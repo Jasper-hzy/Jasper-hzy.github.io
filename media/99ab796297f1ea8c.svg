@@ -1,0 +1,75 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="700" viewBox="0 0 1400 700" role="img" aria-labelledby="title desc">
+  <title id="title">普通文件 I/O 与文件 mmap</title>
+  <desc id="desc">对比 read write 需要在全局 Page Cache 与进程私有 Buffer 间复制，以及 mmap 让两个进程页表直接指向同一 Page Cache 物理页。</desc>
+  <defs>
+    <style>
+      .bg { fill: #fffdf8; }
+      .title { font: 700 26px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #172033; }
+      .sub { font: 14px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #64748b; }
+      .panel { stroke-width: 1.6; rx: 16; }
+      .normal { fill: #fff7ed; stroke: #fb923c; }
+      .mapped { fill: #eef7ff; stroke: #60a5fa; }
+      .box { fill: #fff; stroke: #64748b; stroke-width: 1.2; rx: 10; }
+      .cache { fill: #f0fdf4; stroke: #22c55e; stroke-width: 1.4; rx: 10; }
+      .disk { fill: #faf5ff; stroke: #c084fc; stroke-width: 1.4; rx: 10; }
+      .lt { font: 700 18px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #172033; }
+      .bt { font: 700 14px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #1e293b; }
+      .small { font: 12px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #64748b; }
+      .copy { stroke: #dc2626; stroke-width: 2.4; fill: none; marker-end: url(#red); }
+      .map { stroke: #2563eb; stroke-width: 2.4; fill: none; marker-end: url(#blue); }
+      .io { stroke: #7e22ce; stroke-width: 1.9; fill: none; stroke-dasharray: 7 6; marker-end: url(#purple); }
+    </style>
+    <marker id="red" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#dc2626"/></marker>
+    <marker id="blue" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#2563eb"/></marker>
+    <marker id="purple" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#7e22ce"/></marker>
+  </defs>
+  <rect class="bg" width="1400" height="700"/>
+  <text class="title" x="48" y="46">普通 read/write 与文件 mmap</text>
+  <text class="sub" x="48" y="74">Page Cache 本来就是系统全局的；区别在于进程拿私有副本，还是让自己的 PTE 直接指向文件页。</text>
+
+  <rect class="panel normal" x="45" y="112" width="630" height="500"/>
+  <text class="lt" x="72" y="150">普通 read/write：文件数据存在多份 RAM 副本</text>
+  <rect class="box" x="78" y="205" width="210" height="84"/>
+  <text class="bt" x="102" y="236">进程 A 私有 Buffer</text>
+  <text class="small" x="102" y="261">匿名物理页 A：HELLO</text>
+  <rect class="box" x="432" y="205" width="210" height="84"/>
+  <text class="bt" x="456" y="236">进程 B 私有 Buffer</text>
+  <text class="small" x="456" y="261">匿名物理页 B：HELLO</text>
+  <rect class="cache" x="212" y="354" width="296" height="92"/>
+  <text class="bt" x="240" y="386">全局 Page Cache</text>
+  <text class="small" x="240" y="412">文件物理页 F：HELLO / Dirty 状态</text>
+  <rect class="disk" x="250" y="510" width="220" height="62"/>
+  <text class="bt" x="278" y="547">SSD 文件块</text>
+  <path class="copy" d="M250 354 C225 325, 205 305, 183 289"/>
+  <text class="small" x="105" y="326">read：copy_to_user</text>
+  <path class="copy" d="M470 354 C500 325, 515 305, 537 289"/>
+  <text class="small" x="470" y="326">read：copy_to_user</text>
+  <path class="copy" d="M183 289 C205 320, 240 343, 285 354"/>
+  <text class="small" x="245" y="305">write：copy_from_user</text>
+  <path class="io" d="M360 510 L360 446"/>
+  <text class="small" x="378" y="485">读取 / 回写</text>
+  <text class="small" x="78" y="590">A、B 已读出的 Buffer 不会随 Page Cache 自动更新；重新 read 才复制当前内容。</text>
+
+  <rect class="panel mapped" x="725" y="112" width="630" height="500"/>
+  <text class="lt" x="752" y="150">mmap(MAP_SHARED)：一份文件 Payload 页面</text>
+  <rect class="box" x="758" y="205" width="210" height="84"/>
+  <text class="bt" x="782" y="236">进程 A 虚拟地址</text>
+  <text class="small" x="782" y="261">VMA A / PTE A</text>
+  <rect class="box" x="1112" y="205" width="210" height="84"/>
+  <text class="bt" x="1136" y="236">进程 B 虚拟地址</text>
+  <text class="small" x="1136" y="261">VMA B / PTE B</text>
+  <rect class="cache" x="922" y="354" width="296" height="92"/>
+  <text class="bt" x="950" y="386">同一个 Page Cache 物理页 F</text>
+  <text class="small" x="950" y="412">A Store / B Load 都访问这里</text>
+  <rect class="disk" x="960" y="510" width="220" height="62"/>
+  <text class="bt" x="988" y="547">SSD 文件块</text>
+  <path class="map" d="M863 289 C885 325, 930 343, 980 354"/>
+  <path class="map" d="M1217 289 C1195 325, 1160 343, 1130 354"/>
+  <text class="small" x="820" y="326">PTE 直接映射</text>
+  <text class="small" x="1150" y="326">PTE 直接映射</text>
+  <path class="io" d="M1070 510 L1070 446"/>
+  <text class="small" x="1088" y="485">读取 / 回写</text>
+  <text class="small" x="758" y="590">内存可见不等于落盘；共享读写仍需要同步，持久化需要单独控制。</text>
+
+  <text class="small" x="45" y="658">关键差异：read/write 用私有 Buffer 换取隔离和通用接口；mmap 省掉 Page Cache 与私有 Buffer 之间的复制。</text>
+</svg>

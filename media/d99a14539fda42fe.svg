@@ -1,0 +1,74 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="720" viewBox="0 0 1400 720" role="img" aria-labelledby="title desc">
+  <title id="title">read write 与共享 mmap 的进程间数据路径</title>
+  <desc id="desc">对比两个进程通过 memfd read write 交换数据时的两次复制，与双方 mmap 同一共享对象后直接访问同一物理页。</desc>
+  <defs>
+    <style>
+      .bg { fill: #fffdf8; }
+      .title { font: 700 26px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #172033; }
+      .sub { font: 14px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #64748b; }
+      .panel { stroke-width: 1.6; rx: 16; }
+      .copyPanel { fill: #fff7ed; stroke: #fb923c; }
+      .mapPanel { fill: #eef7ff; stroke: #60a5fa; }
+      .box { fill: #fff; stroke: #64748b; stroke-width: 1.2; rx: 10; }
+      .shared { fill: #f0fdf4; stroke: #22c55e; stroke-width: 1.5; rx: 10; }
+      .lt { font: 700 18px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #172033; }
+      .bt { font: 700 14px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #1e293b; }
+      .small { font: 12px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #64748b; }
+      .copy { stroke: #dc2626; stroke-width: 2.5; fill: none; marker-end: url(#red); }
+      .direct { stroke: #2563eb; stroke-width: 2.5; fill: none; marker-end: url(#blue); }
+      .setup { stroke: #7e22ce; stroke-width: 1.8; fill: none; stroke-dasharray: 7 6; marker-end: url(#purple); }
+    </style>
+    <marker id="red" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#dc2626"/></marker>
+    <marker id="blue" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#2563eb"/></marker>
+    <marker id="purple" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#7e22ce"/></marker>
+  </defs>
+  <rect class="bg" width="1400" height="720"/>
+  <text class="title" x="48" y="46">两个进程通过共享对象交换数据</text>
+  <text class="sub" x="48" y="74">共同的 memfd 只解决“指向同一个内核对象”；是否 mmap 决定进程通过系统调用复制，还是通过指针直接访问共享页。</text>
+
+  <rect class="panel copyPanel" x="45" y="112" width="630" height="520"/>
+  <text class="lt" x="72" y="150">方式一：不 mmap，read/write 共享 fd</text>
+  <rect class="box" x="78" y="214" width="180" height="90"/>
+  <text class="bt" x="101" y="244">进程 A 私有页</text>
+  <text class="small" x="101" y="269">Buffer A：HELLO</text>
+  <text class="small" x="101" y="288">Payload 副本 1</text>
+  <rect class="shared" x="270" y="370" width="180" height="100"/>
+  <text class="bt" x="293" y="401">共享对象物理页</text>
+  <text class="small" x="293" y="426">memfd page：HELLO</text>
+  <text class="small" x="293" y="449">Payload 副本 2</text>
+  <rect class="box" x="462" y="214" width="180" height="90"/>
+  <text class="bt" x="485" y="244">进程 B 私有页</text>
+  <text class="small" x="485" y="269">Buffer B：HELLO</text>
+  <text class="small" x="485" y="288">Payload 副本 3</text>
+  <path class="copy" d="M210 304 C235 340, 275 360, 310 370"/>
+  <text class="small" x="130" y="348">write() / copy_from_user()</text>
+  <path class="copy" d="M410 370 C455 350, 505 330, 535 304"/>
+  <text class="small" x="430" y="348">read() / copy_to_user()</text>
+  <text class="small" x="78" y="528">A 修改私有 Buffer 不会自动同步；调用 write 才复制，B 调用 read 才得到新副本。</text>
+  <text class="small" x="78" y="556">传输一次 Payload：两次内存复制，并进入内核两次。</text>
+
+  <rect class="panel mapPanel" x="725" y="112" width="630" height="520"/>
+  <text class="lt" x="752" y="150">方式二：双方 mmap(MAP_SHARED)</text>
+  <rect class="box" x="758" y="214" width="180" height="90"/>
+  <text class="bt" x="781" y="244">进程 A</text>
+  <text class="small" x="781" y="269">VA A / VMA A / PTE A</text>
+  <text class="small" x="781" y="288">CPU Store</text>
+  <rect class="shared" x="930" y="370" width="220" height="100"/>
+  <text class="bt" x="953" y="401">同一个共享物理页</text>
+  <text class="small" x="953" y="426">memfd page：HELLO</text>
+  <text class="small" x="953" y="449">唯一一份 IPC Payload</text>
+  <rect class="box" x="1142" y="214" width="180" height="90"/>
+  <text class="bt" x="1165" y="244">进程 B</text>
+  <text class="small" x="1165" y="269">VA B / VMA B / PTE B</text>
+  <text class="small" x="1165" y="288">CPU Load</text>
+  <path class="direct" d="M878 304 C900 335, 950 360, 985 370"/>
+  <path class="direct" d="M1095 370 C1140 350, 1190 330, 1215 304"/>
+  <text class="small" x="780" y="348">PTE 指向共享页</text>
+  <text class="small" x="1150" y="348">PTE 指向共享页</text>
+  <path class="setup" d="M848 214 C920 194, 1160 194, 1232 214"/>
+  <text class="small" x="938" y="178">memfd fd 传递后，双方引用同一对象</text>
+  <text class="small" x="758" y="528">如果 A 先在私有堆构造再 memcpy 到共享页，仍有一次应用层复制。</text>
+  <text class="small" x="758" y="556">如果 A 直接在共享页构造、B 原地读取，IPC Payload 不再搬家。</text>
+
+  <text class="small" x="45" y="680">mmap 只共享数据页；消息通知、读写顺序和所有权仍需 eventfd、futex、Socket、原子状态或进程共享锁。</text>
+</svg>

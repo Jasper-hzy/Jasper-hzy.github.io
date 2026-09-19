@@ -1,0 +1,75 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="650" viewBox="0 0 1200 650" role="img" aria-labelledby="title desc">
+  <title id="title">mmap 的 VMA 与底层物理页</title>
+  <desc id="desc">展示 mmap 先创建 VMA，首次访问后根据文件映射、匿名映射或共享对象映射到不同来源的 RAM 物理页。</desc>
+  <defs>
+    <style>
+      .bg { fill: #fffdf8; }
+      .title { font: 700 26px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #172033; }
+      .sub { font: 14px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #64748b; }
+      .lane { stroke-width: 1.6; rx: 16; }
+      .proc { fill: #eef7ff; stroke: #60a5fa; }
+      .kernel { fill: #fff7ed; stroke: #fb923c; }
+      .ram { fill: #f0fdf4; stroke: #4ade80; }
+      .box { fill: #fff; stroke: #64748b; stroke-width: 1.2; rx: 10; }
+      .lt { font: 700 18px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #172033; }
+      .bt { font: 700 14px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #1e293b; }
+      .txt { font: 13px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #475569; }
+      .small { font: 12px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #64748b; }
+      .flow { stroke: #2563eb; stroke-width: 2.2; fill: none; marker-end: url(#blue); }
+      .file { stroke: #7e22ce; stroke-width: 2; fill: none; marker-end: url(#purple); }
+      .swap { stroke: #64748b; stroke-width: 1.8; fill: none; stroke-dasharray: 7 6; marker-end: url(#gray); }
+    </style>
+    <marker id="blue" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#2563eb"/></marker>
+    <marker id="purple" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#7e22ce"/></marker>
+    <marker id="gray" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#64748b"/></marker>
+  </defs>
+  <rect class="bg" width="1200" height="650"/>
+  <text class="title" x="48" y="46">mmap：先建立 VMA，首次访问再确定物理页</text>
+  <text class="sub" x="48" y="74">VMA 记录虚拟地址的来源与权限；PTE 最终指向 RAM，底层页面由 backing object 决定。</text>
+
+  <rect class="lane proc" x="50" y="118" width="300" height="420"/>
+  <text class="lt" x="77" y="156">进程虚拟地址空间</text>
+  <rect class="box" x="78" y="204" width="244" height="112"/>
+  <text class="bt" x="102" y="235">VMA</text>
+  <text class="small" x="102" y="260">地址范围 / prot / flags</text>
+  <text class="small" x="102" y="283">文件、匿名或共享对象</text>
+  <text class="small" x="102" y="303">mmap() 时先创建</text>
+  <rect class="box" x="78" y="374" width="244" height="92"/>
+  <text class="bt" x="102" y="405">PTE</text>
+  <text class="small" x="102" y="429">虚拟页 → 物理页号 PFN</text>
+  <text class="small" x="102" y="451">通常在首次访问后建立</text>
+
+  <rect class="lane kernel" x="426" y="118" width="300" height="420"/>
+  <text class="lt" x="453" y="156">缺页处理</text>
+  <rect class="box" x="454" y="204" width="244" height="112"/>
+  <text class="bt" x="478" y="235">根据 VMA 找 backing</text>
+  <text class="small" x="478" y="260">文件：inode + offset</text>
+  <text class="small" x="478" y="283">匿名：按需申请清零页</text>
+  <text class="small" x="478" y="303">共享：对象 + page index</text>
+  <rect class="box" x="454" y="374" width="244" height="92"/>
+  <text class="bt" x="478" y="405">建立页表映射</text>
+  <text class="small" x="478" y="429">把目标物理页 PFN 写入 PTE</text>
+  <text class="small" x="478" y="451">重新执行触发缺页的指令</text>
+
+  <rect class="lane ram" x="802" y="118" width="348" height="420"/>
+  <text class="lt" x="829" y="156">RAM 物理页</text>
+  <rect class="box" x="830" y="190" width="292" height="80"/>
+  <text class="bt" x="854" y="220">文件映射</text>
+  <text class="small" x="854" y="245">Page Cache 文件页 ↔ 磁盘文件</text>
+  <rect class="box" x="830" y="300" width="292" height="80"/>
+  <text class="bt" x="854" y="330">匿名映射</text>
+  <text class="small" x="854" y="355">匿名物理页；内存紧张时可进入 Swap</text>
+  <rect class="box" x="830" y="410" width="292" height="80"/>
+  <text class="bt" x="854" y="440">共享对象映射</text>
+  <text class="small" x="854" y="465">多个进程 PTE 指向同一个共享页</text>
+
+  <path class="flow" d="M200 316 L200 374"/>
+  <path class="flow" d="M322 420 L454 420"/>
+  <path class="flow" d="M698 420 C750 420, 770 230, 830 230"/>
+  <path class="flow" d="M698 420 C750 420, 770 340, 830 340"/>
+  <path class="flow" d="M698 420 C750 420, 770 450, 830 450"/>
+  <path class="file" d="M322 260 L454 260"/>
+  <text class="small" x="347" y="245">首次访问</text>
+
+  <text class="small" x="50" y="586">要点：mmap 不保证“新建一份数据”；它建立地址映射。文件页可来自 Page Cache，匿名页按需分配，共享页按共同对象复用。</text>
+</svg>

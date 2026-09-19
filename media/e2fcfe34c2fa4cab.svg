@@ -1,0 +1,114 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="1000" viewBox="0 0 1200 1000" role="img" aria-labelledby="title desc">
+  <title id="title">Android NestedScrolling 滚动距离协商</title>
+  <desc id="desc">Child 保持 MotionEvent 目标身份，通过 startNestedScroll 建立协作关系。每次 MOVE 先让 Parent 预消费，再由 Child 消费剩余距离，最后把未消费距离交给 Parent，手势结束时停止协作。</desc>
+  <defs>
+    <style>
+      .bg { fill: #fffdf8; }
+      .title { font: 700 28px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #172033; }
+      .subtitle { font: 14px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #64748b; }
+      .lane-parent { fill: #fff7ed; stroke: #f97316; stroke-width: 2; }
+      .lane-child { fill: #eff6ff; stroke: #3b82f6; stroke-width: 2; }
+      .parent-box { fill: #fffaf2; stroke: #f97316; stroke-width: 2; }
+      .child-box { fill: #f5f9ff; stroke: #3b82f6; stroke-width: 2; }
+      .consume-box { fill: #ecfdf5; stroke: #10b981; stroke-width: 2.5; }
+      .summary { fill: #fefce8; stroke: #eab308; stroke-width: 2; }
+      .lane-title { font: 700 18px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #1e293b; text-anchor: middle; }
+      .label { font: 700 16px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #1e293b; }
+      .txt { font: 13px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #475569; }
+      .small { font: 12px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #64748b; }
+      .num { font: 700 16px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #ffffff; text-anchor: middle; dominant-baseline: middle; }
+      .call { stroke: #2563eb; stroke-width: 3; fill: none; marker-end: url(#blue); }
+      .return { stroke: #f97316; stroke-width: 2.5; stroke-dasharray: 7 5; fill: none; marker-end: url(#orange); }
+      .next { stroke: #059669; stroke-width: 3; fill: none; marker-end: url(#green); }
+      .guide { stroke: #cbd5e1; stroke-width: 1.5; stroke-dasharray: 5 7; }
+    </style>
+    <marker id="blue" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#2563eb"/></marker>
+    <marker id="orange" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#f97316"/></marker>
+    <marker id="green" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#059669"/></marker>
+  </defs>
+
+  <rect class="bg" width="1200" height="1000"/>
+  <text class="title" x="44" y="46">NestedScrolling：一次 MOVE 的滚动距离协商</text>
+  <text class="subtitle" x="44" y="74">MotionEvent 仍由 Child 持有；父子之间额外传递 dx / dy、consumed 和 velocity。</text>
+
+  <rect class="lane-parent" x="90" y="100" width="420" height="54" rx="12"/>
+  <text class="lane-title" x="300" y="134">NestedScrolling Parent</text>
+  <rect class="lane-child" x="690" y="100" width="420" height="54" rx="12"/>
+  <text class="lane-title" x="900" y="134">NestedScrolling Child（TouchTarget）</text>
+
+  <line class="guide" x1="300" y1="154" x2="300" y2="900"/>
+  <line class="guide" x1="900" y1="154" x2="900" y2="900"/>
+
+  <circle cx="48" cy="229" r="20" fill="#7c3aed"/>
+  <text class="num" x="48" y="229">1</text>
+  <rect class="parent-box" x="110" y="188" width="360" height="82" rx="13"/>
+  <text class="label" x="136" y="220">onStartNestedScroll(...) = true</text>
+  <text class="txt" x="136" y="245">onNestedScrollAccepted：记录轴和 type</text>
+  <rect class="child-box" x="730" y="188" width="350" height="82" rx="13"/>
+  <text class="label" x="756" y="220">startNestedScroll(VERTICAL, TOUCH)</text>
+  <text class="txt" x="756" y="245">沿父链查找并保存接受协作的 Parent</text>
+  <path class="call" d="M730 229 L480 229"/>
+
+  <path class="next" d="M900 270 L900 308"/>
+
+  <circle cx="48" cy="350" r="20" fill="#2563eb"/>
+  <text class="num" x="48" y="350">2</text>
+  <rect class="child-box" x="730" y="310" width="350" height="80" rx="13"/>
+  <text class="label" x="756" y="342">收到 ACTION_MOVE</text>
+  <text class="txt" x="756" y="367">由触摸坐标计算本次滚动量：dy = 100</text>
+
+  <path class="next" d="M900 390 L900 428"/>
+
+  <circle cx="48" cy="475" r="20" fill="#f97316"/>
+  <text class="num" x="48" y="475">3</text>
+  <rect class="parent-box" x="110" y="430" width="360" height="92" rx="13"/>
+  <text class="label" x="136" y="460">onNestedPreScroll(dy=100)</text>
+  <text class="txt" x="136" y="484">Parent 先消费 30</text>
+  <text class="txt" x="136" y="506">写回 consumed[1] = 30</text>
+  <rect class="child-box" x="730" y="430" width="350" height="92" rx="13"/>
+  <text class="label" x="756" y="460">dispatchNestedPreScroll(dy=100)</text>
+  <text class="txt" x="756" y="484">滚动前先询问 Parent</text>
+  <text class="txt" x="756" y="506">剩余量 = 100 - consumed[1]</text>
+  <path class="call" d="M730 463 L480 463"/>
+  <path class="return" d="M480 499 L720 499"/>
+  <text class="small" x="600" y="493" text-anchor="middle">consumed[1] = 30</text>
+
+  <path class="next" d="M900 522 L900 558"/>
+
+  <circle cx="48" cy="607" r="20" fill="#059669"/>
+  <text class="num" x="48" y="607">4</text>
+  <rect class="consume-box" x="730" y="560" width="350" height="94" rx="13"/>
+  <text class="label" x="756" y="590">Child 消费剩余距离</text>
+  <text class="txt" x="756" y="614">可用 70，实际消费 50</text>
+  <text class="txt" x="756" y="636">仍未消费：dyUnconsumed = 20</text>
+
+  <path class="next" d="M900 654 L900 688"/>
+
+  <circle cx="48" cy="737" r="20" fill="#059669"/>
+  <text class="num" x="48" y="737">5</text>
+  <rect class="consume-box" x="110" y="690" width="360" height="94" rx="13"/>
+  <text class="label" x="136" y="720">onNestedScroll(..., unconsumed=20)</text>
+  <text class="txt" x="136" y="744">Parent 再消费 Child 用不掉的 20</text>
+  <text class="txt" x="136" y="766">也可以继续向更上层 Nested Parent 传递</text>
+  <rect class="child-box" x="730" y="690" width="350" height="94" rx="13"/>
+  <text class="label" x="756" y="720">dispatchNestedScroll(50, 20)</text>
+  <text class="txt" x="756" y="744">报告 dyConsumed = 50</text>
+  <text class="txt" x="756" y="766">报告 dyUnconsumed = 20</text>
+  <path class="call" d="M730 737 L480 737"/>
+
+  <path class="next" d="M900 784 L900 818"/>
+
+  <circle cx="48" cy="855" r="20" fill="#7c3aed"/>
+  <text class="num" x="48" y="855">6</text>
+  <rect class="parent-box" x="110" y="820" width="360" height="70" rx="13"/>
+  <text class="label" x="136" y="849">Fling 协商 / onStopNestedScroll()</text>
+  <text class="txt" x="136" y="872">可先消费 velocity；结束时清理协作状态</text>
+  <rect class="child-box" x="730" y="820" width="350" height="70" rx="13"/>
+  <text class="label" x="756" y="849">UP / CANCEL：结束协作</text>
+  <text class="txt" x="756" y="872">preFling / fling → stopNestedScroll</text>
+  <path class="call" d="M730 855 L480 855"/>
+
+  <rect class="summary" x="90" y="920" width="1020" height="58" rx="12"/>
+  <text class="label" x="116" y="946">一次 MOVE：Parent 预消费 30 + Child 消费 50 + Parent 处理剩余 20 = 100</text>
+  <text class="txt" x="116" y="967">它协商的是滚动距离，不改变当前 MotionEvent 的 TouchTarget。</text>
+</svg>

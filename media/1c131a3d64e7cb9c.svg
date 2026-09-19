@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1380" height="760" viewBox="0 0 1380 760" role="img" aria-labelledby="title desc">
+  <title id="title">SurfaceView 与 TextureView 图形链路差异</title>
+  <desc id="desc">对比 SurfaceView 的独立 Surface/Layer 合成路径，与 TextureView 通过 SurfaceTexture、TextureLayer、ViewRootImpl Window Surface 的绘制路径。</desc>
+  <defs>
+    <style>
+      .bg{fill:#fffdf8}.title{font:700 25px -apple-system,BlinkMacSystemFont,&quot;Segoe UI&quot;,sans-serif;fill:#172033}.sub{font:13px -apple-system,BlinkMacSystemFont,&quot;Segoe UI&quot;,sans-serif;fill:#526174}.lane{fill:#f8fafc;stroke:#d1d9e6;stroke-width:1.4}.sv{fill:#e9f5ff;stroke:#6aa6d8}.tv{fill:#eef8ed;stroke:#71a96d}.sf{fill:#fff4df;stroke:#d6a24a}.box{fill:#fff;stroke:#435166;stroke-width:1.5;rx:12}.hot{fill:#fff7ed;stroke:#fb923c}.label{font:700 14px -apple-system,BlinkMacSystemFont,&quot;Segoe UI&quot;,sans-serif;fill:#172033}.txt{font:12.3px -apple-system,BlinkMacSystemFont,&quot;Segoe UI&quot;,sans-serif;fill:#4b5563}.small{font:11.5px -apple-system,BlinkMacSystemFont,&quot;Segoe UI&quot;,sans-serif;fill:#64748b}.arrow{stroke:#334155;stroke-width:2;fill:none;marker-end:url(#arrow)}.dash{stroke:#7c8796;stroke-width:1.8;fill:none;stroke-dasharray:6 6;marker-end:url(#arrow2)}.green{stroke:#16a34a;stroke-width:2.2;fill:none;marker-end:url(#arrow3)}.orange{stroke:#c27a18;stroke-width:2.2;fill:none;marker-end:url(#arrow4)}
+    </style>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L8,3 L0,6 Z" fill="#334155"/></marker>
+    <marker id="arrow2" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L8,3 L0,6 Z" fill="#7c8796"/></marker>
+    <marker id="arrow3" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L8,3 L0,6 Z" fill="#16a34a"/></marker>
+    <marker id="arrow4" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L8,3 L0,6 Z" fill="#c27a18"/></marker>
+  </defs>
+  <rect class="bg" width="1380" height="760"/>
+  <text class="title" x="44" y="44">SurfaceView 与 TextureView：差异不是有没有 Surface，而是谁最终合成</text>
+  <text class="sub" x="44" y="72">SurfaceView 把内容作为独立 Layer 交给 SurfaceFlinger；TextureView 先把 producer buffer 采样成 View 内容，再画进 App Window Surface。</text>
+
+  <rect class="lane sv" x="46" y="120" width="600" height="260" rx="18"/>
+  <text class="label" x="76" y="152">SurfaceView：独立 Surface / 独立 Layer</text>
+  <rect class="box" x="85" y="205" width="145" height="64" rx="12"/><text class="label" x="158" y="230" text-anchor="middle">Producer</text><text class="txt" x="158" y="251" text-anchor="middle">Camera / Codec / GL</text>
+  <rect class="box" x="280" y="205" width="145" height="64" rx="12"/><text class="label" x="353" y="230" text-anchor="middle">SurfaceView</text><text class="txt" x="353" y="251" text-anchor="middle">自己的 Surface</text>
+  <rect class="box hot" x="475" y="205" width="135" height="64" rx="12"/><text class="label" x="542" y="230" text-anchor="middle">独立 Layer</text><text class="txt" x="542" y="251" text-anchor="middle">SF 直接合成</text>
+  <path class="arrow" d="M230 237 L280 237"/><path class="arrow" d="M425 237 L475 237"/>
+  <text class="small" x="86" y="318">特点：路径短，适合视频、相机、游戏、低延迟渲染；View 层级只负责占位和控制 Layer 位置。</text>
+
+  <rect class="lane tv" x="46" y="430" width="900" height="250" rx="18"/>
+  <text class="label" x="76" y="462">TextureView：SurfaceTexture 接收帧，TextureLayer 作为 View 内容画进 Window Surface</text>
+  <rect class="box" x="85" y="515" width="145" height="64" rx="12"/><text class="label" x="158" y="540" text-anchor="middle">Producer</text><text class="txt" x="158" y="561" text-anchor="middle">Camera / Codec / GL</text>
+  <rect class="box" x="280" y="515" width="145" height="64" rx="12"/><text class="label" x="353" y="540" text-anchor="middle">SurfaceTexture</text><text class="txt" x="353" y="561" text-anchor="middle">BufferQueue consumer</text>
+  <rect class="box hot" x="475" y="515" width="145" height="64" rx="12"/><text class="label" x="548" y="540" text-anchor="middle">TextureLayer</text><text class="txt" x="548" y="561" text-anchor="middle">OES 纹理层</text>
+  <rect class="box" x="670" y="515" width="230" height="64" rx="12"/><text class="label" x="785" y="540" text-anchor="middle">ViewRootImpl Window Surface</text><text class="txt" x="785" y="561" text-anchor="middle">和普通 View 一起绘制</text>
+  <path class="green" d="M230 547 L280 547"/><path class="green" d="M425 547 L475 547"/><path class="green" d="M620 547 L670 547"/>
+  <text class="small" x="86" y="630">关键调用：TextureView.draw() -> applyUpdate() / applyTransformMatrix() -> RecordingCanvas.drawTextureLayer(layer)。</text>
+
+  <rect class="lane sf" x="980" y="120" width="340" height="560" rx="18"/>
+  <text class="label" x="1010" y="152">SurfaceFlinger 最终看到的 Layer</text>
+  <rect class="box" x="1030" y="215" width="240" height="74" rx="12"/><text class="label" x="1150" y="244" text-anchor="middle">App Window Layer</text><text class="txt" x="1150" y="267" text-anchor="middle">普通 View + TextureView 结果</text>
+  <rect class="box" x="1030" y="350" width="240" height="74" rx="12"/><text class="label" x="1150" y="379" text-anchor="middle">SurfaceView Layer</text><text class="txt" x="1150" y="402" text-anchor="middle">独立参与合成</text>
+  <rect class="box" x="1030" y="500" width="240" height="74" rx="12"/><text class="label" x="1150" y="529" text-anchor="middle">Display</text><text class="txt" x="1150" y="552" text-anchor="middle">HWC / GPU 合成输出</text>
+  <path class="orange" d="M610 237 C810 237,890 387,1030 387"/>
+  <path class="green" d="M900 547 C955 547,960 252,1030 252"/>
+  <path class="arrow" d="M1150 289 L1150 350"/><path class="arrow" d="M1150 424 L1150 500"/>
+  <text class="small" x="1010" y="622">结论：TextureView 灵活，是因为它进了 View 树；SurfaceView 低延迟，是因为它绕过 App 侧纹理合成。</text>
+</svg>

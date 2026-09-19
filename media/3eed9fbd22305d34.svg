@@ -1,0 +1,81 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="760" viewBox="0 0 1200 760" role="img" aria-labelledby="title desc">
+  <title id="title">Activity / Window / Layer 三维度关联</title>
+  <desc id="desc">展示 ATMS 的 ActivityRecord、WMS 的 WindowState 和 SurfaceFlinger 的 Layer 如何通过 token 和 SurfaceControl 关联，以及各自的通信通道。</desc>
+  <defs>
+    <style>
+      .bg { fill: #fffdf8; }
+      .title { font: 700 26px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #172033; }
+      .sub { font: 14px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #64748b; }
+      .lane { stroke-width: 1.6; rx: 16; }
+      .atms { fill: #eef7ff; stroke: #60a5fa; }
+      .wms { fill: #fff7ed; stroke: #fb923c; }
+      .sf { fill: #f0fdf4; stroke: #4ade80; }
+      .lt { font: 700 18px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #172033; }
+      .txt { font: 13px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #475569; }
+      .box { fill: #fff; stroke: #64748b; stroke-width: 1.2; rx: 10; }
+      .bt { font: 700 13px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #1e293b; }
+      .small { font: 12px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #64748b; }
+      .link { stroke: #b91c1c; stroke-width: 2; fill: none; marker-end: url(#red); }
+      .comm { stroke: #2563eb; stroke-width: 1.8; fill: none; stroke-dasharray: 7 6; marker-end: url(#blue); }
+    </style>
+    <marker id="red" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#b91c1c"/></marker>
+    <marker id="blue" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#2563eb"/></marker>
+  </defs>
+  <rect class="bg" width="1200" height="760"/>
+  <text class="title" x="48" y="46">Activity / Window / Layer 三维度关联</text>
+  <text class="sub" x="48" y="74">红线：身份关联（token / SurfaceControl）。蓝虚线：通信通道（Binder / Surface）。</text>
+
+  <rect class="lane atms" x="60" y="110" width="320" height="560"/>
+  <text class="lt" x="86" y="146">ATMS（system_server）</text>
+  <text class="txt" x="86" y="170">管 Activity / Task / 生命周期</text>
+  <rect class="box" x="90" y="200" width="260" height="70"/>
+  <text class="bt" x="110" y="228">ActivityRecord</text>
+  <text class="small" x="110" y="250">Activity 的系统记录</text>
+  <rect class="box" x="90" y="300" width="260" height="70"/>
+  <text class="bt" x="110" y="328">token: IBinder</text>
+  <text class="small" x="110" y="350">Activity 实例唯一身份</text>
+  <rect class="box" x="90" y="470" width="260" height="86"/>
+  <text class="bt" x="110" y="498">通信通道</text>
+  <text class="small" x="110" y="520">App→ATMS: IActivityTaskManager</text>
+  <text class="small" x="110" y="540">ATMS→App: IApplicationThread</text>
+
+  <rect class="lane wms" x="440" y="110" width="320" height="560"/>
+  <text class="lt" x="466" y="146">WMS（system_server）</text>
+  <text class="txt" x="466" y="170">管窗口秩序 / 层级 / 焦点 / 输入目标</text>
+  <rect class="box" x="470" y="200" width="260" height="70"/>
+  <text class="bt" x="490" y="228">WindowToken</text>
+  <text class="small" x="490" y="250">窗口归属令牌（对应 token）</text>
+  <rect class="box" x="470" y="300" width="260" height="86"/>
+  <text class="bt" x="490" y="328">WindowState</text>
+  <text class="small" x="490" y="350">一个窗口的系统记录</text>
+  <text class="small" x="490" y="370">一个 token 可挂多个窗口</text>
+  <rect class="box" x="470" y="470" width="260" height="86"/>
+  <text class="bt" x="490" y="498">通信通道</text>
+  <text class="small" x="490" y="520">App→WMS: IWindowSession</text>
+  <text class="small" x="490" y="540">WMS→App: IWindow</text>
+
+  <rect class="lane sf" x="820" y="110" width="320" height="560"/>
+  <text class="lt" x="846" y="146">SurfaceFlinger</text>
+  <text class="txt" x="846" y="170">管 Layer 合成顺序与上屏</text>
+  <rect class="box" x="850" y="200" width="260" height="70"/>
+  <text class="bt" x="870" y="228">SurfaceControl</text>
+  <text class="small" x="870" y="250">控制图层属性的句柄</text>
+  <rect class="box" x="850" y="300" width="260" height="70"/>
+  <text class="bt" x="870" y="328">Layer</text>
+  <text class="small" x="870" y="350">合成单元（唯一）</text>
+  <rect class="box" x="850" y="470" width="260" height="86"/>
+  <text class="bt" x="870" y="498">数据通道</text>
+  <text class="small" x="870" y="520">WMS→SF: SurfaceControl 事务</text>
+  <text class="small" x="870" y="540">App→SF: Surface / BufferQueue</text>
+
+  <path class="link" d="M350 335 L470 235"/>
+  <text class="small" x="360" y="300">token 关联</text>
+  <path class="link" d="M730 343 L850 235"/>
+  <text class="small" x="742" y="300">SurfaceControl 关联</text>
+
+  <path class="comm" d="M220 470 C220 430, 220 400, 220 386"/>
+  <path class="comm" d="M600 470 C600 440, 600 410, 600 386"/>
+  <path class="comm" d="M980 470 C980 400, 980 340, 980 370"/>
+
+  <text class="small" x="60" y="712">要点：三维度各自维护权威状态，靠 token 和 SurfaceControl 关联；不是一一对应，很多系统窗口/图层不属于任何 Activity。</text>
+</svg>

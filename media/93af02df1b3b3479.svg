@@ -1,0 +1,112 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1380" height="980" viewBox="0 0 1380 980" role="img" aria-labelledby="title desc">
+  <title id="title">Android 系统启动流程总览</title>
+  <desc id="desc">展示从 Bootloader、Kernel、init、Zygote、system_server 到 Launcher 的启动链路，并标注各阶段初始化的进程和服务。</desc>
+  <defs>
+    <style>
+      .bg { fill: #fffdf8; }
+      .title { font: 700 28px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #172033; }
+      .sub { font: 15px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #64748b; }
+      .stage { fill: #ffffff; stroke: #64748b; stroke-width: 1.6; rx: 16; }
+      .boot { fill: #eef7ff; stroke: #60a5fa; }
+      .kernel { fill: #f5f3ff; stroke: #a78bfa; }
+      .init { fill: #fff7ed; stroke: #fb923c; }
+      .zygote { fill: #f0fdf4; stroke: #4ade80; }
+      .server { fill: #fefce8; stroke: #eab308; }
+      .launcher { fill: #fdf2f8; stroke: #f472b6; }
+      .st { font: 700 18px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #172033; }
+      .txt { font: 13px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #475569; }
+      .small { font: 12px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #64748b; }
+      .box { fill: #fff; stroke: #94a3b8; stroke-width: 1.2; rx: 10; }
+      .bt { font: 700 13px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #1e293b; }
+      .arrow { stroke: #334155; stroke-width: 2.2; fill: none; marker-end: url(#arrow); }
+      .dash { stroke: #64748b; stroke-width: 1.7; fill: none; stroke-dasharray: 7 6; marker-end: url(#gray); }
+      .note { fill: #f8fafc; stroke: #cbd5e1; stroke-width: 1.2; rx: 12; }
+      .boundary { stroke: #ef4444; stroke-width: 2; fill: none; stroke-dasharray: 9 7; }
+      .boundary-label { font: 700 13px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #b91c1c; }
+    </style>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#334155"/></marker>
+    <marker id="gray" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#64748b"/></marker>
+  </defs>
+  <rect class="bg" width="1380" height="980"/>
+  <text class="title" x="52" y="48">Android 系统启动流程总览</text>
+  <text class="sub" x="52" y="76">主线：Bootloader → Kernel → init → Zygote → system_server → Launcher。重点看每一步拉起了哪些进程、初始化了哪些服务。</text>
+
+  <rect class="stage boot" x="70" y="120" width="250" height="120"/>
+  <text class="st" x="95" y="154">1. Bootloader</text>
+  <text class="txt" x="95" y="182">初始化基础硬件</text>
+  <text class="txt" x="95" y="204">校验并加载 boot 镜像</text>
+  <text class="txt" x="95" y="226">把控制权交给 Kernel</text>
+
+  <rect class="stage kernel" x="395" y="120" width="250" height="120"/>
+  <text class="st" x="420" y="154">2. Linux Kernel</text>
+  <text class="txt" x="420" y="182">初始化调度 / 内存 / 文件系统</text>
+  <text class="txt" x="420" y="204">准备 Binder / input / display 驱动</text>
+  <text class="txt" x="420" y="226">启动用户空间 PID 1：init</text>
+
+  <rect class="stage init" x="720" y="120" width="300" height="175"/>
+  <text class="st" x="745" y="154">3. init</text>
+  <text class="txt" x="745" y="182">解析 init.rc / init.zygote*.rc</text>
+  <text class="txt" x="745" y="204">拉起 Android 用户空间基础进程</text>
+  <rect class="box" x="745" y="222" width="250" height="50"/>
+  <text class="bt" x="765" y="244">native 基础进程</text>
+  <text class="small" x="765" y="264">servicemanager / SurfaceFlinger / netd / vold</text>
+
+  <rect class="stage zygote" x="70" y="360" width="300" height="180"/>
+  <text class="st" x="95" y="394">4. Zygote</text>
+  <text class="txt" x="95" y="418">init 启动 app_process（native）</text>
+  <text class="txt" x="95" y="440">AndroidRuntime.start 初始化 ART</text>
+  <text class="txt" x="95" y="462">进入 ZygoteInit.main（Java）</text>
+  <text class="txt" x="95" y="484">预加载 Framework 类和资源</text>
+  <text class="txt" x="95" y="506">fork system_server；监听 App fork 请求</text>
+
+  <rect class="stage server" x="445" y="340" width="390" height="240"/>
+  <text class="st" x="470" y="374">5. system_server</text>
+  <text class="txt" x="470" y="402">入口：SystemServer.main → SystemServer.run</text>
+  <text class="txt" x="470" y="424">创建 SystemServiceManager</text>
+  <text class="txt" x="470" y="446">分阶段启动 Framework Services</text>
+  <rect class="box" x="470" y="464" width="340" height="86"/>
+  <text class="bt" x="490" y="486">核心 Java Framework 服务</text>
+  <text class="small" x="490" y="508">AMS / ATMS：进程、Activity、Task、生命周期</text>
+  <text class="small" x="490" y="528">PMS：包扫描、Manifest、组件解析</text>
+  <text class="small" x="490" y="548">WMS / Power / Display / Input / Connectivity</text>
+
+  <rect class="stage launcher" x="930" y="360" width="330" height="180"/>
+  <text class="st" x="955" y="394">6. Launcher</text>
+  <text class="txt" x="955" y="422">系统 ready 后 AMS/ATMS 构造 HOME Intent</text>
+  <text class="txt" x="955" y="444">PMS 解析出 Launcher Activity</text>
+  <text class="txt" x="955" y="466">AMS 请求 Zygote fork Launcher 进程</text>
+  <text class="txt" x="955" y="488">ActivityThread 创建 HOME Activity</text>
+  <text class="txt" x="955" y="510">WMS / SurfaceFlinger 显示桌面</text>
+
+  <path class="arrow" d="M320 180 L395 180"/>
+  <path class="arrow" d="M645 180 L720 180"/>
+  <path class="arrow" d="M870 295 C870 330, 250 320, 230 360"/>
+  <path class="arrow" d="M370 450 L445 450"/>
+  <path class="arrow" d="M835 450 L930 450"/>
+
+  <path class="boundary" d="M390 315 L390 575"/>
+  <text class="boundary-label" x="400" y="326">进入 ART / Framework Java 主流程</text>
+  <text class="small" x="400" y="346">ZygoteInit.main 之后主流程由 Java 组织</text>
+
+  <rect class="note" x="70" y="635" width="365" height="135"/>
+  <text class="bt" x="95" y="666">Binder 服务发现</text>
+  <text class="txt" x="95" y="694">init 拉起 servicemanager</text>
+  <text class="txt" x="95" y="716">system_server 注册 AMS / PMS / WMS 等 Binder</text>
+  <text class="txt" x="95" y="738">App 通过 ServiceManager.getService 查询系统服务</text>
+
+  <rect class="note" x="505" y="635" width="365" height="135"/>
+  <text class="bt" x="530" y="666">Zygote fork 关系</text>
+  <text class="txt" x="530" y="692">system_server 入口：SystemServer.main</text>
+  <text class="txt" x="530" y="714">普通 App 入口：ActivityThread.main</text>
+  <text class="txt" x="530" y="736">二者都是 Zygote fork 出来的独立 Java/ART 进程</text>
+
+  <rect class="note" x="940" y="635" width="365" height="135"/>
+  <text class="bt" x="965" y="666">Launcher 启动边界</text>
+  <text class="txt" x="965" y="694">Launcher 是 HOME Activity，不是系统服务</text>
+  <text class="txt" x="965" y="716">系统决定启动 HOME，Zygote 只负责 fork 进程</text>
+  <text class="txt" x="965" y="738">Activity 创建由 AMS/ATMS 下发事务完成</text>
+
+  <path class="dash" d="M835 520 C875 610, 360 610, 255 635"/>
+  <path class="dash" d="M220 540 C300 610, 600 610, 690 635"/>
+  <path class="dash" d="M1095 540 L1095 635"/>
+</svg>

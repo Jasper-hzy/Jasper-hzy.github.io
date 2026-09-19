@@ -1,0 +1,1471 @@
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="description" content="Glide 源码 · 客户端开发、系统原理与工程实践。"><meta name="color-scheme" content="light dark"><meta name="theme-color" content="#f4f1ea"><title>Glide 源码 · Joel 的技术笔记</title><link rel="icon" href="/favicon.svg"><link rel="stylesheet" href="/style.css"><script src="/app.js" defer></script></head><body><a class="skip" href="#main">跳到正文</a><header class="site-header"><a class="brand" href="/" aria-label="Joel 的技术笔记首页"><span class="brand-mark" aria-hidden="true">J</span><span>Joel 的技术笔记</span></a><div class="header-actions"><span class="header-note">CLIENT · MEDIA · SYSTEMS</span><button class="mobile-menu" type="button" aria-controls="site-directory" aria-expanded="false">目录</button><a href="/#search">搜索</a></div></header><div class="layout has-toc"><aside class="sidebar" id="site-directory"><a class="directory-home" href="/">全部目录 <span>167</span></a><nav aria-label="知识目录"><details open><summary>客户端开发 <small>43</small></summary><a class="section-overview" href="/topics/client/">分类概览 →</a><ul><li><details open><summary>Android</summary><ul><li><a href="/notes/cd703068ffa81c0f/">Android</a></li><li><details><summary>系统原理</summary><ul><li><a href="/notes/fab84807ffb6d277/">Android 系统源码学习总纲</a></li><li><a href="/notes/1c136c4416d06071/">系统启动流程</a></li><li><a href="/notes/51a85ec64df5a668/">ART：JIT / AOT / Profile / GC</a></li><li><a href="/notes/579943f755f56d07/">SystemServer 启动服务流程</a></li><li><a href="/notes/08d2a56a2a759fce/">PackageManagerService 包扫描与安装流程</a></li><li><a href="/notes/84363bcc3e1a6595/">ATMS 与 AMS</a></li><li><a href="/notes/ee4541ede89330a8/">WindowManagerService 窗口管理流程</a></li><li><a href="/notes/9e5b0f3f4ca04e76/">Input 输入系统流程</a></li><li><a href="/notes/df4027642366e720/">Activity 启动与显示流程</a></li><li><a href="/notes/03953a247cdb3327/">Binder</a></li><li><a href="/notes/3428c6a7ad967847/">Android 渲染上屏流程</a></li></ul></details></li><li><details><summary>UI与渲染</summary><ul><li><a href="/notes/7582c9b1581b3665/">渲染流程</a></li><li><a href="/notes/4a594de417119321/">RecyclerView 缓存机制</a></li><li><a href="/notes/5202b7428683905e/">事件分发机制</a></li><li><a href="/notes/f6c73d82600acf33/">自定义 ItemDecoration</a></li><li><a href="/notes/22a5902d69c4c940/">ItemTouchHelper 使用</a></li><li><a href="/notes/179570f12295f1ab/">Material Design 布局使用</a></li></ul></details></li><li><details open><summary>框架与工程</summary><ul><li><a href="/notes/056423c700c40391/">Android 插件化</a></li><li><a href="/notes/2beac6fcfd86382d/">Android 热更新</a></li><li><a href="/notes/029f8807a6033e04/">Dagger2 基础与多宿主实践</a></li><li><a href="/notes/e97db8270e9d1781/">Fresco</a></li><li><a href="/notes/5db034481aa59958/" aria-current="page">Glide 源码</a></li><li><a href="/notes/56322147ef68cac3/">MMKV 源码解析</a></li><li><a href="/notes/930c095f85690ccd/">Retrofit 源码解析</a></li></ul></details></li><li><details><summary>性能稳定性</summary><ul><li><a href="/notes/e8bbec3482f2a8d4/">应用启动优化</a></li><li><a href="/notes/2d016d7297cbdba9/">ANR 排查</a></li><li><a href="/notes/689e2041f5c6b580/">内存优化</a></li><li><a href="/notes/7556cd7c3bc2b1c3/">卡顿与丢帧排查</a></li><li><a href="/notes/15be7ae7f28353e1/">TimeoutException</a></li><li><a href="/notes/79948e481206ca62/">BlockCanary</a></li><li><a href="/notes/057de36673ccdcb9/">LeakCanary 原理</a></li></ul></details></li><li><details><summary>工具链</summary><ul><li><a href="/notes/73185ba4ec50bc83/">Gradle 源码流程分析</a></li><li><a href="/notes/e5d63e4556abf9a6/">Gradle 编译流程梳理</a></li><li><a href="/notes/84901174916c45fd/">Transform 使用</a></li><li><a href="/notes/9adf88e7f5b5b11d/">编译性能优化</a></li><li><a href="/notes/689954c1e13017ea/">反编译</a></li></ul></details></li></ul></details></li><li><details><summary>鸿蒙</summary><ul><li><a href="/notes/e48e3cdc84f2a0f6/">基础入门</a></li><li><a href="/notes/6d738cc87d748c3c/">错误处理</a></li></ul></details></li><li><details><summary>跨端</summary><ul><li><details><summary>Lynx</summary><ul><li><a href="/notes/741ac84d1e8f8b8a/">Lynx 跨端框架优势与对比</a></li><li><a href="/notes/a708a884013d8a87/">Lynx 容器监控指标口径</a></li></ul></details></li><li><details><summary>React-Native</summary><ul><li><a href="/notes/0355d59a0679ef8d/">资料</a></li><li><a href="/notes/9a243b8c0439267b/">构建源码依赖工程</a></li></ul></details></li></ul></details></li></ul></details><details><summary>基础知识 <small>40</small></summary><a class="section-overview" href="/topics/fundamentals/">分类概览 →</a><ul><li><details><summary>C++</summary><ul><li><a href="/notes/04e59128bf1e98a4/">C++</a></li><li><a href="/notes/337f3289ca817d07/">基础语义</a></li><li><a href="/notes/7da782b3a8e0f2ef/">对象与资源管理</a></li><li><a href="/posts/cpp-lifetime/">智能指针与异步生命周期</a></li><li><a href="/notes/b772f3b2675faaf5/">STL 容器</a></li><li><a href="/notes/051be1b8f1d35f56/">并发基础</a></li><li><a href="/posts/cpp-build-and-link/">编译与链接</a></li><li><a href="/notes/23212fc946d4c347/">开发问题汇总</a></li><li><a href="/notes/63c12ecbd19b0f91/">熟练度标准与自测</a></li><li><details><summary>开发问题</summary><ul><li><a href="/notes/1d1f5d117322d7da/">ABI 问题</a></li><li><a href="/notes/29c0c961be175b60/">写已释放地址与内存踩踏</a></li><li><a href="/posts/cpp-container-concurrency/">标准容器并发访问</a></li><li><a href="/notes/85ddc54e262bad58/">对象生命周期与回调</a></li><li><a href="/notes/808f19ab738e16da/">Release 偶现问题</a></li><li><a href="/notes/280f7a3ab5fd45c3/">平台运行态 Crash 分类</a></li><li><a href="/notes/e04fd0e54f9a7d47/">ASAN 场景失败与真实内存错误区分</a></li><li><a href="/notes/623620045defcbb3/">历史排查案例</a></li></ul></details></li></ul></details></li><li><details><summary>Java</summary><ul><li><a href="/notes/b1c8a52ce929a020/">Java</a></li><li><a href="/notes/048e210c85f4e2d0/">AQS</a></li><li><a href="/notes/8e9dc066a5544aab/">Synchronized</a></li><li><a href="/notes/b73248fd23c6b5f8/">多线程同步</a></li><li><a href="/notes/3d67cdd9a9231ab4/">线程池</a></li><li><a href="/notes/1e3108720115f9d3/">CopyOnWriteArrayList</a></li><li><a href="/notes/36a3d031dee2fb29/">Volatile</a></li><li><a href="/notes/e0d01430259a37d3/">垃圾回收机制</a></li></ul></details></li><li><details><summary>Kotlin</summary><ul><li><a href="/notes/8a8e5294a0285aae/">Kotlin</a></li><li><a href="/notes/4061b718089f851b/">协程使用</a></li><li><a href="/notes/7856c70c2fa1cb64/">自定义 Kotlin Compiler Plugin</a></li></ul></details></li><li><details><summary>计算机网络</summary><ul><li><a href="/notes/c4418afb3b4eb8e2/">计算机网络</a></li><li><a href="/notes/f425bc6b5bdafa80/">HTTP 协议</a></li><li><a href="/notes/15d4a1778e656754/">编码加密</a></li><li><a href="/notes/2acb0fe30800e3af/">登陆认证</a></li></ul></details></li><li><details><summary>操作系统</summary><ul><li><a href="/notes/cc459aa9bad2e365/">操作系统</a></li><li><a href="/notes/071abe42adc5d303/">CPU 调度算法</a></li><li><a href="/notes/ce6aa3943fd8ff6d/">mmap 原理</a></li><li><a href="/notes/1e29933ec8a137ff/">生产者消费者模型</a></li><li><a href="/notes/c568c645f9f52e82/">页面置换算法</a></li></ul></details></li><li><details><summary>编译原理</summary><ul><li><a href="/notes/f354f9e11ab9a802/">龙书</a></li></ul></details></li><li><details><summary>设计模式</summary><ul><li><a href="/notes/ce7abb0ac2e79516/">单例模式</a></li><li><a href="/notes/e4ca0fc073f3a05b/">建造者模式</a></li></ul></details></li></ul></details><details><summary>音视频 <small>9</small></summary><a class="section-overview" href="/topics/media/">分类概览 →</a><ul><li><a href="/notes/ef119b6df9ca84b8/">音视频处理流程</a></li><li><details><summary>WebRTC</summary><ul><li><a href="/notes/45f67730a5fb6602/">学习大纲</a></li><li><a href="/notes/5974905c4606c9c3/">连接建立</a></li><li><a href="/notes/ac2f41a67eccb700/">拥塞控制</a></li></ul></details></li><li><details><summary>OpenGL</summary><ul><li><a href="/notes/554b2442737d8d68/">基础知识</a></li><li><a href="/notes/d9b1d4ad8abe2a97/">学习资源</a></li></ul></details></li><li><details><summary>图片协议</summary><ul><li><a href="/notes/061f8cae8aec25b6/">分辨率</a></li><li><a href="/notes/162f8ef558b698a4/">RGB</a></li><li><a href="/notes/0f88bf544513e7c1/">YUV</a></li></ul></details></li></ul></details><details><summary>云游戏 <small>5</small></summary><a class="section-overview" href="/topics/cloud-gaming/">分类概览 →</a><ul><li><a href="/notes/bf95bcbbbd60604c/">框架实现</a></li><li><a href="/notes/36582d80df98846f/">云游戏优化</a></li><li><details><summary>技术实现</summary><ul><li><a href="/notes/38845869d7192ea0/">Android 容器抓屏实现</a></li><li><a href="/notes/3e3c8cfb2580f5c8/">Android 容器触摸输入原理</a></li><li><a href="/notes/95623197f800b091/">Android 云游戏免安装启动机制</a></li></ul></details></li></ul></details><details><summary>AI 与大模型 <small>2</small></summary><a class="section-overview" href="/topics/ai/">分类概览 →</a><ul><li><a href="/notes/48948eb946ee1473/">基础知识</a></li><li><a href="/notes/f156542fce17a012/">AI 工程分层与面试回答</a></li></ul></details><details><summary>算法练习 <small>52</small></summary><a class="section-overview" href="/topics/algorithms/">分类概览 →</a><ul><li><a href="/notes/93a9a083af32c3d2/">算法练习</a></li><li><a href="/notes/a78e4d2bbe575447/">高频算法题清单（通用 / 字节风格）</a></li><li><a href="/notes/f745b2389e7d23e7/">小红书高频算法题清单</a></li><li><details><summary>智力题</summary><ul><li><a href="/notes/ba2d85f388e95f73/">总览</a></li><li><a href="/notes/434b50db1b597ad4/">高频智力题清单</a></li><li><a href="/notes/b00124b11552e20b/">思维模型</a></li><li><a href="/notes/d5e1d5a9d69eaefc/">12 球称重</a></li><li><a href="/notes/68e6dc07320087af/">毒药小白鼠</a></li><li><a href="/notes/3d83d5df9cb9a3c8/">鸡蛋掉落</a></li></ul></details></li><li><details><summary>题型模板</summary><ul><li><a href="/notes/dbda860183531936/">滑动窗口</a></li><li><a href="/notes/77bdd4ba7661b40b/">滑动窗口 <small>CPP</small></a></li></ul></details></li><li><details><summary>LeetCode</summary><ul><li><a href="/notes/2d30c32c4a0e89a0/">1.两数之和 <small>CPP</small></a></li><li><a href="/notes/57a5a57f907a0ec4/">2.两数相加 <small>CPP</small></a></li><li><a href="/notes/3f08bcae660db563/">3.无重复字符的最长子串 <small>CPP</small></a></li><li><a href="/notes/b16ca27a01318d4b/">11.盛最多水的容器 <small>CPP</small></a></li><li><a href="/notes/3d08d25f75c18331/">15.三数之和 <small>CPP</small></a></li><li><a href="/notes/8b208b6f30563fb4/">19.删除链表的倒数第-n-个结点 <small>CPP</small></a></li><li><a href="/notes/437bc90908824ab8/">21.合并两个有序链表 <small>CPP</small></a></li><li><a href="/notes/83f209ba4fcd4b26/">23.合并-k-个升序链表 <small>CPP</small></a></li><li><a href="/notes/9aa34711df2551a5/">25.K-个一组翻转链表 <small>CPP</small></a></li><li><a href="/notes/d67130692b90b8f7/">33.搜索旋转排序数组 <small>CPP</small></a></li><li><a href="/notes/9d1a99705c93d424/">34.在排序数组中查找元素的第一个和最后一个位置 <small>CPP</small></a></li><li><a href="/notes/b112df5a6fc5781c/">42.接雨水 <small>CPP</small></a></li><li><a href="/notes/ecc2a5f653ffa5fa/">49.字母异位词分组 <small>CPP</small></a></li><li><a href="/notes/39c18d0756052355/">53.最大子数组和 <small>CPP</small></a></li><li><a href="/notes/e59ded4d7dea5ec5/">56.合并区间 <small>CPP</small></a></li><li><a href="/notes/18406501b8d5cc47/">72.编辑距离 <small>CPP</small></a></li><li><a href="/notes/07d983c7275b5666/">82.删除排序链表中的重复元素-ii <small>CPP</small></a></li><li><a href="/notes/0ad3d0db8dd86ec0/">83.删除排序链表中的重复元素 <small>CPP</small></a></li><li><a href="/notes/1c62040a09bc4c3a/">92.反转链表 II <small>CPP</small></a></li><li><a href="/notes/cdb661dcf6e9acbe/">93.复原 IP 地址 <small>CPP</small></a></li><li><a href="/notes/2616f4bde8260e5d/">121.买卖股票的最佳时机 <small>CPP</small></a></li><li><a href="/notes/3db84bfe65ff3824/">122.买卖股票的最佳时机-II <small>CPP</small></a></li><li><a href="/notes/5e5910321065c5f2/">128.最长连续序列 <small>CPP</small></a></li><li><a href="/notes/50db8c67d7d6c96b/">142.环形链表-ii <small>CPP</small></a></li><li><a href="/notes/a745b24e46f7e8e2/">143.重排链表 <small>CPP</small></a></li><li><a href="/notes/50be710fff45d868/">146.lru-缓存 <small>CPP</small></a></li><li><a href="/notes/98723cd4305832f1/">199.二叉树的右视图 <small>CPP</small></a></li><li><a href="/notes/8953c9820b15afeb/">206.反转链表 <small>CPP</small></a></li><li><a href="/notes/aad8d01506c865c3/">207.课程表 <small>CPP</small></a></li><li><a href="/notes/e436ea8876352dc3/">209.长度最小的子数组 <small>CPP</small></a></li><li><a href="/notes/8fa679c5f37a53c9/">215.数组中的第K个最大元素 <small>CPP</small></a></li><li><a href="/notes/2475489ce09d9280/">227.基本计算器-ii <small>CPP</small></a></li><li><a href="/notes/08d2ef416fe36746/">236.二叉树的最近公共祖先 <small>CPP</small></a></li><li><a href="/notes/110fa7fed851d549/">300.最长递增子序列 <small>CPP</small></a></li><li><a href="/notes/5c1073abb1a4354f/">387.字符串中的第一个唯一字符 <small>CPP</small></a></li><li><a href="/notes/f0fafa58fa81eced/">438.找到字符串中所有字母异位词 <small>CPP</small></a></li><li><a href="/notes/e6273d804d024ac3/">688.骑士在棋盘上的概率 <small>CPP</small></a></li><li><a href="/notes/5080a7cf177c528f/">695.岛屿的最大面积 <small>CPP</small></a></li><li><a href="/notes/002e2eddfaae4e16/">739.每日温度 <small>CPP</small></a></li><li><a href="/notes/5852112c135004af/">1143.最长公共子序列 <small>CPP</small></a></li><li><a href="/notes/85e225b9f26a2a1d/">leetcode <small>H</small></a></li></ul></details></li></ul></details><details><summary>前端 <small>3</small></summary><a class="section-overview" href="/topics/frontend/">分类概览 →</a><ul><li><a href="/notes/3ef98881b1c23e65/">CSS 引入</a></li><li><a href="/notes/3d4c145ae62d12a1/">定位</a></li><li><a href="/notes/85007c347c771cb2/">块元素和行内元素</a></li></ul></details><details><summary>业务实践 <small>7</small></summary><a class="section-overview" href="/topics/practice/">分类概览 →</a><ul><li><a href="/notes/3c9c4da576f6ac05/">AB 实验</a></li><li><a href="/notes/ac7c6e4dc35e8109/">IM 会话缓存与数据访问调度设计</a></li><li><details><summary>案例</summary><ul><li><a href="/notes/f6f786e148e57237/">直播互动玩法 - Cocos 场景切换适配问题</a></li><li><a href="/notes/c251094855ed2daa/">直播互动玩法 - Laya 动态切屏适配</a></li></ul></details></li><li><details><summary>复盘</summary><ul><li><a href="/notes/65dbf3374bf94c55/">项目</a></li><li><a href="/notes/433807cfcf2d12c2/">简历问</a></li><li><a href="/notes/cac176312066e08d/">项目</a></li></ul></details></li></ul></details><details><summary>游戏开发 <small>2</small></summary><a class="section-overview" href="/topics/games/">分类概览 →</a><ul><li><a href="/notes/486f6445d73eaecb/">ThomasBrush 教程</a></li><li><details><summary>游戏</summary><ul><li><details><summary>卡牌游戏</summary><ul><li><a href="/notes/c9dc8f92b42a56bd/">ScriptableObject</a></li></ul></details></li></ul></details></li></ul></details><details><summary>资料归档 <small>2</small></summary><a class="section-overview" href="/topics/archive/">分类概览 →</a><ul><li><a href="/notes/92f96b37e66919d4/">归档说明</a></li><li><details><summary>分享</summary><ul><li><a href="/notes/76801009021bc269/">分享资料 <small>KEY</small></a></li></ul></details></li></ul></details><details><summary>共享资源 <small>2</small></summary><a class="section-overview" href="/topics/resources/">分类概览 →</a><ul><li><a href="/notes/588247153e773e3a/">共享资源说明</a></li><li><details><summary>android</summary><ul><li><a href="/notes/21a8b4d054cc9cb6/">Okhttp拦截器链时序图 <small>POS</small></a></li></ul></details></li></ul></details></nav></aside><main id="main"><header class="post-header"><div class="breadcrumbs"><a href="/topics/client/">客户端开发</a><span>/ Android</span><span>/ 框架与工程</span></div><h1>Glide 源码</h1></header><article class="prose"><hr>
+<p>layout:     post
+title:      &quot;Glide源码&quot;
+subtitle:   &quot; Glide源码解析&quot;
+date:       2020-02-13 10:24:00
+author:     &quot;hzy&quot;
+//header-img: &quot;img/post-bg-2015.jpg&quot;
+catalog: true
+tags:</p>
+<ul><li><p>框架</p></li></ul>
+<hr>
+<h3 id="glide源码">Glide源码</h3>
+<h5 id="glide的初始化过程">Glide的初始化过程：</h5>
+<ul><li><p>在使用Glide.with方法时会传入一个context，该方法返回一个GlideRequests对象，如下：</p></li></ul>
+<div class="code-block"><div class="code-label">code</div><pre tabindex="0"><code>    Glide.with(this)//在Activity中调用</code></pre></div>
+<p>在Glide4.4之后使用的是GlideApp代替Glide，但实际原理不变</p>
+<ul><li><p>Glide.with方法中getRetriever方法返回一个RequestManagerRetriever对象：</p></li></ul>
+<div class="code-block"><div class="code-label">code</div><pre tabindex="0"><code>    @NonNullpublic static RequestManager with(@NonNull Activity activity) {  
+        return getRetriever(activity).get(activity);
+    }</code></pre></div>
+<ul><li><p>Glide类中的getRetriever方法：</p></li></ul>
+<div class="code-block"><div class="code-label">code</div><pre tabindex="0"><code>    @NonNull
+    private static RequestManagerRetriever getRetriever(@Nullable Context context) {
+  //上下文可能由于其他原因而为空（即，用户传入null），但实际上，它仅会由于Fragment生命周期错误而发生调用时传入的是空对象
+    Preconditions.checkNotNull(
+        context,
+        &quot;You cannot start a load on a not yet attached View or a Fragment where getActivity() &quot;
+            + &quot;returns null (which usually occurs when getActivity() is called before the Fragment &quot;
+            + &quot;is attached or after the Fragment is destroyed).&quot;)；
+        return Glide.get(context).getRequestManagerRetriever();
+    }</code></pre></div>
+<p>在该方法中通过Glide.get(context)方法初始化Glide。</p>
+<ul><li><p>Glide中的get方法：</p></li></ul>
+<div class="code-block"><div class="code-label">code</div><pre tabindex="0"><code>    @NonNull
+    public static Glide get(@NonNull Context context) {
+    if (glide == null) {
+    //获取模块 --- 这里通过注解@GlideModule在编译时用户自定义的模块生成自己工程下的GeneratedAppGlideModuleImpl类，因此在反射时类加载器会先加载本地jar包路径的生成的GeneratedAppGlideModuleImpl类，而默认初始化中反射使用Glide的默认GeneratedAppGlideModuleImpl类
+      GeneratedAppGlideModule annotationGeneratedModule =
+          getAnnotationGeneratedGlideModules(context.getApplicationContext());
+      synchronized (Glide.class) {
+        if (glide == null) {
+          checkAndInitializeGlide(context, annotationGeneratedModule);
+        }
+      }
+    }c
+
+    return glide;
+  }</code></pre></div>
+<p>通过DLC单例模式获取，在第一次调用时进入checkAndInitializeGlide方法初始化Glide，其中会加载用户自定义的模块。</p>
+<ul><li><p>Glide中的checkAndInitializeGlide方法防止Glide的get方法多个线程调用导致的多次初始化，真正的初始化在initializeGlide中：</p></li></ul>
+<div class="code-block"><div class="code-label">code</div><pre tabindex="0"><code>    private static void initializeGlide(
+      @NonNull Context context,
+      @NonNull GlideBuilder builder,
+      @Nullable GeneratedAppGlideModule annotationGeneratedModule) {
+    Context applicationContext = context.getApplicationContext();
+    //从AndroidManifest中解析配置文件，在新版本的已经不需要配置，新版本的自定义在get方法中通过反射获取，详细的在后面会提到。
+    ...
+   // debug 输出日志
+    ...
+    RequestManagerRetriever.RequestManagerFactory factory =
+        annotationGeneratedModule != null
+            ? annotationGeneratedModule.getRequestManagerFactory()
+            : null;
+            
+    //设置加载配置
+    builder.setRequestManagerFactory(factory);
+    for (com.bumptech.glide.module.GlideModule module : manifestModules) {
+      module.applyOptions(applicationContext, builder);
+    }
+    if (annotationGeneratedModule != null) {
+      annotationGeneratedModule.applyOptions(applicationContext, builder);
+    }
+    
+    //创建 glide实例
+    Glide glide = builder.build(applicationContext);
+    //注册自定义配置类Module的加载配置，注册对应编码解码器等。
+    ...
+    //注册状态回调，四大组件都注册了该接口用于接收管理内存变化、窗口变化等
+    applicationContext.registerComponentCallbacks(glide)；
+    Glide.glide = glide;
+  }</code></pre></div>
+<p>在上面的代码中主要是加载了用户自定义的模块，并使用GlideBuilder设置了该配置生成的一个RequestManagerFactory，然后使用GlideBuilder的builder方法创建了一个glide对象。</p>
+<ul><li><p>GlideBuilder的builder:</p></li></ul>
+<div class="code-block"><div class="code-label">code</div><pre tabindex="0"><code>  @NonNull
+  Glide build(@NonNull Context context) {
+  //初始化一系列缓存池
+    if (sourceExecutor == null) {
+      sourceExecutor = GlideExecutor.newSourceExecutor();
+    }
+
+    if (diskCacheExecutor == null) {
+      diskCacheExecutor = GlideExecutor.newDiskCacheExecutor();
+    }
+
+    if (animationExecutor == null) {
+      animationExecutor = GlideExecutor.newAnimationExecutor();
+    }
+
+    if (memorySizeCalculator == null) {
+      memorySizeCalculator = new MemorySizeCalculator.Builder(context).build();
+    }
+
+    if (connectivityMonitorFactory == null) {
+      connectivityMonitorFactory = new DefaultConnectivityMonitorFactory();
+    }
+
+    if (bitmapPool == null) {
+      int size = memorySizeCalculator.getBitmapPoolSize();
+      if (size &gt; 0) {
+        bitmapPool = new LruBitmapPool(size);
+      } else {
+        bitmapPool = new BitmapPoolAdapter();
+      }
+    }
+
+    if (arrayPool == null) {
+      arrayPool = new LruArrayPool(memorySizeCalculator.getArrayPoolSizeInBytes());
+    }
+
+    if (memoryCache == null) {
+      memoryCache = new LruResourceCache(memorySizeCalculator.getMemoryCacheSize());
+    }
+
+    if (diskCacheFactory == null) {
+      diskCacheFactory = new InternalCacheDiskCacheFactory(context);
+    }
+
+    if (engine == null) {
+    //创建加载引擎类
+      engine =
+          new Engine(
+              memoryCache,
+              diskCacheFactory,
+              diskCacheExecutor,
+              sourceExecutor,
+              GlideExecutor.newUnlimitedSourceExecutor(),
+              animationExecutor,
+              isActiveResourceRetentionAllowed);
+    }
+
+    if (defaultRequestListeners == null) {
+      defaultRequestListeners = Collections.emptyList();
+    } else {
+      defaultRequestListeners = Collections.unmodifiableList(defaultRequestListeners);
+    }
+
+    RequestManagerRetriever requestManagerRetriever =
+        new RequestManagerRetriever(requestManagerFactory);
+
+    return new Glide(
+        context,
+        engine,
+        memoryCache,
+        bitmapPool,
+        arrayPool,
+        requestManagerRetriever,
+        connectivityMonitorFactory,
+        logLevel,
+        defaultRequestOptionsFactory,
+        defaultTransitionOptions,
+        defaultRequestListeners,
+        isLoggingRequestOriginsEnabled
+        isImageDecoderEnabledForBitmaps);
+  }</code></pre></div>
+<p>在代码中可以看出缓存池的初始化实在GlideBuilder中初始化的，最后调用了Glide的构造函数，构造函数中传入了各类缓存池和在一开始Glide.with方法中getRetriever方法返回的RequestManagerRetriever对象就是在这里创建的。</p>
+<ul><li><p>Glide的构造函数：</p></li></ul>
+<div class="code-block"><div class="code-label">code</div><pre tabindex="0"><code>    Glide(
+      @NonNull Context context,
+      @NonNull Engine engine,
+      @NonNull MemoryCache memoryCache,
+      @NonNull BitmapPool bitmapPool,
+      @NonNull ArrayPool arrayPool,
+      @NonNull RequestManagerRetriever requestManagerRetriever,
+      @NonNull ConnectivityMonitorFactory connectivityMonitorFactory,
+      int logLevel,
+      @NonNull RequestOptionsFactory defaultRequestOptionsFactory,
+      @NonNull Map&lt;Class&lt;?&gt;, TransitionOptions&lt;?, ?&gt;&gt; defaultTransitionOptions,
+      @NonNull List&lt;RequestListener&lt;Object&gt;&gt; defaultRequestListeners,
+      boolean isLoggingRequestOriginsEnabled,
+      boolean isImageDecoderEnabledForBitmaps) {
+    this.engine = engine;
+    this.bitmapPool = bitmapPool;
+    this.arrayPool = arrayPool;
+    this.memoryCache = memoryCache;
+    this.requestManagerRetriever = requestManagerRetriever;
+    this.connectivityMonitorFactory = connectivityMonitorFactory;
+    this.defaultRequestOptionsFactory = defaultRequestOptionsFactory;
+
+    final Resources resources = context.getResources();
+
+    //注册各类对应解码器
+    registry = new Registry();
+    registry.register(new DefaultImageHeaderParser());
+    // Right now we&#39;re only using this parser for HEIF images, which are only supported on OMR1+.
+    // If we need this for other file types, we should consider removing this restriction.
+    if (Build.VERSION.SDK_INT &gt;= Build.VERSION_CODES.O_MR1) {
+      registry.register(new ExifInterfaceImageHeaderParser());
+    }
+
+    List&lt;ImageHeaderParser&gt; imageHeaderParsers = registry.getImageHeaderParsers();
+
+    ByteBufferGifDecoder byteBufferGifDecoder =
+        new ByteBufferGifDecoder(context, imageHeaderParsers, bitmapPool, arrayPool);
+    ResourceDecoder&lt;ParcelFileDescriptor, Bitmap&gt; parcelFileDescriptorVideoDecoder =
+        VideoDecoder.parcel(bitmapPool);
+
+    // TODO(judds): Make ParcelFileDescriptorBitmapDecoder work with ImageDecoder.
+    Downsampler downsampler =
+        new Downsampler(
+            registry.getImageHeaderParsers(), resources.getDisplayMetrics(), bitmapPool, arrayPool);
+
+    ResourceDecoder&lt;ByteBuffer, Bitmap&gt; byteBufferBitmapDecoder;
+    ResourceDecoder&lt;InputStream, Bitmap&gt; streamBitmapDecoder;
+    if (isImageDecoderEnabledForBitmaps &amp;&amp; Build.VERSION.SDK_INT &gt;= Build.VERSION_CODES.P) {
+      streamBitmapDecoder = new InputStreamBitmapImageDecoderResourceDecoder();
+      byteBufferBitmapDecoder = new ByteBufferBitmapImageDecoderResourceDecoder();
+    } else {
+      byteBufferBitmapDecoder = new ByteBufferBitmapDecoder(downsampler);
+      streamBitmapDecoder = new StreamBitmapDecoder(downsampler, arrayPool);
+    }
+
+    ResourceDrawableDecoder resourceDrawableDecoder = new ResourceDrawableDecoder(context);
+    ResourceLoader.StreamFactory resourceLoaderStreamFactory =
+        new ResourceLoader.StreamFactory(resources);
+    ResourceLoader.UriFactory resourceLoaderUriFactory = new ResourceLoader.UriFactory(resources);
+    ResourceLoader.FileDescriptorFactory resourceLoaderFileDescriptorFactory =
+        new ResourceLoader.FileDescriptorFactory(resources);
+    ResourceLoader.AssetFileDescriptorFactory resourceLoaderAssetFileDescriptorFactory =
+        new ResourceLoader.AssetFileDescriptorFactory(resources);
+    BitmapEncoder bitmapEncoder = new BitmapEncoder(arrayPool);
+
+    BitmapBytesTranscoder bitmapBytesTranscoder = new BitmapBytesTranscoder();
+    GifDrawableBytesTranscoder gifDrawableBytesTranscoder = new GifDrawableBytesTranscoder();
+
+    ContentResolver contentResolver = context.getContentResolver();
+
+    registry
+        .append(ByteBuffer.class, new ByteBufferEncoder())
+        .append(InputStream.class, new StreamEncoder(arrayPool))
+        /* Bitmaps */
+        .append(Registry.BUCKET_BITMAP, ByteBuffer.class, Bitmap.class, byteBufferBitmapDecoder)
+        .append(Registry.BUCKET_BITMAP, InputStream.class, Bitmap.class, streamBitmapDecoder);
+
+    if (ParcelFileDescriptorRewinder.isSupported()) {
+      registry.append(
+          Registry.BUCKET_BITMAP,
+          ParcelFileDescriptor.class,
+          Bitmap.class,
+          new ParcelFileDescriptorBitmapDecoder(downsampler));
+    }
+
+    registry
+        .append(
+            Registry.BUCKET_BITMAP,
+            ParcelFileDescriptor.class,
+            Bitmap.class,
+            parcelFileDescriptorVideoDecoder)
+        .append(
+            Registry.BUCKET_BITMAP,
+            AssetFileDescriptor.class,
+            Bitmap.class,
+            VideoDecoder.asset(bitmapPool))
+        .append(Bitmap.class, Bitmap.class, UnitModelLoader.Factory.&lt;Bitmap&gt;getInstance())
+        .append(Registry.BUCKET_BITMAP, Bitmap.class, Bitmap.class, new UnitBitmapDecoder())
+        .append(Bitmap.class, bitmapEncoder)
+        /* BitmapDrawables */
+        .append(
+            Registry.BUCKET_BITMAP_DRAWABLE,
+            ByteBuffer.class,
+            BitmapDrawable.class,
+            new BitmapDrawableDecoder&lt;&gt;(resources, byteBufferBitmapDecoder))
+        .append(
+            Registry.BUCKET_BITMAP_DRAWABLE,
+            InputStream.class,
+            BitmapDrawable.class,
+            new BitmapDrawableDecoder&lt;&gt;(resources, streamBitmapDecoder))
+        .append(
+            Registry.BUCKET_BITMAP_DRAWABLE,
+            ParcelFileDescriptor.class,
+            BitmapDrawable.class,
+            new BitmapDrawableDecoder&lt;&gt;(resources, parcelFileDescriptorVideoDecoder))
+        .append(BitmapDrawable.class, new BitmapDrawableEncoder(bitmapPool, bitmapEncoder))
+        /* GIFs */
+        .append(
+            Registry.BUCKET_GIF,
+            InputStream.class,
+            GifDrawable.class,
+            new StreamGifDecoder(imageHeaderParsers, byteBufferGifDecoder, arrayPool))
+        .append(Registry.BUCKET_GIF, ByteBuffer.class, GifDrawable.class, byteBufferGifDecoder)
+        .append(GifDrawable.class, new GifDrawableEncoder())
+        /* GIF Frames */
+        // Compilation with Gradle requires the type to be specified for UnitModelLoader here.
+        .append(
+            GifDecoder.class, GifDecoder.class, UnitModelLoader.Factory.&lt;GifDecoder&gt;getInstance())
+        .append(
+            Registry.BUCKET_BITMAP,
+            GifDecoder.class,
+            Bitmap.class,
+            new GifFrameResourceDecoder(bitmapPool))
+        /* Drawables */
+        .append(Uri.class, Drawable.class, resourceDrawableDecoder)
+        .append(
+            Uri.class, Bitmap.class, new ResourceBitmapDecoder(resourceDrawableDecoder, bitmapPool))
+        /* Files */
+        .register(new ByteBufferRewinder.Factory())
+        .append(File.class, ByteBuffer.class, new ByteBufferFileLoader.Factory())
+        .append(File.class, InputStream.class, new FileLoader.StreamFactory())
+        .append(File.class, File.class, new FileDecoder())
+        .append(File.class, ParcelFileDescriptor.class, new FileLoader.FileDescriptorFactory())
+        // Compilation with Gradle requires the type to be specified for UnitModelLoader here.
+        .append(File.class, File.class, UnitModelLoader.Factory.&lt;File&gt;getInstance())
+        /* Models */
+        .register(new InputStreamRewinder.Factory(arrayPool));
+
+    if (ParcelFileDescriptorRewinder.isSupported()) {
+      registry.register(new ParcelFileDescriptorRewinder.Factory());
+    }
+
+    registry
+        .append(int.class, InputStream.class, resourceLoaderStreamFactory)
+        .append(int.class, ParcelFileDescriptor.class, resourceLoaderFileDescriptorFactory)
+        .append(Integer.class, InputStream.class, resourceLoaderStreamFactory)
+        .append(Integer.class, ParcelFileDescriptor.class, resourceLoaderFileDescriptorFactory)
+        .append(Integer.class, Uri.class, resourceLoaderUriFactory)
+        .append(int.class, AssetFileDescriptor.class, resourceLoaderAssetFileDescriptorFactory)
+        .append(Integer.class, AssetFileDescriptor.class, resourceLoaderAssetFileDescriptorFactory)
+        .append(int.class, Uri.class, resourceLoaderUriFactory)
+        .append(String.class, InputStream.class, new DataUrlLoader.StreamFactory&lt;String&gt;())
+        .append(Uri.class, InputStream.class, new DataUrlLoader.StreamFactory&lt;Uri&gt;())
+        .append(String.class, InputStream.class, new StringLoader.StreamFactory())
+        .append(String.class, ParcelFileDescriptor.class, new StringLoader.FileDescriptorFactory())
+        .append(
+            String.class, AssetFileDescriptor.class, new StringLoader.AssetFileDescriptorFactory())
+        .append(Uri.class, InputStream.class, new HttpUriLoader.Factory())
+        .append(Uri.class, InputStream.class, new AssetUriLoader.StreamFactory(context.getAssets()))
+        .append(
+            Uri.class,
+            ParcelFileDescriptor.class,
+            new AssetUriLoader.FileDescriptorFactory(context.getAssets()))
+        .append(Uri.class, InputStream.class, new MediaStoreImageThumbLoader.Factory(context))
+        .append(Uri.class, InputStream.class, new MediaStoreVideoThumbLoader.Factory(context));
+    if (Build.VERSION.SDK_INT &gt;= Build.VERSION_CODES.Q) {
+      registry.append(
+          Uri.class, InputStream.class, new QMediaStoreUriLoader.InputStreamFactory(context));
+      registry.append(
+          Uri.class,
+          ParcelFileDescriptor.class,
+          new QMediaStoreUriLoader.FileDescriptorFactory(context));
+    }
+    registry
+        .append(Uri.class, InputStream.class, new UriLoader.StreamFactory(contentResolver))
+        .append(
+            Uri.class,
+            ParcelFileDescriptor.class,
+            new UriLoader.FileDescriptorFactory(contentResolver))
+        .append(
+            Uri.class,
+            AssetFileDescriptor.class,
+            new UriLoader.AssetFileDescriptorFactory(contentResolver))
+        .append(Uri.class, InputStream.class, new UrlUriLoader.StreamFactory())
+        .append(URL.class, InputStream.class, new UrlLoader.StreamFactory())
+        .append(Uri.class, File.class, new MediaStoreFileLoader.Factory(context))
+        .append(GlideUrl.class, InputStream.class, new HttpGlideUrlLoader.Factory())
+        .append(byte[].class, ByteBuffer.class, new ByteArrayLoader.ByteBufferFactory())
+        .append(byte[].class, InputStream.class, new ByteArrayLoader.StreamFactory())
+        .append(Uri.class, Uri.class, UnitModelLoader.Factory.&lt;Uri&gt;getInstance())
+        .append(Drawable.class, Drawable.class, UnitModelLoader.Factory.&lt;Drawable&gt;getInstance())
+        .append(Drawable.class, Drawable.class, new UnitDrawableDecoder())
+        /* Transcoders */
+        .register(Bitmap.class, BitmapDrawable.class, new BitmapDrawableTranscoder(resources))
+        .register(Bitmap.class, byte[].class, bitmapBytesTranscoder)
+        .register(
+            Drawable.class,
+            byte[].class,
+            new DrawableBytesTranscoder(
+                bitmapPool, bitmapBytesTranscoder, gifDrawableBytesTranscoder))
+        .register(GifDrawable.class, byte[].class, gifDrawableBytesTranscoder);
+
+    if (Build.VERSION.SDK_INT &gt;= Build.VERSION_CODES.M) {
+      ResourceDecoder&lt;ByteBuffer, Bitmap&gt; byteBufferVideoDecoder =
+          VideoDecoder.byteBuffer(bitmapPool);
+      registry.append(ByteBuffer.class, Bitmap.class, byteBufferVideoDecoder);
+      registry.append(
+          ByteBuffer.class,
+          BitmapDrawable.class,
+          new BitmapDrawableDecoder&lt;&gt;(resources, byteBufferVideoDecoder));
+    }
+
+    ImageViewTargetFactory imageViewTargetFactory = new ImageViewTargetFactory();
+    glideContext =
+        new GlideContext(
+            context,
+            arrayPool,
+            registry,
+            imageViewTargetFactory,
+            defaultRequestOptionsFactory,
+            defaultTransitionOptions,
+            defaultRequestListeners,
+            engine,
+            isLoggingRequestOriginsEnabled,
+            logLevel);
+  }</code></pre></div>
+<p>以上代大部分是在注册对应的解码器，直接看最后一段，构建了一个GlideContext对象保存了各类的属性。<strong>以上就是Glide的初始化过程中各类资源的创建过程，回到初始化的 第 2 点，Glide的get方法触发了Glide的初始化，并在上述代码中初始化了RequestManagerRetriever对象，Glide的with方法实际调用的是RequestManagerRetriever的get方法。</strong></p>
+<ul><li><p>RequestManagerRetriever的get方法:</p></li></ul>
+<div class="code-block"><div class="code-label">code</div><pre tabindex="0"><code>    @NonNull
+    public RequestManager get(@NonNull FragmentActivity activity) {
+        if (Util.isOnBackgroundThread()) {
+        //不是在主线程
+          return get(activity.getApplicationContext());
+        } else {
+          assertNotDestroyed(activity);
+          FragmentManager fm = activity.getSupportFragmentManager();
+          return supportFragmentGet(activity, fm, /*parentHint=*/ null, isActivityVisible(activity));
+        }
+    }</code></pre></div>
+<p>该方法返回通过supportFragmentGet方法生成的RequestManager。</p>
+<ul><li><p>RequestManagerRetriever的supportFragmentGet方法：</p></li></ul>
+<div class="code-block"><div class="code-label">code</div><pre tabindex="0"><code>    @NonNull
+    private RequestManager supportFragmentGet(
+      @NonNull Context context,
+      @NonNull FragmentManager fm,
+      @Nullable Fragment parentHint,
+      boolean isParentVisible) {
+        SupportRequestManagerFragment current =
+            getSupportRequestManagerFragment(fm, parentHint, isParentVisible);
+        RequestManager requestManager = current.getRequestManager();
+        if (requestManager == null) {
+            // TODO(b/27524013): Factor out this Glide.get() call.
+            Glide glide = Glide.get(context);
+            requestManager =
+              factory.build(
+                glide, current.getGlideLifecycle(), current.getRequestManagerTreeNode(), context);
+            current.setRequestManager(requestManager);
+        return requestManager;
+    }</code></pre></div>
+<p>上面的代码中可以看出requestManager是由factory的build方法中创建的，但在这之前，需要看下其中build传入的参数是如何来的，主要是如何实现Glide和Activity的生命周期关联。</p>
+<ul><li><p>Glide和Activity的生命周期关联，SupportRequestManagerFragment的生成：</p></li></ul>
+<p>在上面的代码中SupportRequestManagerFragment是由getSupportRequestManagerFragment方法生成的：</p>
+<div class="code-block"><div class="code-label">code</div><pre tabindex="0"><code>    private SupportRequestManagerFragment getSupportRequestManagerFragment(
+      @NonNull final FragmentManager fm, @Nullable Fragment parentHint, boolean isParentVisible) {
+      //通过Tag获得Fragment
+        SupportRequestManagerFragment current =
+            (SupportRequestManagerFragment) fm.findFragmentByTag(FRAGMENT_TAG);
+        if (current == null) {
+          current = pendingSupportRequestManagerFragments.get(fm);
+          if (current == null) {
+            //获取为空的话就创建一个
+            current = new SupportRequestManagerFragment();
+            current.setParentFragmentHint(parentHint);
+            if (isParentVisible) {
+               //调用onStart回调
+              current.getGlideLifecycle().onStart();
+            }
+            pendingSupportRequestManagerFragments.put(fm, current);
+            //添加到对应的context的FragmentManger中，附加tag
+            fm.beginTransaction().add(current, FRAGMENT_TAG).commitAllowingStateLoss();
+            handler.obtainMessage(ID_REMOVE_SUPPORT_FRAGMENT_MANAGER, fm).sendToTarget();
+          }
+        }
+        return current;
+    }</code></pre></div>
+<p>Glide通过向Activity中添加了一个固定Tag的Fragment，并在这个Fragment中实现了一个Lifecycle接口的子类用于通知外界生命周期的变化。因此每个Activity中如果调用了with都会有一个空的Fragment,互不干扰。</p>
+<ul><li><p>回到第9步中使用RequestManagerFactory的build生成一个RequestManager对象（首次调用的时候）：RequestManagerFactory在初始化中Glide的initializeGlide方法以下代码通过</p></li></ul>
+<div class="code-block"><div class="code-label">code</div><pre tabindex="0"><code>    RequestManagerRetriever.RequestManagerFactory factory =
+        annotationGeneratedModule != null
+            ? annotationGeneratedModule.getRequestManagerFactory(): null;</code></pre></div>
+<p><strong>annotationGeneratedModule.getRequestManagerFactory()该方法返回null，具体实现子类为GeneratedAppGlideModuleImpl，在子类GeneratedAppGlideModuleImpl中的getRequestManagerFactory()返回GeneratedRequestManagerFactory类，因此此处的factory调用的是GeneratedRequestManagerFactory的build方法（如果在没有自定义GlideModule的情况下，默认情况下在Glide的getAnnotationGeneratedGlideModules方法中通过反射获取到到这个GeneratedAppGlideModuleImpl类，其中其他的调用方法是调用用户自定义模块的重写，因此也可以重写具有注解@GlideModule的AppGlideModule类的getRequestManagerFactory方法自定义一个Factory类）</strong></p>
+<ul><li><p>默认的GeneratedRequestManagerFactory的build方法：</p></li></ul>
+<div class="code-block"><div class="code-label">code</div><pre tabindex="0"><code>    public RequestManager build(@NonNull Glide glide, @NonNull Lifecycle lifecycle,
+        @NonNull RequestManagerTreeNode treeNode, @NonNull Context context) {
+            return new GlideRequests(glide, lifecycle, treeNode, context);
+        }
+    }</code></pre></div>
+<p>该方法返回一个GlideRequests</p>
+<ul><li><p>GlideRequests类继承于RequestManager，且该类是由编译生成的，在编译时注解@GlideExtension和@GlideType会被动对应生成，因此使得Glide.with方法返回的对象所调用的链式方法可以由@GlideExtension和@GlideType这两个注解自定义添加特定的方法处理。由于该类继承自RequestManager，其中的实现都在RequestManager父类中，在该类中储存了请求的配置。</p></li><li><p>在使用RequestManager类方法时会返回一个带泛型的GlideRequest&lt;T&gt;类，该类继承于RequestBuilder&lt;T&gt;类，该泛型用于转换请求结果的类型转换和类型检查，这个类是创建用于保存请求的内容Request类，直到调用RequestBuilder&lt;T&gt;的into方法，数据才开始加载。</p></li><li><p>RequestBuilder的into方法：</p></li></ul>
+<div class="code-block"><div class="code-label">code</div><pre tabindex="0"><code>  private &lt;Y extends Target&lt;TranscodeType&gt;&gt; Y into(
+      @NonNull Y target,
+      @Nullable RequestListener&lt;TranscodeType&gt; targetListener,
+      BaseRequestOptions&lt;?&gt; options,
+      Executor callbackExecutor) {
+    Preconditions.checkNotNull(target);
+    if (!isModelSet) {
+      throw new IllegalArgumentException(&quot;You must call #load() before calling #into()&quot;);
+    }
+    
+    //创建一个请求体
+    Request request = buildRequest(target, targetListener, options, callbackExecutor);
+
+    Request previous = target.getRequest();
+    //重复的请求的话就重新开始，并将target返回
+    if (request.isEquivalentTo(previous)
+        &amp;&amp; !isSkipMemoryCacheWithCompletePreviousRequest(options, previous)) {
+      // If the request is completed, beginning again will ensure the result is re-delivered,
+      // triggering RequestListeners and Targets. If the request is failed, beginning again will
+      // restart the request, giving it another chance to complete. If the request is already
+      // running, we can let it continue running without interruption.
+      if (!Preconditions.checkNotNull(previous).isRunning()) {
+        // Use the previous request rather than the new one to allow for optimizations like skipping
+        // setting placeholders, tracking and un-tracking Targets, and obtaining View dimensions
+        // that are done in the individual Request.
+        previous.begin();
+      }
+      return target;
+    }
+
+    //清除请求缓存f
+    requestManager.clear(target);
+    target.setRequest(request);
+    //开始请求
+    requestManager.track(target, request);
+
+    return target;
+  }</code></pre></div>
+<p>最终的请求在判断是重复请求后会调用previous.begin重新执行，不是重复的请求则会调用requestManager.track(target, request)开始加载。</p>
+<ul><li><p>requestManager.track(target, request)方法：</p></li></ul>
+<div class="code-block"><div class="code-label">code</div><pre tabindex="0"><code> synchronized void track(@NonNull Target&lt;?&gt; target, @NonNull Request request) {
+    targetTracker.track(target);
+    requestTracker.runRequest(request);
+  }</code></pre></div>
+<p>其中的 targetTracker.track(target);是将这个target对象保存起来，用于在RequestManager类中注册的生命周期回调的通知。
+requestTracker.runRequest(request);则是正式开始加载。</p>
+<ul><li><p>requestTracker.runRequest(request)方法：</p></li></ul>
+<div class="code-block"><div class="code-label">code</div><pre tabindex="0"><code> /** Starts tracking the given request. */
+  public void runRequest(@NonNull Request request) {
+    requests.add(request);
+    if (!isPaused) {
+      request.begin();
+    } else {
+      request.clear();
+      if (Log.isLoggable(TAG, Log.VERBOSE)) {
+        Log.v(TAG, &quot;Paused, delaying request&quot;);
+      }
+      //保存请求以进行下一次排队
+      pendingRequests.add(request);
+    }
+  }</code></pre></div>
+<p>这里调用开始加载的方法也是Request类的begin方法，与之前判断重复请求的方式一样。</p>
+<ul><li><p>Request类的begin()方法，由于该类是一个接口，需要找到实际实现的类，回到第15步，该类实例化是由RequestBuilder的buildRequest(target, targetListener, options, callbackExecutor);方法生成。</p></li><li><p>RequestBuilder的buildRequest方法：</p></li></ul>
+<div class="code-block"><div class="code-label">code</div><pre tabindex="0"><code> private Request buildRequest(
+      Target&lt;TranscodeType&gt; target,
+      @Nullable RequestListener&lt;TranscodeType&gt; targetListener,
+      BaseRequestOptions&lt;?&gt; requestOptions,
+      Executor callbackExecutor) {
+    return buildRequestRecursive(
+        /*requestLock=*/ new Object(),
+        target,
+        targetListener,
+        /*parentCoordinator=*/ null,
+        transitionOptions,
+        requestOptions.getPriority(),
+        requestOptions.getOverrideWidth(),
+        requestOptions.getOverrideHeight(),
+        requestOptions,
+        callbackExecutor);
+  }</code></pre></div>
+<p>最后调用的时buildRequestRecursive方法：</p>
+<div class="code-block"><div class="code-label">code</div><pre tabindex="0"><code> private Request buildRequestRecursive(
+      Object requestLock,
+      Target&lt;TranscodeType&gt; target,
+      @Nullable RequestListener&lt;TranscodeType&gt; targetListener,
+      @Nullable RequestCoordinator parentCoordinator,
+      TransitionOptions&lt;?, ? super TranscodeType&gt; transitionOptions,
+      Priority priority,
+      int overrideWidth,
+      int overrideHeight,
+      BaseRequestOptions&lt;?&gt; requestOptions,
+      Executor callbackExecutor) {
+
+    //先创建具有错误回调的Request
+    // Build the ErrorRequestCoordinator first if necessary so we can update parentCoordinator.
+    ErrorRequestCoordinator errorRequestCoordinator = null;
+    if (errorBuilder != null) {
+        //创建只有在设置了RequestManger的error方法设置了错误回调资源后才启用，优先调用是为了同步parentCoordinator。
+      errorRequestCoordinator = new ErrorRequestCoordinator(requestLock, parentCoordinator);
+      parentCoordinator = errorRequestCoordinator;
+    }
+
+    //创建缩略图Request
+    //创建ThumbnailRequestCoordinator实际请求类
+    Request mainRequest =
+        buildThumbnailRequestRecursive(
+            requestLock,
+            target,
+            targetListener,
+            parentCoordinator,
+            transitionOptions,
+            priority,
+            overrideWidth,
+            overrideHeight,
+            requestOptions,
+            callbackExecutor);
+
+    if (errorRequestCoordinator == null) {
+        //  没有设置处理error时
+      return mainRequest;
+    }
+    
+    //设置了error，获取设置的属性生成一个errorRequest
+    int errorOverrideWidth = errorBuilder.getOverrideWidth();
+    int errorOverrideHeight = errorBuilder.getOverrideHeight();
+    if (Util.isValidDimensions(overrideWidth, overrideHeight) &amp;&amp; !errorBuilder.isValidOverride()) {
+      errorOverrideWidth = requestOptions.getOverrideWidth();
+      errorOverrideHeight = requestOptions.getOverrideHeight();
+    }
+
+//创建ErrorRequestCoordinator实际请求类
+    Request errorRequest =
+        errorBuilder.buildRequestRecursive(
+            requestLock,
+            target,
+            targetListener,
+            errorRequestCoordinator,
+            errorBuilder.transitionOptions,
+            errorBuilder.getPriority(),
+            errorOverrideWidth,
+            errorOverrideHeight,
+            errorBuilder,
+            callbackExecutor);
+    errorRequestCoordinator.setRequests(mainRequest, errorRequest);
+    return errorRequestCoordinator;
+  }</code></pre></div>
+<p>从上面的代码可以看出，此处主要是根据是否调用了error方法区别生成不同的请求实体：
+分别是ThumbnailRequestCoordinator和ErrorRequestCoordinator。</p>
+<ul><li><p>在17步中的begin()方法具体实现类，ThumbnailRequestCoordinator的begin方法：</p></li></ul>
+<div class="code-block"><div class="code-label">code</div><pre tabindex="0"><code>  /** Starts first the thumb request and then the full request. */
+  @Override
+  public void begin() {
+    synchronized (requestLock) {
+      isRunningDuringBegin = true;
+      try {
+        // If the request has completed previously, there&#39;s no need to restart both the full and the
+        // thumb, we can just restart the full.
+        if (fullState != RequestState.SUCCESS &amp;&amp; thumbState != RequestState.RUNNING) {
+          thumbState = RequestState.RUNNING;
+          //发起请求
+          thumb.begin();
+        }
+        if (isRunningDuringBegin &amp;&amp; fullState != RequestState.RUNNING) {
+          fullState = RequestState.RUNNING;
+          //   发起请求
+          full.begin();
+        }
+      } finally {
+        isRunningDuringBegin = false;
+      }
+    }
+  }</code></pre></div>
+<p>可以看出实际发起请求的也不是ThumbnailRequestCoordinator类，该类如同名字一样，只是用来协调两个请求之间的状态同步，因为该类是一个先加载缩略图再加载原图的Request组合类。
+回到创建ThumbnailRequestCoordinator类实例的地方：RequestManger的buildThumbnailRequestRecursive方法：</p>
+<div class="code-block"><div class="code-label">code</div><pre tabindex="0"><code>private Request buildThumbnailRequestRecursive(
+      Object requestLock,
+      Target&lt;TranscodeType&gt; target,
+      RequestListener&lt;TranscodeType&gt; targetListener,
+      @Nullable RequestCoordinator parentCoordinator,
+      TransitionOptions&lt;?, ? super TranscodeType&gt; transitionOptions,
+      Priority priority,
+      int overrideWidth,
+      int overrideHeight,
+      BaseRequestOptions&lt;?&gt; requestOptions,
+      Executor callbackExecutor) {
+      if (thumbnailBuilder != null) {
+      //检测 并设置过滤等属性
+      ...
+
+      ThumbnailRequestCoordinator coordinator =
+          new ThumbnailRequestCoordinator(requestLock, parentCoordinator);
+             //创建一个完整请求
+      Request fullRequest =
+          obtainRequest(
+              requestLock,
+              target,
+              targetListener,
+              requestOptions,
+              coordinator,
+              transitionOptions,
+              priority,
+              overrideWidth,
+              overrideHeight,
+              callbackExecutor);
+      isThumbnailBuilt = true;
+      // Recursively generate thumbnail requests.
+          //创建一个缩略图请求
+      Request thumbRequest =
+          thumbnailBuilder.buildRequestRecursive(
+              requestLock,
+              target,
+              targetListener,
+              coordinator,
+              thumbTransitionOptions,
+              thumbPriority,
+              thumbOverrideWidth,
+              thumbOverrideHeight,
+              thumbnailBuilder,
+              callbackExecutor);
+      isThumbnailBuilt = false;
+      coordinator.setRequests(fullRequest, thumbRequest);
+      return coordinator;
+    } else if (thumbSizeMultiplier != null) {
+      // Base case: thumbnail multiplier generates a thumbnail request, but cannot recurse.
+      ThumbnailRequestCoordinator coordinator =
+          new ThumbnailRequestCoordinator(requestLock, parentCoordinator);
+      Request fullRequest =
+          obtainRequest(
+              requestLock,
+              target,
+              targetListener,
+              requestOptions,
+              coordinator,
+              transitionOptions,
+              priority,
+              overrideWidth,
+              overrideHeight,
+              callbackExecutor);
+      BaseRequestOptions&lt;?&gt; thumbnailOptions =
+          requestOptions.clone().sizeMultiplier(thumbSizeMultiplier);
+
+       //创建一个缩略图请求
+      Request thumbnailRequest =
+          obtainRequest(
+              requestLock,
+              target,
+              targetListener,
+              thumbnailOptions,
+              coordinator,
+              transitionOptions,
+              getThumbnailPriority(priority),
+              overrideWidth,
+              overrideHeight,
+              callbackExecutor);
+
+      coordinator.setRequests(fullRequest, thumbnailRequest);
+      return coordinator;
+    } else {
+      // Base case: no thumbnail.
+      //没有设置缩略图即调用thumb方法设置启用缩略图
+      return obtainRequest(
+          requestLock,
+          target,
+          targetListener,
+          requestOptions,
+          parentCoordinator,
+          transitionOptions,
+          priority,
+          overrideWidth,
+          overrideHeight,
+          callbackExecutor);
+    }
+  }</code></pre></div>
+<p>看到根据缩略图的尺寸需要和原图进行递归计算生成缩略图的请求，这是在设置了缩略图启用的情况下，一般走到最后一个请求原图的Request,通过obtainRequest方法生成。</p>
+<ul><li><p>RequestBuilder的obtainRequest方法</p></li></ul>
+<div class="code-block"><div class="code-label">code</div><pre tabindex="0"><code>private Request obtainRequest(
+      Object requestLock,
+      Target&lt;TranscodeType&gt; target,
+      RequestListener&lt;TranscodeType&gt; targetListener,
+      BaseRequestOptions&lt;?&gt; requestOptions,
+      RequestCoordinator requestCoordinator,
+      TransitionOptions&lt;?, ? super TranscodeType&gt; transitionOptions,
+      Priority priority,
+      int overrideWidth,
+      int overrideHeight,
+      Executor callbackExecutor) {
+    return SingleRequest.obtain(
+        context,
+        glideContext,
+        requestLock,
+        model,
+        transcodeClass,
+        requestOptions,
+        overrideWidth,
+        overrideHeight,
+        priority,
+        target,
+        targetListener,
+        requestListeners,
+        requestCoordinator,
+        glideContext.getEngine(),
+        transitionOptions.getTransitionFactory(),
+        callbackExecutor);
+  }</code></pre></div>
+<p>最终调用生成的是SingleRequest.obtain方法：</p>
+<div class="code-block"><div class="code-label">code</div><pre tabindex="0"><code>public static &lt;R&gt; SingleRequest&lt;R&gt; obtain(
+      Context context,
+      GlideContext glideContext,
+      Object requestLock,
+      Object model,
+      Class&lt;R&gt; transcodeClass,
+      BaseRequestOptions&lt;?&gt; requestOptions,
+      int overrideWidth,
+      int overrideHeight,
+      Priority priority,
+      Target&lt;R&gt; target,
+      RequestListener&lt;R&gt; targetListener,
+      @Nullable List&lt;RequestListener&lt;R&gt;&gt; requestListeners,
+      RequestCoordinator requestCoordinator,
+      Engine engine,
+      TransitionFactory&lt;? super R&gt; animationFactory,
+      Executor callbackExecutor) {
+    return new SingleRequest&lt;&gt;(
+        context,
+        glideContext,
+        requestLock,
+        model,
+        transcodeClass,
+        requestOptions,
+        overrideWidth,
+        overrideHeight,
+        priority,
+        target,
+        targetListener,
+        requestListeners,
+        requestCoordinator,
+        engine,
+        animationFactory,
+        callbackExecutor);
+  }</code></pre></div>
+<p>最终返回的Request类型是SingleRequest类，该类才是最后调用begin方法启动加载的地方。</p>
+<ul><li><p>SingleRequest的begin方法：</p></li></ul>
+<div class="code-block"><div class="code-label">code</div><pre tabindex="0"><code> @Override
+  public void begin() {
+    synchronized (requestLock) {
+    //错误检测
+      assertNotCallingCallbacks();
+      stateVerifier.throwIfRecycled();
+      startTime = LogTime.getLogTime();
+      if (model == null) {
+        if (Util.isValidDimensions(overrideWidth, overrideHeight)) {
+          width = overrideWidth;
+          height = overrideHeight;
+        }
+        // Only log at more verbose log levels if the user has set a fallback drawable, because
+        // fallback Drawables indicate the user expects null models occasionally.
+        int logLevel = getFallbackDrawable() == null ? Log.WARN : Log.DEBUG;
+        onLoadFailed(new GlideException(&quot;Received null model&quot;), logLevel);
+        return;
+      }
+
+      if (status == Status.RUNNING) {
+        throw new IllegalArgumentException(&quot;Cannot restart a running request&quot;);
+      }
+
+      // If we&#39;re restarted after we&#39;re complete (usually via something like a notifyDataSetChanged
+      // that starts an identical request into the same Target or View), we can simply use the
+      // resource and size we retrieved the last time around and skip obtaining a new size, starting
+      // a new load etc. This does mean that users who want to restart a load because they expect
+      // that the view size has changed will need to explicitly clear the View or Target before
+      // starting the new load.
+      if (status == Status.COMPLETE) {
+        //触发回调
+        onResourceReady(resource, DataSource.MEMORY_CACHE);
+        return;
+      }
+
+      // Restarts for requests that are neither complete nor running can be treated as new requests
+      // and can run again from the beginning.
+
+      status = Status.WAITING_FOR_SIZE;
+        //判断是否需要重新获取大小，最终都会调用到onSizeReady方法重新启动获取。
+      if (Util.isValidDimensions(overrideWidth, overrideHeight)) {
+        onSizeReady(overrideWidth, overrideHeight);
+      } else {
+        target.getSize(this);
+      }
+
+      if ((status == Status.RUNNING || status == Status.WAITING_FOR_SIZE)
+          &amp;&amp; canNotifyStatusChanged()) {
+        target.onLoadStarted(getPlaceholderDrawable());
+      }
+      if (IS_VERBOSE_LOGGABLE) {
+        logV(&quot;finished run method in &quot; + LogTime.getElapsedMillis(startTime));
+      }
+    }
+  }</code></pre></div>
+<p>在其中只有 onSizeReady(overrideWidth, overrideHeight); 代码触发了加载操作，其他的代码只是为了判断回调触发时机。
+进入 onSizeReady(overrideWidth, overrideHeight)方法:</p>
+<ul><li><p>SingleRequest的 onSizeReady方法</p></li></ul>
+<div class="code-block"><div class="code-label">code</div><pre tabindex="0"><code> @Override
+  public void onSizeReady(int width, int height) {
+    stateVerifier.throwIfRecycled();
+    synchronized (requestLock) {
+      if (IS_VERBOSE_LOGGABLE) {
+        logV(&quot;Got onSizeReady in &quot; + LogTime.getElapsedMillis(startTime));
+      }
+      if (status != Status.WAITING_FOR_SIZE) {
+        return;
+      }
+      status = Status.RUNNING;
+
+      float sizeMultiplier = requestOptions.getSizeMultiplier();
+      this.width = maybeApplySizeMultiplier(width, sizeMultiplier);
+      this.height = maybeApplySizeMultiplier(height, sizeMultiplier);
+
+      if (IS_VERBOSE_LOGGABLE) {
+        logV(&quot;finished setup for calling load in &quot; + LogTime.getElapsedMillis(startTime));
+      }
+      loadStatus =
+          engine.load(
+              glideContext,
+              model,
+              requestOptions.getSignature(),
+              this.width,
+              this.height,
+              requestOptions.getResourceClass(),
+              transcodeClass,
+              priority,
+              requestOptions.getDiskCacheStrategy(),
+              requestOptions.getTransformations(),
+              requestOptions.isTransformationRequired(),
+              requestOptions.isScaleOnlyOrNoTransform(),
+              requestOptions.getOptions(),
+              requestOptions.isMemoryCacheable(),
+              requestOptions.getUseUnlimitedSourceGeneratorsPool(),
+              requestOptions.getUseAnimationPool(),
+              requestOptions.getOnlyRetrieveFromCache(),
+              this,
+              callbackExecutor);
+
+      // This is a hack that&#39;s only useful for testing right now where loads complete synchronously
+      // even though under any executor running on any thread but the main thread, the load would
+      // have completed asynchronously.
+      if (status != Status.RUNNING) {
+        loadStatus = null;
+      }
+      if (IS_VERBOSE_LOGGABLE) {
+        logV(&quot;finished onSizeReady in &quot; + LogTime.getElapsedMillis(startTime));
+      }
+    }
+  }</code></pre></div>
+<p>最终终于找到请求Request调用加载类Engine发起加载操作的地方：
+engine.load方法，该方法加载完之后通过ResourceCallback接口即SingRequest实现的接口方法将结果回调。</p>
+<h5 id="engine加载过程">Engine加载过程：</h5>
+<ul><li><p>在Glide使用的最后调用了engine.load方法发起获取资源操作：</p></li></ul>
+<div class="code-block"><div class="code-label">code</div><pre tabindex="0"><code>    public &lt;R&gt; LoadStatus load(
+        GlideContext glideContext,
+        Object model,
+        Key signature,
+        int width,
+        int height,
+        Class&lt;?&gt; resourceClass,
+        Class&lt;R&gt; transcodeClass,
+        Priority priority,
+        DiskCacheStrategy diskCacheStrategy,
+        Map&lt;Class&lt;?&gt;, Transformation&lt;?&gt;&gt; transformations,
+        boolean isTransformationRequired,
+        boolean isScaleOnlyOrNoTransform,
+        Options options,
+        boolean isMemoryCacheable,
+        boolean useUnlimitedSourceExecutorPool,
+        boolean useAnimationPool,
+        boolean onlyRetrieveFromCache,
+        ResourceCallback cb,
+        Executor callbackExecutor) {
+        
+        long startTime = VERBOSE_IS_LOGGABLE ? LogTime.getLogTime() : 0;
+
+        EngineKey key =
+            keyFactory.buildKey(
+                model,
+                signature,
+                width,
+                height,
+                transformations,
+                resourceClass,
+                transcodeClass,
+                options);
+
+        EngineResource&lt;?&gt; memoryResource;
+        synchronized (this) {
+           //从缓存中获取资源
+          memoryResource = loadFromMemory(key, isMemoryCacheable, startTime);
+
+          if (memoryResource == null) {
+            //从缓存加载不到启动线程加载
+            return waitForExistingOrStartNewJob(
+                glideContext,
+                model,
+                signature,
+                width,
+                height,
+                resourceClass,
+                transcodeClass,
+                priority,
+                diskCacheStrategy,
+                transformations,
+                isTransformationRequired,
+                isScaleOnlyOrNoTransform,
+                options,
+                isMemoryCacheable,
+                useUnlimitedSourceExecutorPool,
+                useAnimationPool,
+                onlyRetrieveFromCache,
+                cb,
+                callbackExecutor,
+                key,
+                startTime);
+            }
+        }
+       //避免在按住引擎锁定的同时进行回调，这样会使调用者更容易//死锁。
+        cb.onResourceReady(memoryResource, DataSource.MEMORY_CACHE);
+        return null;
+  }</code></pre></div>
+<p>在waitForExistingOrStartNewJob中发起了新的请求。</p>
+<ul><li><p>Engine的waitForExistingOrStartNewJob方法:</p></li></ul>
+<div class="code-block"><div class="code-label">code</div><pre tabindex="0"><code>    private &lt;R&gt; LoadStatus waitForExistingOrStartNewJob(
+        GlideContext glideContext,
+          Object model,
+          Key signature,
+          int width,
+          int height,
+          Class&lt;?&gt; resourceClass,
+          Class&lt;R&gt; transcodeClass,
+          Priority priority,
+          DiskCacheStrategy diskCacheStrategy,
+          Map&lt;Class&lt;?&gt;, Transformation&lt;?&gt;&gt; transformations,
+          boolean isTransformationRequired,
+          boolean isScaleOnlyOrNoTransform,
+          Options options,
+          boolean isMemoryCacheable,
+          boolean useUnlimitedSourceExecutorPool,
+          boolean useAnimationPool,
+          boolean onlyRetrieveFromCache,
+          ResourceCallback cb,
+          Executor callbackExecutor,
+          EngineKey key,
+          long startTime){
+        //该请求的任务是否已经在执行队列中
+        EngineJob&lt;?&gt; current = jobs.get(key, onlyRetrieveFromCache);
+        if (current != null) {
+          current.addCallback(cb, callbackExecutor);
+          if (VERBOSE_IS_LOGGABLE) {
+            logWithTimeAndKey(&quot;Added to existing load&quot;, startTime, key);
+          }
+          //重置状态回调
+          return new LoadStatus(cb, current);
+        }
+
+        EngineJob&lt;R&gt; engineJob =
+            engineJobFactory.build(
+                key,
+                isMemoryCacheable,
+                useUnlimitedSourceExecutorPool,
+                useAnimationPool,
+                onlyRetrieveFromCache);
+
+        DecodeJob&lt;R&gt; decodeJob =
+            decodeJobFactory.build(
+                glideContext,
+                model,
+                key,
+                signature,
+                width,
+                height,
+                resourceClass,
+                transcodeClass,
+                priority,
+                diskCacheStrategy,
+                transformations,
+                isTransformationRequired,
+                isScaleOnlyOrNoTransform,
+                onlyRetrieveFromCache,
+                options,
+                engineJob);
+
+        //加入请求任务
+        jobs.put(key, engineJob);
+
+        engineJob.addCallback(cb, callbackExecutor);
+        //启动请求任务
+        engineJob.start(decodeJob);
+
+        if (VERBOSE_IS_LOGGABLE) {
+          logWithTimeAndKey(&quot;Started new load&quot;, startTime, key);
+        }
+        return new LoadStatus(cb, engineJob);
+    }</code></pre></div>
+<p>最终启动加载任务的是  engineJob.start(decodeJob)这个方法。</p>
+<ul><li><p>EngineJob.start(DecodeJob&lt;R&gt; r)方法:</p></li></ul>
+<div class="code-block"><div class="code-label">code</div><pre tabindex="0"><code> public synchronized void start(DecodeJob&lt;R&gt; decodeJob) {
+    this.decodeJob = decodeJob;
+    //选择线程池
+    GlideExecutor executor =
+        decodeJob.willDecodeFromCache() ? diskCacheExecutor : getActiveSourceExecutor();
+    //线程池执行任务
+    executor.execute(decodeJob);</code></pre></div>
+<p>暂且不管哪个线程池执行该任务，最终都会调用decodeJob的run方法，因此回到2，查看实际DecodeJob类是由decodeJobFactory.build生成的。</p>
+<ul><li><p>DecodeJobFactory的build方法：</p></li></ul>
+<div class="code-block"><div class="code-label">code</div><pre tabindex="0"><code>    &lt;R&gt; DecodeJob&lt;R&gt; build(
+        GlideContext glideContext,
+        Object model,
+        EngineKey loadKey,
+        Key signature,
+        int width,
+        int height,
+        Class&lt;?&gt; resourceClass,
+        Class&lt;R&gt; transcodeClass,
+        Priority priority,
+        DiskCacheStrategy diskCacheStrategy,
+        Map&lt;Class&lt;?&gt;, Transformation&lt;?&gt;&gt; transformations,
+        boolean isTransformationRequired,
+        boolean isScaleOnlyOrNoTransform,
+        boolean onlyRetrieveFromCache,
+        Options options,
+        DecodeJob.Callback&lt;R&gt; callback) {
+        //从线程池中获得一个实例
+      DecodeJob&lt;R&gt; result = Preconditions.checkNotNull((DecodeJob&lt;R&gt;) pool.acquire());
+      //初始化
+      return result.init(
+          glideContext,
+          model,
+          loadKey,
+          signature,
+          width,
+          height,
+          resourceClass,
+          transcodeClass,
+          priority,
+          diskCacheStrategy,
+          transformations,
+          isTransformationRequired,
+          isScaleOnlyOrNoTransform,
+          onlyRetrieveFromCache,
+          options,
+          callback,
+          creationOrder++);
+    }
+  }</code></pre></div>
+<p>因此执行请求应该是DecodeJob的Run方法。</p>
+<ul><li><p>DecodeJob的Run方法</p></li></ul>
+<div class="code-block"><div class="code-label">code</div><pre tabindex="0"><code> @Override
+  public void run() {
+    GlideTrace.beginSectionFormat(&quot;DecodeJob#run(model=%s)&quot;, model);
+    DataFetcher&lt;?&gt; localFetcher = currentFetcher;
+    try {
+    //如果取消了加载就回调失败
+      if (isCancelled) {
+        notifyFailed();
+        return;
+      }
+      //执行加载
+      runWrapped();
+    } catch (CallbackException e) {
+      throw e;
+    } catch (Throwable t) {
+     //捕获打印日志
+      if (Log.isLoggable(TAG, Log.DEBUG)) {
+        Log.d(
+            TAG,
+            &quot;DecodeJob threw unexpectedly&quot; + &quot;, isCancelled: &quot; + isCancelled + &quot;, stage: &quot; + stage,
+            t);
+      }
+      // 失败执行
+      if (stage != Stage.ENCODE) {
+        throwables.add(t);
+        notifyFailed();
+      }
+      if (!isCancelled) {
+        throw t;
+      }
+      throw t;
+    } finally {
+      // Keeping track of the fetcher here and calling cleanup is excessively paranoid, we call
+      // close in all cases anyway.
+      if (localFetcher != null) {
+        localFetcher.cleanup();
+      }
+      GlideTrace.endSection();
+    }
+  }</code></pre></div>
+<ul><li><p>DecodeJob的runWrapped方法:</p></li></ul>
+<div class="code-block"><div class="code-label">code</div><pre tabindex="0"><code>private void runWrapped() {
+    switch (runReason) {
+      case INITIALIZE:
+        //初始化加载
+        stage = getNextStage(Stage.INITIALIZE);
+        currentGenerator = getNextGenerator();
+        runGenerators();
+        break;
+      case SWITCH_TO_SOURCE_SERVICE:
+        //从磁盘或网络加载
+        runGenerators();
+        break;
+      case DECODE_DATA:
+        //解析资源
+        decodeFromRetrievedData();
+        break;
+      default:
+        throw new IllegalStateException(&quot;Unrecognized run reason: &quot; + runReason);
+    }
+  }</code></pre></div>
+<p>在DecodeJob初始化时，默认runReason为INITIALIZE。因此走到INITIALIZE分支：
+在这里调用了</p>
+<div class="code-block"><div class="code-label">code</div><pre tabindex="0"><code>        stage = getNextStage(Stage.INITIALIZE);
+        currentGenerator = getNextGenerator();
+        runGenerators();</code></pre></div>
+<p>依次查看下这三个方法。</p>
+<ul><li><p>DecodeJob的getNextStage()、getNextGenerator()、runGenerators()方法：</p></li></ul>
+<p><strong>getNextStage()方法：</strong></p>
+<div class="code-block"><div class="code-label">code</div><pre tabindex="0"><code>private Stage getNextStage(Stage current) {
+    switch (current) {
+      case INITIALIZE：
+        //如果可以从磁盘中加载到解码的缓存资源的话就返回标记，否则就循环查看是否其余资源缓存
+        return diskCacheStrategy.decodeCachedResource()
+            ? Stage.RESOURCE_CACHE
+            : getNextStage(Stage.RESOURCE_CACHE);
+      case RESOURCE_CACHE:
+        //查看是否有下载的未解码的源数据缓存
+        return diskCacheStrategy.decodeCachedData()
+            ? Stage.DATA_CACHE
+            : getNextStage(Stage.DATA_CACHE);
+      case DATA_CACHE:
+        //从数据源获取    
+        //没有缓存就需要加载数据、如果设置了只从缓存中获取就直接返回结束
+        // Skip loading from source if the user opted to only retrieve the resource from cache.
+        return onlyRetrieveFromCache ? Stage.FINISHED : Stage.SOURCE;
+      case SOURCE:
+      case FINISHED:
+        return Stage.FINISHED;
+      default:
+        throw new IllegalArgumentException(&quot;Unrecognized stage: &quot; + current);
+    }
+  }</code></pre></div>
+<p>经过该方法 stage这个变量应该储存要发起哪种获取（磁盘缓存还是源数据获取）。</p>
+<p><strong>getNextStage()方法：</strong></p>
+<div class="code-block"><div class="code-label">code</div><pre tabindex="0"><code>private DataFetcherGenerator getNextGenerator() {
+    switch (stage) {
+      case RESOURCE_CACHE:
+        return new ResourceCacheGenerator(decodeHelper, this);
+      case DATA_CACHE:
+        return new DataCacheGenerator(decodeHelper, this);
+      case SOURCE:
+        return new SourceGenerator(decodeHelper, this);
+      case FINISHED:
+        return null;
+      default:
+        throw new IllegalStateException(&quot;Unrecognized stage: &quot; + stage);
+    }
+  }</code></pre></div>
+<p>根据之前getNextStage函数判断的应该从哪里加载返回不同的DataFetcherGenerator实现类。
+<strong>runGenerators()方法：</strong></p>
+<div class="code-block"><div class="code-label">code</div><pre tabindex="0"><code> private void runGenerators() {
+    currentThread = Thread.currentThread();
+    startFetchTime = LogTime.getLogTime();
+    boolean isStarted = false;
+    //正常情况下由currentGenerator.startNext()执行判断是否成功
+    while (!isCancelled
+        &amp;&amp; currentGenerator != null
+        &amp;&amp; !(isStarted = currentGenerator.startNext())) {
+      stage = getNextStage(stage);
+      currentGenerator = getNextGenerator();
+      //如果是从源数据加载，重新启动加载
+      if (stage == Stage.SOURCE) {
+        reschedule();
+        return;
+      }
+    if ((stage == Stage.FINISHED || isCancelled) &amp;&amp; !isStarted) {
+    //如果重试也失败会走到这里
+        notifyFailed();
+    }
+
+    // Otherwise a generator started a new load and we expect to be called back in
+    // onDataFetcherReady.
+  }</code></pre></div>
+<p>在实际中会调用currentGenerator.startNext()来判断加载是否成功
+由于getNextStage函数会返回三种不同的DataFetcherGenerator实现类：ResourceCacheGenerator、DataCacheGenerator、SourceGenerator。可以逐步查看三种类的startNext方法。</p>
+<ul><li><p>ResourceCacheGenerator、DataCacheGenerator、SourceGenerator的startNext方法：</p></li></ul>
+<p><strong>ResourceCacheGenerator的startNext方法：</strong></p>
+<div class="code-block"><div class="code-label">code</div><pre tabindex="0"><code>public boolean startNext() {
+    //获取缓存key
+    List&lt;Key&gt; sourceIds = helper.getCacheKeys();
+    if (sourceIds.isEmpty()) {
+      return false;
+    }
+    //获取在初始化时注册的可被转换解析的所有类型
+    List&lt;Class&lt;?&gt;&gt; resourceClasses = helper.getRegisteredResourceClasses();
+    if (resourceClasses.isEmpty()) {
+      if (File.class.equals(helper.getTranscodeClass())) {
+        return false;
+      }
+      throw new IllegalStateException(
+          &quot;Failed to find any load path from &quot;
+              + helper.getModelClass()
+              + &quot; to &quot;
+              + helper.getTranscodeClass());
+    }
+    //尝试20次 在循环在可解析类型集合中查找要解析的类直到第一次成功
+    while (modelLoaders == null || !hasNextModelLoader()) {
+      resourceClassIndex++;
+      if (resourceClassIndex &gt;= resourceClasses.size()) {
+        sourceIdIndex++;
+        if (sourceIdIndex &gt;= sourceIds.size()) {
+          return false;
+        }
+        resourceClassIndex = 0;
+      }
+      //获得对应的缓存
+      Key sourceId = sourceIds.get(sourceIdIndex);
+      Class&lt;?&gt; resourceClass = resourceClasses.get(resourceClassIndex);
+      //取得解码后的转换
+      Transformation&lt;?&gt; transformation = helper.getTransformation(resourceClass);
+     
+      currentKey =
+          new ResourceCacheKey( // NOPMD AvoidInstantiatingObjectsInLoops
+              helper.getArrayPool(),
+              sourceId,
+              helper.getSignature(),
+              helper.getWidth(),
+              helper.getHeight(),
+              transformation,
+              resourceClass,
+              helper.getOptions());
+              
+       //获取到对应的磁盘缓存资源文件
+      cacheFile = helper.getDiskCache().get(currentKey);
+      if (cacheFile != null) {
+        sourceKey = sourceId;
+        //获得注册的解码加载器
+        modelLoaders = helper.getModelLoaders(cacheFile);
+        modelLoaderIndex = 0;
+      }
+    }
+
+    loadData = null;
+    boolean started = false;
+    while (!started &amp;&amp; hasNextModelLoader()) {
+       //遍历解码器
+      ModelLoader&lt;File, ?&gt; modelLoader = modelLoaders.get(modelLoaderIndex++);
+      //创建一个解码数据类型
+      loadData =
+          modelLoader.buildLoadData(
+              cacheFile, helper.getWidth(), helper.getHeight(), helper.getOptions());
+      // helper.hasLoadPath(loadData.fetcher.getDataClass()这句代码说明解码器可以解码该类型
+      if (loadData != null &amp;&amp; helper.hasLoadPath(loadData.fetcher.getDataClass())) {
+        //只有解码成功才会走到这里
+        started = true;
+        //调用解码器解析数据
+        loadData.fetcher.loadData(helper.getPriority(), this);
+      }
+    }
+    return started;
+  }</code></pre></div>
+<p>可以看到最终调用的是loadData.fetcher.loadData(helper.getPriority(), this);这个方法解码数据，因此要找到该fetcher对应的具体初始化地方，可以看到loadData数据是由modelLoader.buildLoadData方法生成，modelLoader是由对应的类获取到的解码器，回到modelLoader的初始化地方，看下Glide默认注册了那些解码器：
+在Glide的初始化函数中</p>
+<div class="code-block"><div class="code-label">code</div><pre tabindex="0"><code> Glide(
+      @NonNull Context context,
+      @NonNull Engine engine,
+      @NonNull MemoryCache memoryCache,
+      @NonNull BitmapPool bitmapPool,
+      @NonNull ArrayPool arrayPool,
+      @NonNull RequestManagerRetriever requestManagerRetriever,
+      @NonNull ConnectivityMonitorFactory connectivityMonitorFactory,
+      int logLevel,
+      @NonNull RequestOptionsFactory defaultRequestOptionsFactory,
+      @NonNull Map&lt;Class&lt;?&gt;, TransitionOptions&lt;?, ?&gt;&gt; defaultTransitionOptions,
+      @NonNull List&lt;RequestListener&lt;Object&gt;&gt; defaultRequestListeners,
+      boolean isLoggingRequestOriginsEnabled,
+      boolean isImageDecoderEnabledForBitmaps) {
+  //参数赋值
+  ...
+
+    registry = new Registry();
+    //注册默认的图片数据头部数据模块
+    //此解析器用于HEIF图像，只有OMR1 +支持该解析器。 //如果其他文件类型需要此文件，则应考虑删除此限制。
+    registry.register(new DefaultImageHeaderParser());
+  
+    if (Build.VERSION.SDK_INT &gt;= Build.VERSION_CODES.O_MR1) {
+      registry.register(new ExifInterfaceImageHeaderParser());
+    }
+
+    List&lt;ImageHeaderParser&gt; imageHeaderParsers = registry.getImageHeaderParsers();
+    //创建一系列解码器
+    ...
+    //注册哪些类对应使用那些解码器
+
+    
+    registry
+        .append(ByteBuffer.class, new ByteBufferEncoder())  //注册ByteBuffer类的解析器，对应任何子类
+        .append(InputStream.class, new StreamEncoder(arrayPool))    //注册InputStream类的解析器，对应任何子类
+        /* Bitmaps */
+        .append(Registry.BUCKET_BITMAP, ByteBuffer.class, Bitmap.class, byteBufferBitmapDecoder)//注册ByteBuffer转换为bitmap
+        .append(Registry.BUCKET_BITMAP, InputStream.class, Bitmap.class, streamBitmapDecoder);
+   ...
+  }</code></pre></div>
+<p>由于registry也分为许多模块，如解析图片头信息的模块、编码模块等:</p>
+<div class="code-block"><div class="code-label">code</div><pre tabindex="0"><code>  private final ModelLoaderRegistry modelLoaderRegistry;
+  private final EncoderRegistry encoderRegistry;
+  private final ResourceDecoderRegistry decoderRegistry;
+  private final ResourceEncoderRegistry resourceEncoderRegistry;
+  private final DataRewinderRegistry dataRewinderRegistry;
+  private final TranscoderRegistry transcoderRegistry;
+  private final ImageHeaderParserRegistry imageHeaderParserRegistry;</code></pre></div>
+<p>这里我们只需要看到解码模块，因为最后一步加载数据都是将数据类型解码为输出类型。
+最后执行的都是DataFetcher子类的loadData方法，而对应的DataFetcher是由Glide初始化时注册的对应ModelLoader的buildLoadData方法初始化的、随便找一个实现ModelLoader的子类如ByteBufferFileLoader的buildLoadData方法：</p>
+<div class="code-block"><div class="code-label">code</div><pre tabindex="0"><code> @Override
+  public LoadData&lt;ByteBuffer&gt; buildLoadData(
+      @NonNull File file, int width, int height, @NonNull Options options) {
+    //在初始化时传入了对应的ByteBufferFetcher
+    return new LoadData&lt;&gt;(new ObjectKey(file), new ByteBufferFetcher(file));
+  }</code></pre></div>
+<p>总结：在加载资源时会先判断要加载资源的类型遍历在Glide创建时注册相应ModelLoader，并使用ModelLoader的buildeLoadData会设置一个默认的解码器DataFetcher用于加载转换类型。
+<strong>DataCacheGenerator的startNext方法：</strong></p>
+<div class="code-block"><div class="code-label">code</div><pre tabindex="0"><code>@Override
+  public boolean startNext() {
+    while (modelLoaders == null || !hasNextModelLoader()) {
+      sourceIdIndex++;
+      if (sourceIdIndex &gt;= cacheKeys.size()) {
+        return false;
+      }
+        
+      Key sourceId = cacheKeys.get(sourceIdIndex);
+      // PMD.AvoidInstantiatingObjectsInLoops The loop iterates a limited number of times
+      // and the actions it performs are much more expensive than a single allocation.
+      //生成的图片Key值
+      @SuppressWarnings(&quot;PMD.AvoidInstantiatingObjectsInLoops&quot;)
+      Key originalKey = new DataCacheKey(sourceId, helper.getSignature());
+      cacheFile = helper.getDiskCache().get(originalKey);
+      if (cacheFile != null) {
+        this.sourceKey = sourceId;
+        modelLoaders = helper.getModelLoaders(cacheFile);
+        modelLoaderIndex = 0;
+      }
+    }
+
+    loadData = null;
+    boolean started = false;
+    while (!started &amp;&amp; hasNextModelLoader()) {
+      ModelLoader&lt;File, ?&gt; modelLoader = modelLoaders.get(modelLoaderIndex++);
+      loadData =
+          modelLoader.buildLoadData(
+              cacheFile, helper.getWidth(), helper.getHeight(), helper.getOptions());
+      if (loadData != null &amp;&amp; helper.hasLoadPath(loadData.fetcher.getDataClass())) {
+        started = true;
+        loadData.fetcher.loadData(helper.getPriority(), this);
+      }
+    }
+    return started;
+  }</code></pre></div>
+<p>可以看出其中的加载逻辑和ResourceCacheGenerator差不多，不过是生成的key不同导致返回的是不同的缓存。
+<strong>SourceGenerator的startNext方法：</strong></p>
+<div class="code-block"><div class="code-label">code</div><pre tabindex="0"><code> @Override
+  public boolean startNext() {
+    if (dataToCache != null) {
+      Object data = dataToCache;
+      dataToCache = null;
+      cacheData(data);
+    }
+
+    if (sourceCacheGenerator != null &amp;&amp; sourceCacheGenerator.startNext()) {
+      return true;
+    }
+    sourceCacheGenerator = null;
+
+    loadData = null;
+    boolean started = false;
+    while (!started &amp;&amp; hasNextModelLoader()) {
+      loadData = helper.getLoadData().get(loadDataListIndex++);
+      if (loadData != null
+          &amp;&amp; (helper.getDiskCacheStrategy().isDataCacheable(loadData.fetcher.getDataSource())
+              || helper.hasLoadPath(loadData.fetcher.getDataClass()))) {
+        started = true;
+        startNextLoad(loadData);
+      }
+    }
+    return started;
+  }</code></pre></div>
+<p>在  loadData=helper.getLoadData().get(loadDataListIndex++);这句加载数据时会获取注册其中所有可以处理该输入的ModelLoader,再根据helper.hasLoadPath(loadData.fetcher.getDataClass()这句代码会检测解码器是否能解析出需要的类型，如根据string的图片url生成bitmap。
+可以看到加载源数据时会先查询缓存内存再使用fetch进行加载，通常情况下是传入一个String触发加载，可以查看到String对应的解析类是</p>
+<div class="code-block"><div class="code-label">code</div><pre tabindex="0"><code> .append(String.class, InputStream.class, new DataUrlLoader.StreamFactory&lt;String&gt;())
+        .append(Uri.class, InputStream.class, new DataUrlLoader.StreamFactory&lt;Uri&gt;())
+        .append(String.class, InputStream.class, new StringLoader.StreamFactory())
+        .append(String.class, ParcelFileDescriptor.class, new StringLoader.FileDescriptorFactory())
+        .append(
+            String.class, AssetFileDescriptor.class, new StringLoader.AssetFileDescriptorFactory())</code></pre></div></article><p class="post-bottom"><a href="/topics/client/">← 返回客户端开发目录</a><a href="#main">回到顶部 ↑</a></p><footer><span>Joel · 技术学习与实践笔记</span><a href="#main">回到顶部 ↑</a></footer></main><aside class="toc"><span>本篇目录</span><ul></ul></aside></div></body></html>

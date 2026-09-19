@@ -1,0 +1,101 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="820" viewBox="0 0 1280 820" role="img" aria-labelledby="title desc">
+  <title id="title">Android 系统源码学习总纲</title>
+  <desc id="desc">传统 Android 系统分层，以及 Framework 层内部 App 进程 Manager、Binder、system_server Framework Service 的边界。</desc>
+  <defs>
+    <style>
+      .bg { fill: #fffdf8; }
+      .title { font: 700 28px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #172033; }
+      .sub { font: 15px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #64748b; }
+      .layer { stroke-width: 2; rx: 18; }
+      .app { fill: #eef7ff; stroke: #60a5fa; }
+      .fw { fill: #fff7ed; stroke: #fb923c; }
+      .native { fill: #f0fdf4; stroke: #4ade80; }
+      .hal { fill: #fefce8; stroke: #eab308; }
+      .kernel { fill: #f5f3ff; stroke: #a78bfa; }
+      .hw { fill: #fdf2f8; stroke: #f472b6; }
+      .lt { font: 700 20px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #172033; }
+      .txt { font: 13px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #475569; }
+      .small { font: 12px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #64748b; }
+      .box { fill: #fff; stroke: #64748b; stroke-width: 1.3; rx: 10; }
+      .bt { font: 700 14px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #1e293b; }
+      .arrow { stroke: #334155; stroke-width: 2; fill: none; marker-end: url(#arrow); }
+      .binder { stroke: #2563eb; stroke-width: 2.2; fill: none; marker-end: url(#blue); }
+      .dash { stroke: #94a3b8; stroke-width: 1.8; fill: none; stroke-dasharray: 7 6; marker-end: url(#gray); }
+      .note { fill: #fff; stroke: #cbd5e1; stroke-width: 1.3; rx: 14; }
+    </style>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#334155"/></marker>
+    <marker id="blue" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#2563eb"/></marker>
+    <marker id="gray" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#94a3b8"/></marker>
+  </defs>
+  <rect class="bg" width="1280" height="820"/>
+  <text class="title" x="52" y="48">Android 系统源码学习总纲</text>
+  <text class="sub" x="52" y="76">传统分层：Applications → Framework → Runtime / Native → HAL → Kernel → Hardware；Framework 内部再看进程边界。</text>
+
+  <rect class="layer app" x="60" y="115" width="760" height="78"/>
+  <text class="lt" x="92" y="148">Applications / System Apps</text>
+  <text class="txt" x="92" y="173">普通应用、系统应用：Activity、Service、Broadcast、View、资源和业务状态</text>
+
+  <rect class="layer fw" x="60" y="218" width="760" height="218"/>
+  <text class="lt" x="92" y="251">Java API Framework</text>
+  <text class="txt" x="92" y="276">Framework 是传统分层；源码阅读时重点展开 App 进程侧、Binder 和 system_server 侧。</text>
+  <rect class="box" x="92" y="308" width="205" height="82"/>
+  <text class="bt" x="194" y="334" text-anchor="middle">App 进程侧</text>
+  <text class="small" x="115" y="358">Manager / API / Proxy</text>
+  <text class="small" x="115" y="376">ActivityManager / WindowManager</text>
+  <rect class="box" x="342" y="318" width="135" height="62"/>
+  <text class="bt" x="410" y="345" text-anchor="middle">Binder IPC</text>
+  <text class="small" x="410" y="366" text-anchor="middle">AIDL / Proxy / Stub</text>
+  <rect class="box" x="522" y="308" width="260" height="82"/>
+  <text class="bt" x="652" y="334" text-anchor="middle">system_server 侧</text>
+  <text class="small" x="545" y="358">Framework Services</text>
+  <text class="small" x="545" y="376">AMS / ATMS / PMS / WMS / Power</text>
+  <path class="binder" d="M297 349 L342 349"/>
+  <path class="binder" d="M477 349 L522 349"/>
+
+  <rect class="layer native" x="60" y="461" width="760" height="92"/>
+  <text class="lt" x="92" y="494">Android Runtime / Native C/C++ Libraries</text>
+  <text class="txt" x="92" y="519">ART、JNI、libc、SurfaceFlinger、AudioFlinger、CameraService、MediaCodec、netd</text>
+
+  <rect class="layer hal" x="60" y="578" width="760" height="72"/>
+  <text class="lt" x="92" y="611">HAL / Vendor</text>
+  <text class="txt" x="92" y="636">Graphics HAL、Audio HAL、Camera HAL、Power HAL、Codec HAL</text>
+
+  <rect class="layer kernel" x="60" y="675" width="760" height="72"/>
+  <text class="lt" x="92" y="708">Linux Kernel</text>
+  <text class="txt" x="92" y="733">进程、调度、内存、文件系统、网络、Binder driver、input/display/audio/camera drivers</text>
+
+  <rect class="layer hw" x="60" y="772" width="760" height="38"/>
+  <text class="lt" x="92" y="798">Hardware：屏幕 / 触摸 / 摄像头 / 音频 / GPU / Modem</text>
+
+  <path class="arrow" d="M440 193 L440 218"/>
+  <path class="arrow" d="M440 436 L440 461"/>
+  <path class="arrow" d="M440 553 L440 578"/>
+  <path class="arrow" d="M440 650 L440 675"/>
+  <path class="arrow" d="M440 747 L440 772"/>
+
+  <rect class="note" x="885" y="120" width="330" height="72"/>
+  <text class="bt" x="907" y="148">系统启动</text>
+  <text class="small" x="907" y="172">Bootloader → Kernel → init → Zygote → system_server → Launcher</text>
+  <rect class="note" x="885" y="216" width="330" height="72"/>
+  <text class="bt" x="907" y="244">应用与组件</text>
+  <text class="small" x="907" y="268">startActivity / Service / Broadcast → AMS / ATMS / PMS</text>
+  <rect class="note" x="885" y="312" width="330" height="72"/>
+  <text class="bt" x="907" y="340">窗口显示</text>
+  <text class="small" x="907" y="364">Window / ViewRootImpl / WMS → SurfaceFlinger / HWC</text>
+  <rect class="note" x="885" y="408" width="330" height="72"/>
+  <text class="bt" x="907" y="436">输入事件</text>
+  <text class="small" x="907" y="460">Kernel input → EventHub → InputReader → InputDispatcher → View</text>
+  <rect class="note" x="885" y="504" width="330" height="72"/>
+  <text class="bt" x="907" y="532">媒体与硬件</text>
+  <text class="small" x="907" y="556">MediaCodec / AudioTrack / CameraManager → HAL → Driver</text>
+  <rect class="note" x="885" y="600" width="330" height="72"/>
+  <text class="bt" x="907" y="628">安全与资源</text>
+  <text class="small" x="907" y="652">Permission / AppOps / SELinux / Storage / Power / Network</text>
+
+  <path class="dash" d="M820 154 C850 154, 855 156, 885 156"/>
+  <path class="dash" d="M820 350 C850 350, 855 252, 885 252"/>
+  <path class="dash" d="M820 350 C850 350, 855 348, 885 348"/>
+  <path class="dash" d="M820 710 C850 710, 855 444, 885 444"/>
+  <path class="dash" d="M820 520 C850 520, 855 540, 885 540"/>
+  <path class="dash" d="M820 614 C850 614, 855 636, 885 636"/>
+</svg>

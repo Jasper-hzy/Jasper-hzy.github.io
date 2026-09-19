@@ -1,0 +1,88 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="700" viewBox="0 0 1200 700" role="img" aria-labelledby="title desc">
+  <title id="title">Binder 对象身份与服务发现</title>
+  <desc id="desc">展示服务端 Binder 实体、驱动中的 binder_node、不同客户端各自的 binder_ref 和 handle，以及 ServiceManager handle 0 的服务发现职责。</desc>
+  <defs>
+    <style>
+      .bg { fill: #fffdf8; }
+      .title { font: 700 26px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #172033; }
+      .sub { font: 14px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #64748b; }
+      .lane { stroke-width: 1.6; rx: 16; }
+      .server { fill: #f0fdf4; stroke: #4ade80; }
+      .driver { fill: #fff7ed; stroke: #fb923c; }
+      .client { fill: #eef7ff; stroke: #60a5fa; }
+      .sm { fill: #faf5ff; stroke: #c084fc; }
+      .box { fill: #fff; stroke: #64748b; stroke-width: 1.2; rx: 10; }
+      .lt { font: 700 18px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #172033; }
+      .bt { font: 700 14px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #1e293b; }
+      .txt { font: 13px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #475569; }
+      .small { font: 12px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #64748b; }
+      .identity { stroke: #b91c1c; stroke-width: 2.2; fill: none; marker-end: url(#red); }
+      .lookup { stroke: #7e22ce; stroke-width: 1.9; fill: none; stroke-dasharray: 7 6; marker-end: url(#purple); }
+      .call { stroke: #2563eb; stroke-width: 2; fill: none; marker-end: url(#blue); }
+    </style>
+    <marker id="red" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#b91c1c"/></marker>
+    <marker id="purple" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#7e22ce"/></marker>
+    <marker id="blue" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#2563eb"/></marker>
+  </defs>
+  <rect class="bg" width="1200" height="700"/>
+  <text class="title" x="48" y="46">Binder 对象身份与服务发现</text>
+  <text class="sub" x="48" y="74">红线：对象引用关系。紫虚线：只在查询阶段经过 ServiceManager。蓝线：拿到 handle 后直接发起业务事务。</text>
+
+  <rect class="lane server" x="50" y="120" width="255" height="455"/>
+  <text class="lt" x="76" y="156">服务端进程</text>
+  <text class="txt" x="76" y="180">例如 system_server</text>
+  <rect class="box" x="78" y="220" width="200" height="78"/>
+  <text class="bt" x="98" y="249">AMS Stub / BBinder</text>
+  <text class="small" x="98" y="273">真正执行服务方法的 Binder 实体</text>
+  <rect class="box" x="78" y="352" width="200" height="78"/>
+  <text class="bt" x="98" y="381">服务端 Binder 线程</text>
+  <text class="small" x="98" y="405">收到事务后进入 onTransact()</text>
+
+  <rect class="lane driver" x="355" y="120" width="360" height="455"/>
+  <text class="lt" x="381" y="156">Binder Driver</text>
+  <text class="txt" x="381" y="180">维护跨进程对象身份与路由</text>
+  <rect class="box" x="390" y="218" width="290" height="82"/>
+  <text class="bt" x="414" y="247">binder_node X</text>
+  <text class="small" x="414" y="271">唯一指向服务端 Binder 实体</text>
+  <rect class="box" x="390" y="342" width="132" height="92"/>
+  <text class="bt" x="410" y="371">binder_ref A</text>
+  <text class="small" x="410" y="395">属于客户端 A</text>
+  <text class="small" x="410" y="415">handle = 3</text>
+  <rect class="box" x="548" y="342" width="132" height="92"/>
+  <text class="bt" x="568" y="371">binder_ref B</text>
+  <text class="small" x="568" y="395">属于客户端 B</text>
+  <text class="small" x="568" y="415">handle = 7</text>
+
+  <rect class="lane sm" x="765" y="120" width="385" height="172"/>
+  <text class="lt" x="791" y="156">ServiceManager</text>
+  <text class="txt" x="791" y="180">客户端通过特殊 handle 0 调用</text>
+  <rect class="box" x="793" y="204" width="329" height="60"/>
+  <text class="bt" x="815" y="230">"activity" → AMS 的 Binder 引用</text>
+  <text class="small" x="815" y="250">只维护 name → Binder，不转发业务调用</text>
+
+  <rect class="lane client" x="765" y="326" width="180" height="249"/>
+  <text class="lt" x="789" y="362">客户端 A</text>
+  <rect class="box" x="789" y="394" width="132" height="76"/>
+  <text class="bt" x="809" y="423">BinderProxy</text>
+  <text class="small" x="809" y="447">本进程 handle 3</text>
+  <rect class="lane client" x="970" y="326" width="180" height="249"/>
+  <text class="lt" x="994" y="362">客户端 B</text>
+  <rect class="box" x="994" y="394" width="132" height="76"/>
+  <text class="bt" x="1014" y="423">BinderProxy</text>
+  <text class="small" x="1014" y="447">本进程 handle 7</text>
+
+  <path class="identity" d="M278 259 L390 259"/>
+  <path class="identity" d="M456 342 L492 300"/>
+  <path class="identity" d="M614 342 L574 300"/>
+  <path class="identity" d="M789 432 L522 388"/>
+  <path class="identity" d="M994 432 L680 388"/>
+  <path class="lookup" d="M855 394 C840 328, 820 290, 870 264"/>
+  <path class="lookup" d="M1060 394 C1060 330, 1040 295, 1020 264"/>
+  <path class="call" d="M855 470 C825 495, 770 520, 715 520"/>
+  <path class="call" d="M1060 470 C990 540, 820 550, 715 540"/>
+  <path class="call" d="M390 525 C335 510, 315 440, 278 405"/>
+  <text class="small" x="470" y="552">业务 transact 经驱动路由</text>
+
+  <text class="small" x="50" y="625">关键点：binder_node 是服务端对象身份；binder_ref / handle 属于具体客户端进程，所以 handle 不是全局编号。</text>
+  <text class="small" x="50" y="651">ServiceManager 只解决“按名字找到谁”；查到目标 Binder 后，客户端直接通过驱动调用服务端。</text>
+</svg>

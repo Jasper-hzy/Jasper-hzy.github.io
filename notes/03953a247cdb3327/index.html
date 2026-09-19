@@ -1,0 +1,241 @@
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="description" content="Binder · 客户端开发、系统原理与工程实践。"><meta name="color-scheme" content="light dark"><meta name="theme-color" content="#f4f1ea"><title>Binder · Joel 的技术笔记</title><link rel="icon" href="/favicon.svg"><link rel="stylesheet" href="/style.css"><script src="/app.js" defer></script></head><body><a class="skip" href="#main">跳到正文</a><header class="site-header"><a class="brand" href="/" aria-label="Joel 的技术笔记首页"><span class="brand-mark" aria-hidden="true">J</span><span>Joel 的技术笔记</span></a><div class="header-actions"><span class="header-note">CLIENT · MEDIA · SYSTEMS</span><button class="mobile-menu" type="button" aria-controls="site-directory" aria-expanded="false">目录</button><a href="/#search">搜索</a></div></header><div class="layout has-toc"><aside class="sidebar" id="site-directory"><a class="directory-home" href="/">全部目录 <span>167</span></a><nav aria-label="知识目录"><details open><summary>客户端开发 <small>43</small></summary><a class="section-overview" href="/topics/client/">分类概览 →</a><ul><li><details open><summary>Android</summary><ul><li><a href="/notes/cd703068ffa81c0f/">Android</a></li><li><details open><summary>系统原理</summary><ul><li><a href="/notes/fab84807ffb6d277/">Android 系统源码学习总纲</a></li><li><a href="/notes/1c136c4416d06071/">系统启动流程</a></li><li><a href="/notes/51a85ec64df5a668/">ART：JIT / AOT / Profile / GC</a></li><li><a href="/notes/579943f755f56d07/">SystemServer 启动服务流程</a></li><li><a href="/notes/08d2a56a2a759fce/">PackageManagerService 包扫描与安装流程</a></li><li><a href="/notes/84363bcc3e1a6595/">ATMS 与 AMS</a></li><li><a href="/notes/ee4541ede89330a8/">WindowManagerService 窗口管理流程</a></li><li><a href="/notes/9e5b0f3f4ca04e76/">Input 输入系统流程</a></li><li><a href="/notes/df4027642366e720/">Activity 启动与显示流程</a></li><li><a href="/notes/03953a247cdb3327/" aria-current="page">Binder</a></li><li><a href="/notes/3428c6a7ad967847/">Android 渲染上屏流程</a></li></ul></details></li><li><details><summary>UI与渲染</summary><ul><li><a href="/notes/7582c9b1581b3665/">渲染流程</a></li><li><a href="/notes/4a594de417119321/">RecyclerView 缓存机制</a></li><li><a href="/notes/5202b7428683905e/">事件分发机制</a></li><li><a href="/notes/f6c73d82600acf33/">自定义 ItemDecoration</a></li><li><a href="/notes/22a5902d69c4c940/">ItemTouchHelper 使用</a></li><li><a href="/notes/179570f12295f1ab/">Material Design 布局使用</a></li></ul></details></li><li><details><summary>框架与工程</summary><ul><li><a href="/notes/056423c700c40391/">Android 插件化</a></li><li><a href="/notes/2beac6fcfd86382d/">Android 热更新</a></li><li><a href="/notes/029f8807a6033e04/">Dagger2 基础与多宿主实践</a></li><li><a href="/notes/e97db8270e9d1781/">Fresco</a></li><li><a href="/notes/5db034481aa59958/">Glide 源码</a></li><li><a href="/notes/56322147ef68cac3/">MMKV 源码解析</a></li><li><a href="/notes/930c095f85690ccd/">Retrofit 源码解析</a></li></ul></details></li><li><details><summary>性能稳定性</summary><ul><li><a href="/notes/e8bbec3482f2a8d4/">应用启动优化</a></li><li><a href="/notes/2d016d7297cbdba9/">ANR 排查</a></li><li><a href="/notes/689e2041f5c6b580/">内存优化</a></li><li><a href="/notes/7556cd7c3bc2b1c3/">卡顿与丢帧排查</a></li><li><a href="/notes/15be7ae7f28353e1/">TimeoutException</a></li><li><a href="/notes/79948e481206ca62/">BlockCanary</a></li><li><a href="/notes/057de36673ccdcb9/">LeakCanary 原理</a></li></ul></details></li><li><details><summary>工具链</summary><ul><li><a href="/notes/73185ba4ec50bc83/">Gradle 源码流程分析</a></li><li><a href="/notes/e5d63e4556abf9a6/">Gradle 编译流程梳理</a></li><li><a href="/notes/84901174916c45fd/">Transform 使用</a></li><li><a href="/notes/9adf88e7f5b5b11d/">编译性能优化</a></li><li><a href="/notes/689954c1e13017ea/">反编译</a></li></ul></details></li></ul></details></li><li><details><summary>鸿蒙</summary><ul><li><a href="/notes/e48e3cdc84f2a0f6/">基础入门</a></li><li><a href="/notes/6d738cc87d748c3c/">错误处理</a></li></ul></details></li><li><details><summary>跨端</summary><ul><li><details><summary>Lynx</summary><ul><li><a href="/notes/741ac84d1e8f8b8a/">Lynx 跨端框架优势与对比</a></li><li><a href="/notes/a708a884013d8a87/">Lynx 容器监控指标口径</a></li></ul></details></li><li><details><summary>React-Native</summary><ul><li><a href="/notes/0355d59a0679ef8d/">资料</a></li><li><a href="/notes/9a243b8c0439267b/">构建源码依赖工程</a></li></ul></details></li></ul></details></li></ul></details><details><summary>基础知识 <small>40</small></summary><a class="section-overview" href="/topics/fundamentals/">分类概览 →</a><ul><li><details><summary>C++</summary><ul><li><a href="/notes/04e59128bf1e98a4/">C++</a></li><li><a href="/notes/337f3289ca817d07/">基础语义</a></li><li><a href="/notes/7da782b3a8e0f2ef/">对象与资源管理</a></li><li><a href="/posts/cpp-lifetime/">智能指针与异步生命周期</a></li><li><a href="/notes/b772f3b2675faaf5/">STL 容器</a></li><li><a href="/notes/051be1b8f1d35f56/">并发基础</a></li><li><a href="/posts/cpp-build-and-link/">编译与链接</a></li><li><a href="/notes/23212fc946d4c347/">开发问题汇总</a></li><li><a href="/notes/63c12ecbd19b0f91/">熟练度标准与自测</a></li><li><details><summary>开发问题</summary><ul><li><a href="/notes/1d1f5d117322d7da/">ABI 问题</a></li><li><a href="/notes/29c0c961be175b60/">写已释放地址与内存踩踏</a></li><li><a href="/posts/cpp-container-concurrency/">标准容器并发访问</a></li><li><a href="/notes/85ddc54e262bad58/">对象生命周期与回调</a></li><li><a href="/notes/808f19ab738e16da/">Release 偶现问题</a></li><li><a href="/notes/280f7a3ab5fd45c3/">平台运行态 Crash 分类</a></li><li><a href="/notes/e04fd0e54f9a7d47/">ASAN 场景失败与真实内存错误区分</a></li><li><a href="/notes/623620045defcbb3/">历史排查案例</a></li></ul></details></li></ul></details></li><li><details><summary>Java</summary><ul><li><a href="/notes/b1c8a52ce929a020/">Java</a></li><li><a href="/notes/048e210c85f4e2d0/">AQS</a></li><li><a href="/notes/8e9dc066a5544aab/">Synchronized</a></li><li><a href="/notes/b73248fd23c6b5f8/">多线程同步</a></li><li><a href="/notes/3d67cdd9a9231ab4/">线程池</a></li><li><a href="/notes/1e3108720115f9d3/">CopyOnWriteArrayList</a></li><li><a href="/notes/36a3d031dee2fb29/">Volatile</a></li><li><a href="/notes/e0d01430259a37d3/">垃圾回收机制</a></li></ul></details></li><li><details><summary>Kotlin</summary><ul><li><a href="/notes/8a8e5294a0285aae/">Kotlin</a></li><li><a href="/notes/4061b718089f851b/">协程使用</a></li><li><a href="/notes/7856c70c2fa1cb64/">自定义 Kotlin Compiler Plugin</a></li></ul></details></li><li><details><summary>计算机网络</summary><ul><li><a href="/notes/c4418afb3b4eb8e2/">计算机网络</a></li><li><a href="/notes/f425bc6b5bdafa80/">HTTP 协议</a></li><li><a href="/notes/15d4a1778e656754/">编码加密</a></li><li><a href="/notes/2acb0fe30800e3af/">登陆认证</a></li></ul></details></li><li><details><summary>操作系统</summary><ul><li><a href="/notes/cc459aa9bad2e365/">操作系统</a></li><li><a href="/notes/071abe42adc5d303/">CPU 调度算法</a></li><li><a href="/notes/ce6aa3943fd8ff6d/">mmap 原理</a></li><li><a href="/notes/1e29933ec8a137ff/">生产者消费者模型</a></li><li><a href="/notes/c568c645f9f52e82/">页面置换算法</a></li></ul></details></li><li><details><summary>编译原理</summary><ul><li><a href="/notes/f354f9e11ab9a802/">龙书</a></li></ul></details></li><li><details><summary>设计模式</summary><ul><li><a href="/notes/ce7abb0ac2e79516/">单例模式</a></li><li><a href="/notes/e4ca0fc073f3a05b/">建造者模式</a></li></ul></details></li></ul></details><details><summary>音视频 <small>9</small></summary><a class="section-overview" href="/topics/media/">分类概览 →</a><ul><li><a href="/notes/ef119b6df9ca84b8/">音视频处理流程</a></li><li><details><summary>WebRTC</summary><ul><li><a href="/notes/45f67730a5fb6602/">学习大纲</a></li><li><a href="/notes/5974905c4606c9c3/">连接建立</a></li><li><a href="/notes/ac2f41a67eccb700/">拥塞控制</a></li></ul></details></li><li><details><summary>OpenGL</summary><ul><li><a href="/notes/554b2442737d8d68/">基础知识</a></li><li><a href="/notes/d9b1d4ad8abe2a97/">学习资源</a></li></ul></details></li><li><details><summary>图片协议</summary><ul><li><a href="/notes/061f8cae8aec25b6/">分辨率</a></li><li><a href="/notes/162f8ef558b698a4/">RGB</a></li><li><a href="/notes/0f88bf544513e7c1/">YUV</a></li></ul></details></li></ul></details><details><summary>云游戏 <small>5</small></summary><a class="section-overview" href="/topics/cloud-gaming/">分类概览 →</a><ul><li><a href="/notes/bf95bcbbbd60604c/">框架实现</a></li><li><a href="/notes/36582d80df98846f/">云游戏优化</a></li><li><details><summary>技术实现</summary><ul><li><a href="/notes/38845869d7192ea0/">Android 容器抓屏实现</a></li><li><a href="/notes/3e3c8cfb2580f5c8/">Android 容器触摸输入原理</a></li><li><a href="/notes/95623197f800b091/">Android 云游戏免安装启动机制</a></li></ul></details></li></ul></details><details><summary>AI 与大模型 <small>2</small></summary><a class="section-overview" href="/topics/ai/">分类概览 →</a><ul><li><a href="/notes/48948eb946ee1473/">基础知识</a></li><li><a href="/notes/f156542fce17a012/">AI 工程分层与面试回答</a></li></ul></details><details><summary>算法练习 <small>52</small></summary><a class="section-overview" href="/topics/algorithms/">分类概览 →</a><ul><li><a href="/notes/93a9a083af32c3d2/">算法练习</a></li><li><a href="/notes/a78e4d2bbe575447/">高频算法题清单（通用 / 字节风格）</a></li><li><a href="/notes/f745b2389e7d23e7/">小红书高频算法题清单</a></li><li><details><summary>智力题</summary><ul><li><a href="/notes/ba2d85f388e95f73/">总览</a></li><li><a href="/notes/434b50db1b597ad4/">高频智力题清单</a></li><li><a href="/notes/b00124b11552e20b/">思维模型</a></li><li><a href="/notes/d5e1d5a9d69eaefc/">12 球称重</a></li><li><a href="/notes/68e6dc07320087af/">毒药小白鼠</a></li><li><a href="/notes/3d83d5df9cb9a3c8/">鸡蛋掉落</a></li></ul></details></li><li><details><summary>题型模板</summary><ul><li><a href="/notes/dbda860183531936/">滑动窗口</a></li><li><a href="/notes/77bdd4ba7661b40b/">滑动窗口 <small>CPP</small></a></li></ul></details></li><li><details><summary>LeetCode</summary><ul><li><a href="/notes/2d30c32c4a0e89a0/">1.两数之和 <small>CPP</small></a></li><li><a href="/notes/57a5a57f907a0ec4/">2.两数相加 <small>CPP</small></a></li><li><a href="/notes/3f08bcae660db563/">3.无重复字符的最长子串 <small>CPP</small></a></li><li><a href="/notes/b16ca27a01318d4b/">11.盛最多水的容器 <small>CPP</small></a></li><li><a href="/notes/3d08d25f75c18331/">15.三数之和 <small>CPP</small></a></li><li><a href="/notes/8b208b6f30563fb4/">19.删除链表的倒数第-n-个结点 <small>CPP</small></a></li><li><a href="/notes/437bc90908824ab8/">21.合并两个有序链表 <small>CPP</small></a></li><li><a href="/notes/83f209ba4fcd4b26/">23.合并-k-个升序链表 <small>CPP</small></a></li><li><a href="/notes/9aa34711df2551a5/">25.K-个一组翻转链表 <small>CPP</small></a></li><li><a href="/notes/d67130692b90b8f7/">33.搜索旋转排序数组 <small>CPP</small></a></li><li><a href="/notes/9d1a99705c93d424/">34.在排序数组中查找元素的第一个和最后一个位置 <small>CPP</small></a></li><li><a href="/notes/b112df5a6fc5781c/">42.接雨水 <small>CPP</small></a></li><li><a href="/notes/ecc2a5f653ffa5fa/">49.字母异位词分组 <small>CPP</small></a></li><li><a href="/notes/39c18d0756052355/">53.最大子数组和 <small>CPP</small></a></li><li><a href="/notes/e59ded4d7dea5ec5/">56.合并区间 <small>CPP</small></a></li><li><a href="/notes/18406501b8d5cc47/">72.编辑距离 <small>CPP</small></a></li><li><a href="/notes/07d983c7275b5666/">82.删除排序链表中的重复元素-ii <small>CPP</small></a></li><li><a href="/notes/0ad3d0db8dd86ec0/">83.删除排序链表中的重复元素 <small>CPP</small></a></li><li><a href="/notes/1c62040a09bc4c3a/">92.反转链表 II <small>CPP</small></a></li><li><a href="/notes/cdb661dcf6e9acbe/">93.复原 IP 地址 <small>CPP</small></a></li><li><a href="/notes/2616f4bde8260e5d/">121.买卖股票的最佳时机 <small>CPP</small></a></li><li><a href="/notes/3db84bfe65ff3824/">122.买卖股票的最佳时机-II <small>CPP</small></a></li><li><a href="/notes/5e5910321065c5f2/">128.最长连续序列 <small>CPP</small></a></li><li><a href="/notes/50db8c67d7d6c96b/">142.环形链表-ii <small>CPP</small></a></li><li><a href="/notes/a745b24e46f7e8e2/">143.重排链表 <small>CPP</small></a></li><li><a href="/notes/50be710fff45d868/">146.lru-缓存 <small>CPP</small></a></li><li><a href="/notes/98723cd4305832f1/">199.二叉树的右视图 <small>CPP</small></a></li><li><a href="/notes/8953c9820b15afeb/">206.反转链表 <small>CPP</small></a></li><li><a href="/notes/aad8d01506c865c3/">207.课程表 <small>CPP</small></a></li><li><a href="/notes/e436ea8876352dc3/">209.长度最小的子数组 <small>CPP</small></a></li><li><a href="/notes/8fa679c5f37a53c9/">215.数组中的第K个最大元素 <small>CPP</small></a></li><li><a href="/notes/2475489ce09d9280/">227.基本计算器-ii <small>CPP</small></a></li><li><a href="/notes/08d2ef416fe36746/">236.二叉树的最近公共祖先 <small>CPP</small></a></li><li><a href="/notes/110fa7fed851d549/">300.最长递增子序列 <small>CPP</small></a></li><li><a href="/notes/5c1073abb1a4354f/">387.字符串中的第一个唯一字符 <small>CPP</small></a></li><li><a href="/notes/f0fafa58fa81eced/">438.找到字符串中所有字母异位词 <small>CPP</small></a></li><li><a href="/notes/e6273d804d024ac3/">688.骑士在棋盘上的概率 <small>CPP</small></a></li><li><a href="/notes/5080a7cf177c528f/">695.岛屿的最大面积 <small>CPP</small></a></li><li><a href="/notes/002e2eddfaae4e16/">739.每日温度 <small>CPP</small></a></li><li><a href="/notes/5852112c135004af/">1143.最长公共子序列 <small>CPP</small></a></li><li><a href="/notes/85e225b9f26a2a1d/">leetcode <small>H</small></a></li></ul></details></li></ul></details><details><summary>前端 <small>3</small></summary><a class="section-overview" href="/topics/frontend/">分类概览 →</a><ul><li><a href="/notes/3ef98881b1c23e65/">CSS 引入</a></li><li><a href="/notes/3d4c145ae62d12a1/">定位</a></li><li><a href="/notes/85007c347c771cb2/">块元素和行内元素</a></li></ul></details><details><summary>业务实践 <small>7</small></summary><a class="section-overview" href="/topics/practice/">分类概览 →</a><ul><li><a href="/notes/3c9c4da576f6ac05/">AB 实验</a></li><li><a href="/notes/ac7c6e4dc35e8109/">IM 会话缓存与数据访问调度设计</a></li><li><details><summary>案例</summary><ul><li><a href="/notes/f6f786e148e57237/">直播互动玩法 - Cocos 场景切换适配问题</a></li><li><a href="/notes/c251094855ed2daa/">直播互动玩法 - Laya 动态切屏适配</a></li></ul></details></li><li><details><summary>复盘</summary><ul><li><a href="/notes/65dbf3374bf94c55/">项目</a></li><li><a href="/notes/433807cfcf2d12c2/">简历问</a></li><li><a href="/notes/cac176312066e08d/">项目</a></li></ul></details></li></ul></details><details><summary>游戏开发 <small>2</small></summary><a class="section-overview" href="/topics/games/">分类概览 →</a><ul><li><a href="/notes/486f6445d73eaecb/">ThomasBrush 教程</a></li><li><details><summary>游戏</summary><ul><li><details><summary>卡牌游戏</summary><ul><li><a href="/notes/c9dc8f92b42a56bd/">ScriptableObject</a></li></ul></details></li></ul></details></li></ul></details><details><summary>资料归档 <small>2</small></summary><a class="section-overview" href="/topics/archive/">分类概览 →</a><ul><li><a href="/notes/92f96b37e66919d4/">归档说明</a></li><li><details><summary>分享</summary><ul><li><a href="/notes/76801009021bc269/">分享资料 <small>KEY</small></a></li></ul></details></li></ul></details><details><summary>共享资源 <small>2</small></summary><a class="section-overview" href="/topics/resources/">分类概览 →</a><ul><li><a href="/notes/588247153e773e3a/">共享资源说明</a></li><li><details><summary>android</summary><ul><li><a href="/notes/21a8b4d054cc9cb6/">Okhttp拦截器链时序图 <small>POS</small></a></li></ul></details></li></ul></details></nav></aside><main id="main"><header class="post-header"><div class="breadcrumbs"><a href="/topics/client/">客户端开发</a><span>/ Android</span><span>/ 系统原理</span></div><h1>Binder</h1></header><article class="prose"><p>Binder 要解决的核心问题是：让一个进程像调用本地方法一样，调用另一个进程中的对象。</p>
+<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>Client Proxy
+  -&gt; Binder Driver
+  -&gt; Server Binder Thread
+  -&gt; Stub.onTransact()
+  -&gt; Service 实现</code></pre></div>
+<p>本文关注 Binder 的系统主线，不展开 AIDL、Messenger 和 <code>bindService()</code> 的使用教程。源码基线为本地 <code>frameworks/native</code> 的 <code>d1735f8</code>（Android 13 <code>tm-qpr2-release</code>）。</p>
+<h2 id="一binder-分为四层">一、Binder 分为四层</h2>
+<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>业务接口
+  -&gt; AIDL 生成的 Proxy / Stub
+  -&gt; libbinder：BinderProxy、BpBinder、IPCThreadState
+  -&gt; Binder Driver：node、ref、transaction、线程唤醒
+  -&gt; 服务端 Binder 线程池</code></pre></div>
+<ul><li><p>AIDL：生成参数序列化、方法编号、Proxy 和 Stub，本身不是 Binder 驱动。</p></li><li><p>libbinder：把方法调用转换成 Binder 命令和 <code>Parcel</code>。</p></li><li><p>Binder Driver：跨进程定位对象、复制数据、转换 Binder 引用并调度目标线程。</p></li><li><p>Binder 线程池：接收事务并进入服务端的 <code>onTransact()</code>。</p></li></ul>
+<p>同进程调用是例外。<code>Stub.asInterface()</code> 如果发现 Binder 对象就在当前进程，会直接返回本地实现，不经过驱动。</p>
+<h2 id="二noderef-和-handle-如何关联两端">二、node、ref 和 handle 如何关联两端</h2>
+<p>Binder 驱动不会使用 Java 对象地址直接跨进程寻址，而是维护三层关系：</p>
+<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>服务端进程
+  Binder 实体
+    -&gt; binder_node
+         ↑
+客户端进程
+  handle -&gt; binder_ref</code></pre></div>
+<h3 id="bindernode">binder_node</h3>
+<p><code>binder_node</code> 代表真正的服务端 Binder 实体，记录它属于哪个进程，以及服务端用于还原本地 Binder 对象的信息。</p>
+<p>一个 <code>binder_node</code> 可以同时被多个进程引用。</p>
+<h3 id="binderref">binder_ref</h3>
+<p><code>binder_ref</code> 表示某个进程对目标 <code>binder_node</code> 的引用。不同客户端引用同一个服务端 Binder 时，各自拥有自己的 <code>binder_ref</code>。</p>
+<h3 id="handle">handle</h3>
+<p>handle 是 <code>binder_ref</code> 在当前进程内的整数编号，Java 层通常由 <code>BinderProxy</code> 持有。</p>
+<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>客户端 A：handle 3 -&gt; ref A -&gt; node X
+客户端 B：handle 7 -&gt; ref B -&gt; node X</code></pre></div>
+<p>handle 只在所属进程内有效，不是 Binder 对象的全局地址；相同数字在不同进程里可以指向不同对象。</p>
+<p>调用时，驱动执行的核心查找是：</p>
+<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>调用进程 + handle
+  -&gt; binder_ref
+  -&gt; binder_node
+  -&gt; 服务端进程和 Binder 实体</code></pre></div>
+<p><img src="/media/cc71d38acfa45616.svg" alt="Binder 对象身份与服务发现" loading="lazy" decoding="async"></p>
+<h2 id="三servicemanager-只负责服务发现">三、ServiceManager 只负责服务发现</h2>
+<p>在 Framework 使用的 Binder context 中，<code>servicemanager</code> 是 context manager，客户端通过特殊的 handle 0 获得它的代理。</p>
+<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>ProcessState.getContextObject()
+  -&gt; getStrongProxyForHandle(0)
+  -&gt; ServiceManager Proxy</code></pre></div>
+<h3 id="注册实名系统服务">注册实名系统服务</h3>
+<p>以 system_server 注册 AMS、WMS 等服务为例：</p>
+<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>SystemServer 中的 Binder Stub
+  -&gt; ServiceManager.addService(name, binder)
+  -&gt; 驱动为本地 Binder 建立 binder_node
+  -&gt; ServiceManager 保存 name -&gt; Binder 引用</code></pre></div>
+<h3 id="客户端查询服务">客户端查询服务</h3>
+<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>客户端 getService(name)
+  -&gt; 调用 handle 0 对应的 ServiceManager
+  -&gt; ServiceManager 返回目标 Binder 引用
+  -&gt; 驱动在客户端建立 binder_ref 和 handle
+  -&gt; Java 层得到 BinderProxy</code></pre></div>
+<p>ServiceManager 不参与后续每一次业务调用。客户端取得目标服务的 handle 后，后续事务由 Binder Driver 直接发送到服务端进程。</p>
+<h3 id="匿名-binder">匿名 Binder</h3>
+<p>Binder 对象不一定要注册到 ServiceManager。<code>bindService()</code> 返回的 Binder、回调接口和 Binder 连接池，本质上都是把一个 Binder 对象放进已有事务中传给对方：</p>
+<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>已有 Binder 通道
+  -&gt; Parcel 中携带新的 Binder 对象
+  -&gt; 驱动转换为接收进程的 binder_ref / handle</code></pre></div>
+<p>因此，ServiceManager 管理的是“通过名字发现的 Binder 服务”，Binder Driver 管理的是所有 Binder 对象和事务。</p>
+<h2 id="四一次同步事务如何执行">四、一次同步事务如何执行</h2>
+<p>以客户端调用 AIDL 方法为例：</p>
+<p><img src="/media/3f93d06c9955931a.svg" alt="一次同步 Binder 事务" loading="lazy" decoding="async"></p>
+<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>Client
+  -&gt; AIDL Proxy：参数写入 Parcel
+  -&gt; BinderProxy / BpBinder.transact()
+  -&gt; IPCThreadState.transact(handle, code, data)
+  -&gt; BC_TRANSACTION
+  -&gt; ioctl(BINDER_WRITE_READ)
+
+Binder Driver
+  -&gt; handle 找到 binder_ref
+  -&gt; binder_ref 找到 binder_node
+  -&gt; 准备目标进程的 Binder buffer
+  -&gt; 复制并转换事务数据
+  -&gt; 将事务加入目标线程或进程待办队列
+  -&gt; 唤醒服务端 Binder 线程
+
+Server
+  -&gt; 收到 BR_TRANSACTION
+  -&gt; IPCThreadState.executeCommand()
+  -&gt; BBinder.transact()
+  -&gt; Stub.onTransact(code, data, reply)
+  -&gt; Service 方法
+  -&gt; reply 原路返回客户端</code></pre></div>
+<p><code>code</code> 标识调用哪个接口方法，<code>Parcel data</code> 保存参数，<code>Parcel reply</code> 保存返回值或异常。</p>
+<p>Binder 调用看起来像普通方法调用，但执行线程已经从客户端调用线程切换成服务端 Binder 线程。服务端如果需要修改自己的主线程状态，还要再通过 Handler 等机制切换线程。</p>
+<h2 id="五mmap-为什么能减少一次复制">五、mmap 为什么能减少一次复制</h2>
+<p>每个使用 Binder 的进程都会打开 Binder 设备，并通过 <code>mmap()</code> 建立一块用于接收事务的虚拟地址空间：</p>
+<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>ProcessState
+  -&gt; open(&quot;/dev/binder&quot;)
+  -&gt; mmap(..., PROT_READ, ..., binderFd, 0)</code></pre></div>
+<p><img src="/media/300f14746eb85b72.svg" alt="Binder mmap 与一次拷贝" loading="lazy" decoding="async"></p>
+<p>发送事务时，数据路径可以概括为：</p>
+<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>发送端用户空间 Parcel
+  -&gt; copy_from_user()
+  -&gt; 驱动为接收进程准备的 Binder buffer
+  -&gt; 接收端通过 mmap 地址直接读取</code></pre></div>
+<p><code>mmap()</code> 本身不负责复制数据，也不是让发送端和接收端直接共享同一块普通内存。它让驱动管理的接收 buffer 映射到接收进程地址空间，因此接收端不需要再执行一次 <code>copy_to_user()</code>。</p>
+<p>所以 Binder 通常被称为“一次拷贝”，不是“完全零拷贝”。回复数据同样会复制到原调用进程的 Binder 接收区。</p>
+<h3 id="binder-对象不能只复制地址">Binder 对象不能只复制地址</h3>
+<p><code>Parcel</code> 除了普通字节，还可以携带 Binder 对象和文件描述符。驱动复制数据时会根据对象偏移表逐个处理：</p>
+<ul><li><p>本地 Binder 对象跨进程传输后，转换成接收进程中的 handle。</p></li><li><p>已有远程 Binder 再次传输时，驱动维护新的 <code>binder_ref</code> 关系。</p></li><li><p>文件描述符需要复制成接收进程可用的 fd。</p></li></ul>
+<p>这也是 Binder Driver 不能被普通共享内存完全替代的原因：它不仅搬运数据，还维护对象身份、引用计数和调用方身份。</p>
+<h2 id="六与-linux-基础-ipc-的区别">六、与 Linux 基础 IPC 的区别</h2>
+<p>从最基础的常用通信模型看，Linux 进程间通信主要有字节流、共享页和异步通知：</p>
+<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>管道 / Socket：数据经内核管理的端点或缓冲区传递
+共享内存：不同进程的页表项指向同一批物理页
+信号：内核向进程发送异步通知</code></pre></div>
+<p>Linux 还提供 System V / POSIX Message Queue、信号量、<code>eventfd</code> 等独立机制，但它们没有改变 Binder 选型的核心问题：Android 系统服务需要的不只是传输数据，而是受控的本机对象 RPC。</p>
+<div class="table-wrap" tabindex="0" role="region" aria-label="数据表格"><table><thead><tr><th scope="col">方式</th><th scope="col">提供的基础能力</th><th scope="col">用于系统服务时还缺少什么</th></tr></thead><tbody><tr><td>Pipe / FIFO</td><td>单向或半双工字节流</td><td>消息协议、请求响应、多客户端和对象生命周期</td></tr><tr><td>Unix Domain Socket</td><td>双向流或数据报，可传 fd 并获取对端凭据</td><td>需自行实现服务发现、远程对象、引用管理和 RPC 线程模型</td></tr><tr><td>共享内存</td><td>共享物理页，适合大数据</td><td>不提供通知、消息边界、同步、权限和生命周期</td></tr><tr><td>Signal</td><td>进程级异步通知</td><td>载荷很小，不适合复杂请求和返回值</td></tr><tr><td>Binder</td><td>对象 RPC、身份传递、引用转换、死亡通知和线程调度</td><td>不适合直接承载图像、音视频等大块数据</td></tr></tbody></table></div>
+<p>Binder 不是对 Pipe、Socket 的简单封装，而是通过专用内核驱动组合多种基础能力：</p>
+<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>用户进程
+  -&gt; open(&quot;/dev/binder&quot;)
+  -&gt; mmap() 映射接收缓冲区
+  -&gt; ioctl(BINDER_WRITE_READ) 提交或接收事务
+
+Binder Driver
+  -&gt; copy_from_user() 复制事务数据
+  -&gt; binder_node / binder_ref 维护跨进程对象
+  -&gt; todo 队列和 wait queue 调度目标 Binder 线程</code></pre></div>
+<p>Android 不会用 Binder 替代所有 IPC，而是根据数据特征组合使用：</p>
+<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>系统服务的小型控制命令  -&gt; Binder
+图像、音频等大块数据  -&gt; 共享内存 / dma-buf
+共享缓冲区的 fd 和控制信息 -&gt; Binder
+Zygote fork 命令             -&gt; Unix Domain Socket</code></pre></div>
+<h3 id="servicemanager-与-binder-安全边界">ServiceManager 与 Binder 安全边界</h3>
+<p>ServiceManager 的安全价值是受控的服务命名空间，但它不是通用的防 Hook 机制：</p>
+<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>服务注册：拒绝 App UID + SELinux add 权限 + 名称/声明合法性
+服务查询：SELinux find 权限
+Binder 调用：驱动提供真实调用方 UID / PID
+业务方法：系统服务继续检查 Permission / AppOps / User</code></pre></div>
+<p>当前 ServiceManager 会直接拒绝 App UID 注册服务，并通过 SELinux 分别检查 <code>add</code> 与 <code>find</code> 权限。因此普通 App 无法随意注册或替换 AMS 等系统服务，也无法伪造 Binder 驱动提供的 UID。高权限进程对同名服务的处理细节会随 Android 版本变化，安全边界不应建立在“同名一定无法替换”上。</p>
+<p>如果攻击者已经获得 Root、内核控制权、<code>system_server</code> 代码执行权或目标进程内注入能力，Binder 本身不能阻止 Java / Native / 内核层 Hook。</p>
+<p>因此 Binder 的安全模型是：</p>
+<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>ServiceManager 注册与查询控制
+  + Binder 引用隔离和真实调用身份
+  + SELinux binder / service_manager 规则
+  + 服务方法的业务权限检查</code></pre></div>
+<h2 id="七同步调用oneway-和线程池">七、同步调用、oneway 和线程池</h2>
+<h3 id="同步调用">同步调用</h3>
+<p>普通 Binder 事务是同步的：客户端调用线程发送事务后等待 <code>BR_REPLY</code>。</p>
+<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>Client Thread：发送 -&gt; 阻塞等待
+Server Binder Thread：执行 -&gt; 返回 reply
+Client Thread：被唤醒 -&gt; 继续执行</code></pre></div>
+<p>因此，在主线程发起耗时 Binder 调用仍可能造成卡顿或 ANR。Binder 只解决跨进程调用，不会自动把客户端工作切到后台线程。</p>
+<h3 id="oneway">oneway</h3>
+<p>AIDL 中标记为 <code>oneway</code> 的方法不等待服务端执行结果：</p>
+<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>Client：事务交给驱动后返回
+Server：稍后从 Binder 队列中取出并执行</code></pre></div>
+<p><code>oneway</code> 不是“丢了也没关系”，也不代表服务端不执行。发往同一个 Binder node 的异步事务会保持串行顺序；如果发送速度长期高于消费速度，仍会形成积压。</p>
+<h3 id="binder-线程池">Binder 线程池</h3>
+<p>服务端进程需要 Binder 线程等待驱动命令：</p>
+<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>ProcessState.startThreadPool()
+  -&gt; Binder Thread
+  -&gt; IPCThreadState.joinThreadPool()
+  -&gt; 等待 BR_TRANSACTION</code></pre></div>
+<p>多个 Binder 线程意味着服务端可能并发执行多个事务，共享状态必须自行保证线程安全。某个 Binder 线程被耗时任务长期占用，也会降低整个服务的并发处理能力。</p>
+<h2 id="八死亡通知与调用身份">八、死亡通知与调用身份</h2>
+<h3 id="deathrecipient">DeathRecipient</h3>
+<p>客户端可以对远程 <code>BinderProxy</code> 调用 <code>linkToDeath()</code>。服务端进程退出后，驱动根据 <code>binder_ref</code> 和 <code>binder_node</code> 的关系通知客户端，最终回调 <code>binderDied()</code>。</p>
+<p>DeathRecipient 只能说明远端 Binder 所在进程已经死亡，不能保证服务自动恢复，也不能替代业务层重连。</p>
+<h3 id="调用身份">调用身份</h3>
+<p>驱动会把调用方的 PID、UID 等身份随事务交给服务端。系统服务可以通过 <code>Binder.getCallingUid()</code> 等接口做权限判断。</p>
+<p>如果系统服务收到客户端请求后，再以自己的代码调用其他系统接口，需要明确当前操作应该沿用客户端身份还是服务端身份；<code>clearCallingIdentity()</code> 用错可能造成越权或权限异常。</p>
+<h2 id="九常见误区">九、常见误区</h2>
+<h3 id="1-servicemanager-是所有-binder-事务的中转站">1. ServiceManager 是所有 Binder 事务的中转站</h3>
+<p>错误。ServiceManager 只负责实名服务的注册和查询。获得目标 Binder 后，客户端与服务端通过驱动直接通信。</p>
+<h3 id="2-handle-是-binder-服务的全局编号">2. handle 是 Binder 服务的全局编号</h3>
+<p>错误。handle 是当前进程内 <code>binder_ref</code> 的编号，只有 handle 0 具有 context manager 的特殊语义。</p>
+<h3 id="3-mmap-完成了进程间数据复制">3. mmap 完成了进程间数据复制</h3>
+<p>错误。复制由驱动完成，<code>mmap()</code> 提供接收 buffer 的用户空间映射，从而省掉接收端的第二次复制。</p>
+<h3 id="4-oneway-等于开了一个新线程">4. oneway 等于开了一个新线程</h3>
+<p>错误。它只改变客户端是否等待 reply，服务端仍通过 Binder 线程池执行。</p>
+<h3 id="5-binder-适合传输大块数据">5. Binder 适合传输大块数据</h3>
+<p>错误。Binder 接收缓冲区由进程内并发事务共享，事务过大可能触发 <code>TransactionTooLargeException</code>。图片、视频帧等大数据通常只通过 Binder 传递 fd、共享内存句柄或 Surface，而不是直接塞进 Parcel。</p>
+<h2 id="十应用层例子">十、应用层例子</h2>
+<p>这些工具没有引入新的 IPC 机制，底层仍然是 Binder，只是对接口形式和线程模型做了不同封装。</p>
+<h3 id="1-aidl生成-proxy-和-stub">1. AIDL：生成 Proxy 和 Stub</h3>
+<div class="code-block"><div class="code-label">aidl</div><pre tabindex="0"><code>interface IBookService {
+    Book getBook(int id);
+}</code></pre></div>
+<p>服务端实现 <code>Stub</code>：</p>
+<div class="code-block"><div class="code-label">java</div><pre tabindex="0"><code>private final IBookService.Stub binder = new IBookService.Stub() {
+    @Override
+    public Book getBook(int id) {
+        return repository.get(id);
+    }
+};
+
+@Override
+public IBinder onBind(Intent intent) {
+    return binder;
+}</code></pre></div>
+<p>客户端取得 Binder 后转换成接口：</p>
+<div class="code-block"><div class="code-label">java</div><pre tabindex="0"><code>public void onServiceConnected(ComponentName name, IBinder service) {
+    IBookService bookService = IBookService.Stub.asInterface(service);
+}</code></pre></div>
+<p>如果两端在同一进程，<code>asInterface()</code> 返回本地 Stub；如果跨进程，则返回 Proxy。远程方法调用最终仍是：</p>
+<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>Proxy.transact() -&gt; Binder Driver -&gt; Stub.onTransact() -&gt; getBook()</code></pre></div>
+<p><code>Book</code> 这类复杂参数需要实现 <code>Parcelable</code> 并在 AIDL 中声明。跨进程后得到的是重新反序列化的数据对象，不再是服务端原对象的 Java 引用。</p>
+<h3 id="2-messenger把-binder-调用转换成-message">2. Messenger：把 Binder 调用转换成 Message</h3>
+<div class="code-block"><div class="code-label">java</div><pre tabindex="0"><code>Messenger server = new Messenger(new Handler(looper) {
+    @Override
+    public void handleMessage(Message message) {
+        // 处理客户端消息
+    }
+});</code></pre></div>
+<p>服务端通过 <code>server.getBinder()</code> 暴露 Binder，客户端再使用 <code>Messenger.send()</code> 发送消息。</p>
+<p>Messenger 底层仍使用 Binder，但请求会进入指定 Handler，因此天然串行，适合简单消息通信；它不适合需要大量强类型方法和并发调用的接口。</p>
+<h3 id="3-remotecallbacklist管理跨进程回调">3. RemoteCallbackList：管理跨进程回调</h3>
+<p>客户端把回调 Stub 传给服务端，本质上是把一个新的 Binder 对象放进 Parcel。服务端通常使用 <code>RemoteCallbackList</code> 保存这些回调：</p>
+<div class="code-block"><div class="code-label">java</div><pre tabindex="0"><code>RemoteCallbackList&lt;IListener&gt; callbacks = new RemoteCallbackList&lt;&gt;();
+
+callbacks.register(listener);
+
+int count = callbacks.beginBroadcast();
+for (int i = 0; i &lt; count; i++) {
+    callbacks.getBroadcastItem(i).onChanged();
+}
+callbacks.finishBroadcast();</code></pre></div>
+<p>它以底层 Binder 身份区分客户端，并结合死亡通知清理已经退出进程的回调，避免直接用普通 <code>List</code> 管理远程接口。</p>
+<h3 id="4-binder-连接池通过一个-binder-返回其他-binder">4. Binder 连接池：通过一个 Binder 返回其他 Binder</h3>
+<div class="code-block"><div class="code-label">aidl</div><pre tabindex="0"><code>interface IBinderPool {
+    IBinder queryBinder(int serviceId);
+}</code></pre></div>
+<p>客户端先获得 <code>IBinderPool</code>，再通过 <code>queryBinder()</code> 得到其他业务 Binder。返回的业务 Binder 不需要注册到 ServiceManager，而是通过这次已有事务传给客户端。</p>
+<p>它说明了 Binder 的一个重要能力：Binder 对象本身可以作为 Parcel 数据继续跨进程传输，驱动会为接收进程建立对应的 <code>binder_ref</code> 和 handle。</p>
+<h2 id="十一源码入口">十一、源码入口</h2>
+<ul><li><p><code>frameworks/native/libs/binder/ProcessState.cpp</code>：打开驱动、<code>mmap()</code>、handle 0、线程池。</p></li><li><p><code>frameworks/native/libs/binder/BpBinder.cpp</code>：客户端代理、<code>transact()</code>、<code>linkToDeath()</code>。</p></li><li><p><code>frameworks/native/libs/binder/IPCThreadState.cpp</code>：事务命令、<code>ioctl()</code>、等待 reply、处理 <code>BR_TRANSACTION</code>。</p></li><li><p><code>frameworks/native/libs/binder/Binder.cpp</code>：<code>BBinder.transact()</code> 和 <code>onTransact()</code>。</p></li><li><p><code>drivers/android/binder.c</code>：<code>binder_node</code>、<code>binder_ref</code>、事务路由与引用管理。</p></li><li><p><a href="https://source.android.com/docs/core/architecture/ipc/binder-overview">AOSP Binder overview</a></p></li><li><p><a href="https://source.android.com/docs/core/architecture/ipc/binder-threading">AOSP Binder threading</a></p></li></ul>
+<h2 id="十二核心结论">十二、核心结论</h2>
+<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>服务发现：name -&gt; ServiceManager(handle 0) -&gt; BinderProxy(handle)
+对象关联：handle -&gt; binder_ref -&gt; binder_node -&gt; 服务端
+事务调用：Proxy -&gt; Driver -&gt; Binder Thread -&gt; Stub.onTransact
+数据传输：发送端一次复制 -&gt; 接收端 mmap buffer
+选型边界：小型对象 RPC -&gt; Binder，大数据 -&gt; 共享内存 / dma-buf
+安全边界：服务发现控制 + 驱动身份 + SELinux + 业务权限校验</code></pre></div>
+<p>Binder 的重点不是记住 AIDL 模板，而是理解驱动如何维护跨进程对象身份，以及一次事务如何从客户端线程进入服务端 Binder 线程。</p></article><p class="post-bottom"><a href="/topics/client/">← 返回客户端开发目录</a><a href="#main">回到顶部 ↑</a></p><footer><span>Joel · 技术学习与实践笔记</span><a href="#main">回到顶部 ↑</a></footer></main><aside class="toc"><span>本篇目录</span><ul><li><a href="#%E4%B8%80binder-%E5%88%86%E4%B8%BA%E5%9B%9B%E5%B1%82">一、Binder 分为四层</a></li><li><a href="#%E4%BA%8Cnoderef-%E5%92%8C-handle-%E5%A6%82%E4%BD%95%E5%85%B3%E8%81%94%E4%B8%A4%E7%AB%AF">二、node、ref 和 handle 如何关联两端</a></li><li><a href="#%E4%B8%89servicemanager-%E5%8F%AA%E8%B4%9F%E8%B4%A3%E6%9C%8D%E5%8A%A1%E5%8F%91%E7%8E%B0">三、ServiceManager 只负责服务发现</a></li><li><a href="#%E5%9B%9B%E4%B8%80%E6%AC%A1%E5%90%8C%E6%AD%A5%E4%BA%8B%E5%8A%A1%E5%A6%82%E4%BD%95%E6%89%A7%E8%A1%8C">四、一次同步事务如何执行</a></li><li><a href="#%E4%BA%94mmap-%E4%B8%BA%E4%BB%80%E4%B9%88%E8%83%BD%E5%87%8F%E5%B0%91%E4%B8%80%E6%AC%A1%E5%A4%8D%E5%88%B6">五、mmap 为什么能减少一次复制</a></li><li><a href="#%E5%85%AD%E4%B8%8E-linux-%E5%9F%BA%E7%A1%80-ipc-%E7%9A%84%E5%8C%BA%E5%88%AB">六、与 Linux 基础 IPC 的区别</a></li><li><a href="#%E4%B8%83%E5%90%8C%E6%AD%A5%E8%B0%83%E7%94%A8oneway-%E5%92%8C%E7%BA%BF%E7%A8%8B%E6%B1%A0">七、同步调用、oneway 和线程池</a></li><li><a href="#%E5%85%AB%E6%AD%BB%E4%BA%A1%E9%80%9A%E7%9F%A5%E4%B8%8E%E8%B0%83%E7%94%A8%E8%BA%AB%E4%BB%BD">八、死亡通知与调用身份</a></li><li><a href="#%E4%B9%9D%E5%B8%B8%E8%A7%81%E8%AF%AF%E5%8C%BA">九、常见误区</a></li><li><a href="#%E5%8D%81%E5%BA%94%E7%94%A8%E5%B1%82%E4%BE%8B%E5%AD%90">十、应用层例子</a></li><li><a href="#%E5%8D%81%E4%B8%80%E6%BA%90%E7%A0%81%E5%85%A5%E5%8F%A3">十一、源码入口</a></li><li><a href="#%E5%8D%81%E4%BA%8C%E6%A0%B8%E5%BF%83%E7%BB%93%E8%AE%BA">十二、核心结论</a></li></ul></aside></div></body></html>

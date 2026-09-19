@@ -1,0 +1,118 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="1120" viewBox="0 0 1400 1120" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',Arial,sans-serif">
+  <title>拥塞发生后的发送端控制闭环：传统 GCC 与低延迟场景化策略</title>
+  <desc>对比传统 GCC 和低延迟场景化策略如何从网络反馈得到拥塞判断，再调整目标码率、Pacing、CWND 和 Padding，最后通过新一轮 TWCC 验证效果。</desc>
+
+  <defs>
+    <marker id="arrow-common" markerWidth="9" markerHeight="9" refX="7" refY="4" orient="auto">
+      <path d="M0,0 L7,4 L0,8 Z" fill="#788592"/>
+    </marker>
+    <marker id="arrow-gcc" markerWidth="9" markerHeight="9" refX="7" refY="4" orient="auto">
+      <path d="M0,0 L7,4 L0,8 Z" fill="#7e92a6"/>
+    </marker>
+    <marker id="arrow-low-latency" markerWidth="9" markerHeight="9" refX="7" refY="4" orient="auto">
+      <path d="M0,0 L7,4 L0,8 Z" fill="#9b8b75"/>
+    </marker>
+  </defs>
+
+  <rect width="1400" height="1120" fill="#15181c"/>
+  <text x="700" y="42" fill="#e2e6ea" font-size="27" font-weight="600" text-anchor="middle">拥塞发生后的发送端控制闭环</text>
+  <text x="700" y="68" fill="#939ca6" font-size="14" text-anchor="middle">同一条因果链对比：反馈 → 判断 → 控制输出 → 发送执行 → 队列变化</text>
+
+  <!-- shared feedback input -->
+  <rect x="120" y="92" width="1160" height="104" rx="12" fill="#1d2126" stroke="#39414a" stroke-width="1.3"/>
+  <text x="700" y="121" fill="#dce1e6" font-size="18" font-weight="600" text-anchor="middle">共同起点：发送端收到网络反馈</text>
+  <text x="700" y="149" fill="#a7afb8" font-size="14" text-anchor="middle">TWCC 逐包到达状态 / 到达时间差 · 发包历史 send time / size · RR 丢包 / RTT</text>
+  <text x="700" y="176" fill="#858f99" font-size="13" text-anchor="middle">In-flight = 已发送但尚未收到到达反馈的数据；队列积压 ≈ max(In-flight − BDP, 0)</text>
+
+  <!-- lane headers -->
+  <rect x="90" y="225" width="600" height="54" rx="10" fill="#222931" stroke="#465461" stroke-width="1.3"/>
+  <rect x="710" y="225" width="600" height="54" rx="10" fill="#292720" stroke="#544d43" stroke-width="1.3"/>
+  <text x="390" y="259" fill="#dbe2e8" font-size="20" font-weight="600" text-anchor="middle">传统 WebRTC GCC / GoogCC（通用机制）</text>
+  <text x="1010" y="259" fill="#e1ddd6" font-size="20" font-weight="600" text-anchor="middle">低延迟场景化策略</text>
+
+  <!-- input split -->
+  <g fill="none" stroke="#788592" stroke-width="1.8" marker-end="url(#arrow-common)">
+    <path d="M700 196 V210 H390 V225"/>
+    <path d="M700 196 V210 H1010 V225"/>
+  </g>
+
+  <!-- GCC lane cards -->
+  <g>
+    <rect x="105" y="310" width="570" height="116" rx="10" fill="#1e2329" stroke="#414c57" stroke-width="1.2"/>
+    <text x="130" y="340" fill="#d8dee4" font-size="17" font-weight="600">1. 带宽估计与状态识别</text>
+    <text x="130" y="368" fill="#a5aeb7" font-size="14">Delay-based：到达间隔趋势 → overuse / normal / underuse</text>
+    <text x="130" y="394" fill="#a5aeb7" font-size="14">Loss / throughput-based：丢包和 acked throughput 约束码率</text>
+
+    <rect x="105" y="462" width="570" height="116" rx="10" fill="#1e2329" stroke="#414c57" stroke-width="1.2"/>
+    <text x="130" y="492" fill="#d8dee4" font-size="17" font-weight="600">2. 拥塞决策</text>
+    <text x="130" y="520" fill="#a5aeb7" font-size="14">overuse / loss 恶化 → 降低目标码率</text>
+    <text x="130" y="546" fill="#a5aeb7" font-size="14">normal / underuse → 保持、加性上探或发起 probe</text>
+
+    <rect x="105" y="614" width="570" height="158" rx="10" fill="#1e2329" stroke="#414c57" stroke-width="1.2"/>
+    <text x="130" y="644" fill="#d8dee4" font-size="17" font-weight="600">3. 控制输出</text>
+    <text x="130" y="674" fill="#a5aeb7" font-size="14">● Target Bitrate ↓：反压到带宽分配和编码器</text>
+    <text x="130" y="700" fill="#a5aeb7" font-size="14">● Pacing Rate 跟随目标码率调整，发包间隔变大</text>
+    <text x="130" y="726" fill="#a5aeb7" font-size="14">● 可选 CWND / Pushback；Probe 与 Padding 由探测链调度</text>
+    <text x="130" y="752" fill="#838e99" font-size="13">特点：以已收到的反馈为主，存在一个反馈周期的响应滞后</text>
+
+    <rect x="105" y="808" width="570" height="116" rx="10" fill="#1e2329" stroke="#414c57" stroke-width="1.2"/>
+    <text x="130" y="838" fill="#d8dee4" font-size="17" font-weight="600">4. 发送侧执行</text>
+    <text x="130" y="866" fill="#a5aeb7" font-size="14">Encoder 收到更低码率 → 同分辨率 / FPS 下 QP 通常上升</text>
+    <text x="130" y="892" fill="#a5aeb7" font-size="14">Pacer 减慢注入；CWND 开启时限制 In-flight</text>
+
+    <rect x="105" y="960" width="570" height="88" rx="10" fill="#20272d" stroke="#46535e" stroke-width="1.2"/>
+    <text x="390" y="992" fill="#d8dee4" font-size="16" font-weight="600" text-anchor="middle">结果：网络注入速率下降</text>
+    <text x="390" y="1019" fill="#a5aeb7" font-size="14" text-anchor="middle">瓶颈队列逐步排空，再由下一轮反馈验证</text>
+  </g>
+
+  <!-- Low-latency strategy lane cards -->
+  <g>
+    <rect x="725" y="310" width="570" height="116" rx="10" fill="#24231f" stroke="#504a42" stroke-width="1.2"/>
+    <text x="750" y="340" fill="#e0dcd6" font-size="17" font-weight="600">1. 增强的网络观测</text>
+    <text x="750" y="368" fill="#b3aaa0" font-size="14">TWCC + queue / relative delay + pass ratio + loss / RTT</text>
+    <text x="750" y="394" fill="#b3aaa0" font-size="14">In-flight / CWND + 近期链路容量 + 包级早期异常</text>
+
+    <rect x="725" y="462" width="570" height="116" rx="10" fill="#24231f" stroke="#504a42" stroke-width="1.2"/>
+    <text x="750" y="492" fill="#e0dcd6" font-size="17" font-weight="600">2. 分级决策与误判恢复</text>
+    <text x="750" y="520" fill="#b3aaa0" font-size="14">可疑拥塞 → mild discount；证据增强 → aggressive expected rate</text>
+    <text x="750" y="546" fill="#b3aaa0" font-size="14">短时 Burst RTT / 连续无拥塞 → 抑制过度降速或快速恢复</text>
+
+    <rect x="725" y="614" width="570" height="158" rx="10" fill="#24231f" stroke="#504a42" stroke-width="1.2"/>
+    <text x="750" y="644" fill="#e0dcd6" font-size="17" font-weight="600">3. 多执行器联动输出</text>
+    <text x="750" y="674" fill="#b3aaa0" font-size="14">● Target Bitrate × drain ratio；视频再乘 Encoding Discount</text>
+    <text x="750" y="700" fill="#b3aaa0" font-size="14">● Pacing Gain 进入低增益，并可按 In-flight / CWND 再折扣</text>
+    <text x="750" y="726" fill="#b3aaa0" font-size="14">● CWND 按 BDP 限制在途数据；In-flight 过高时 Padding = 0</text>
+    <text x="750" y="752" fill="#91877d" font-size="13">特点：早期判断、分级降速、快速排空与 Burst 恢复协同</text>
+
+    <rect x="725" y="808" width="570" height="116" rx="10" fill="#24231f" stroke="#504a42" stroke-width="1.2"/>
+    <text x="750" y="838" fill="#e0dcd6" font-size="17" font-weight="600">4. 发送侧执行</text>
+    <text x="750" y="866" fill="#b3aaa0" font-size="14">Encoder 少产生数据；Pacer 减慢发包；CWND 限制 In-flight</text>
+    <text x="750" y="892" fill="#b3aaa0" font-size="14">暂停无效 Padding，让网络流入速率低于瓶颈排出速率</text>
+
+    <rect x="725" y="960" width="570" height="88" rx="10" fill="#292720" stroke="#574f45" stroke-width="1.2"/>
+    <text x="1010" y="992" fill="#e0dcd6" font-size="16" font-weight="600" text-anchor="middle">结果：更早阻止队列继续增长</text>
+    <text x="1010" y="1019" fill="#b3aaa0" font-size="14" text-anchor="middle">确认真拥塞继续降；短时 Burst 则尽快恢复</text>
+  </g>
+
+  <!-- vertical flow arrows -->
+  <g fill="none" stroke="#7e92a6" stroke-width="1.9" marker-end="url(#arrow-gcc)">
+    <path d="M390 279 V310"/>
+    <path d="M390 426 V462"/>
+    <path d="M390 578 V614"/>
+    <path d="M390 772 V808"/>
+    <path d="M390 924 V960"/>
+  </g>
+  <g fill="none" stroke="#9b8b75" stroke-width="1.9" marker-end="url(#arrow-low-latency)">
+    <path d="M1010 279 V310"/>
+    <path d="M1010 426 V462"/>
+    <path d="M1010 578 V614"/>
+    <path d="M1010 772 V808"/>
+    <path d="M1010 924 V960"/>
+  </g>
+
+  <!-- feedback loops, routed outside both lanes -->
+  <path d="M390 1048 V1071 H62 V144 H120" fill="none" stroke="#7e92a6" stroke-width="1.7" stroke-dasharray="6 6" marker-end="url(#arrow-gcc)"/>
+  <path d="M1010 1048 V1083 H1338 V144 H1280" fill="none" stroke="#9b8b75" stroke-width="1.7" stroke-dasharray="6 6" marker-end="url(#arrow-low-latency)"/>
+  <text x="228" y="1099" fill="#8796a4" font-size="12" text-anchor="middle">下一轮反馈继续校正 GCC</text>
+  <text x="1172" y="1099" fill="#9a8e80" font-size="12" text-anchor="middle">下一轮反馈确认拥塞或 Burst</text>
+</svg>

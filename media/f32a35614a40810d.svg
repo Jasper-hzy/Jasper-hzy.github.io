@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1320" height="720" viewBox="0 0 1320 720" role="img" aria-labelledby="title desc">
+  <title id="title">Activity 从启动到首帧显示的流转图</title>
+  <desc id="desc">展示业务 startActivity 到 system_server 调度、ActivityThread 创建 Activity、ViewRootImpl 添加窗口、WMS 创建窗口和 SurfaceFlinger 合成首帧的顺序。</desc>
+  <defs>
+    <style>
+      .bg { fill:#fffdf8; }
+      .title { font:700 24px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; fill:#172033; }
+      .sub { font:13px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; fill:#516173; }
+      .lane { fill:#f8fafc; stroke:#d1d9e6; stroke-width:1.4; }
+      .lane-title { font:700 14px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; fill:#1e293b; }
+      .step { fill:#ffffff; stroke:#4b5b70; stroke-width:1.5; rx:12; }
+      .app { fill:#e9f5ff; stroke:#6aa6d8; }
+      .sys { fill:#fff4df; stroke:#d6a24a; }
+      .sf { fill:#eef8ed; stroke:#71a96d; }
+      .text { font:14px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; fill:#172033; }
+      .small { font:12px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; fill:#526174; }
+      .num { font:700 13px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; fill:#fff; }
+      .circle { fill:#334155; }
+      .arrow { stroke:#334155; stroke-width:2; fill:none; marker-end:url(#arrow); }
+      .return { stroke:#7c8796; stroke-width:1.8; fill:none; stroke-dasharray:6 6; marker-end:url(#arrow-gray); }
+    </style>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L8,3 L0,6 Z" fill="#334155"/></marker>
+    <marker id="arrow-gray" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L8,3 L0,6 Z" fill="#7c8796"/></marker>
+  </defs>
+  <rect class="bg" width="1320" height="720"/>
+  <text class="title" x="44" y="44">Activity 从启动到首帧显示的流转图</text>
+  <text class="sub" x="44" y="70">主线：组件调度先发生，窗口注册随后发生，ViewRootImpl 绘制 buffer，SurfaceFlinger 最终合成。</text>
+
+  <rect class="lane app" x="38" y="105" width="1244" height="150" rx="18"/>
+  <text class="lane-title" x="62" y="132">App 进程：发起启动与创建 Activity</text>
+  <rect class="lane sys" x="38" y="285" width="1244" height="150" rx="18"/>
+  <text class="lane-title" x="62" y="312">system_server：组件调度与窗口管理</text>
+  <rect class="lane sf" x="38" y="465" width="1244" height="150" rx="18"/>
+  <text class="lane-title" x="62" y="492">App 绘制与 SurfaceFlinger 合成</text>
+
+  <g transform="translate(70,158)"><rect class="step" width="155" height="62" rx="12"/><circle class="circle" cx="22" cy="22" r="13"/><text class="num" x="22" y="27" text-anchor="middle">1</text><text class="text" x="48" y="25">业务代码</text><text class="small" x="48" y="47">startActivity</text></g>
+  <g transform="translate(270,158)"><rect class="step" width="180" height="62" rx="12"/><circle class="circle" cx="22" cy="22" r="13"/><text class="num" x="22" y="27" text-anchor="middle">2</text><text class="text" x="48" y="25">Instrumentation</text><text class="small" x="48" y="47">execStartActivity</text></g>
+  <g transform="translate(500,338)"><rect class="step" width="210" height="62" rx="12"/><circle class="circle" cx="22" cy="22" r="13"/><text class="num" x="22" y="27" text-anchor="middle">3</text><text class="text" x="48" y="25">ATMS / AMS</text><text class="small" x="48" y="47">校验 ActivityInfo / Task / 进程</text></g>
+  <g transform="translate(765,158)"><rect class="step" width="215" height="62" rx="12"/><circle class="circle" cx="22" cy="22" r="13"/><text class="num" x="22" y="27" text-anchor="middle">4</text><text class="text" x="48" y="25">ActivityThread</text><text class="small" x="48" y="47">performLaunchActivity</text></g>
+  <g transform="translate(1030,158)"><rect class="step" width="190" height="62" rx="12"/><circle class="circle" cx="22" cy="22" r="13"/><text class="num" x="22" y="27" text-anchor="middle">5</text><text class="text" x="48" y="25">Activity / Window</text><text class="small" x="48" y="47">attach / onCreate / setContentView</text></g>
+
+  <g transform="translate(1030,338)"><rect class="step" width="190" height="62" rx="12"/><circle class="circle" cx="22" cy="22" r="13"/><text class="num" x="22" y="27" text-anchor="middle">6</text><text class="text" x="48" y="25">ViewRootImpl</text><text class="small" x="48" y="47">WindowManager.addView</text></g>
+  <g transform="translate(765,338)"><rect class="step" width="215" height="62" rx="12"/><circle class="circle" cx="22" cy="22" r="13"/><text class="num" x="22" y="27" text-anchor="middle">7</text><text class="text" x="48" y="25">WMS</text><text class="small" x="48" y="47">addWindow / relayout / SurfaceControl</text></g>
+  <g transform="translate(500,518)"><rect class="step" width="210" height="62" rx="12"/><circle class="circle" cx="22" cy="22" r="13"/><text class="num" x="22" y="27" text-anchor="middle">8</text><text class="text" x="48" y="25">ViewRootImpl</text><text class="small" x="48" y="47">measure / layout / draw</text></g>
+  <g transform="translate(765,518)"><rect class="step" width="215" height="62" rx="12"/><circle class="circle" cx="22" cy="22" r="13"/><text class="num" x="22" y="27" text-anchor="middle">9</text><text class="text" x="48" y="25">Surface</text><text class="small" x="48" y="47">queueBuffer 到 Layer</text></g>
+  <g transform="translate(1030,518)"><rect class="step" width="190" height="62" rx="12"/><circle class="circle" cx="22" cy="22" r="13"/><text class="num" x="22" y="27" text-anchor="middle">10</text><text class="text" x="48" y="25">SurfaceFlinger</text><text class="small" x="48" y="47">合成 Layer，上屏</text></g>
+
+  <path class="arrow" d="M225 189 L270 189"/><path class="arrow" d="M450 189 C485 189, 465 369, 500 369"/>
+  <path class="arrow" d="M710 369 C750 369, 725 189, 765 189"/><path class="arrow" d="M980 189 L1030 189"/>
+  <path class="arrow" d="M1125 220 L1125 338"/><path class="arrow" d="M1030 369 L980 369"/>
+  <path class="arrow" d="M765 400 C720 430, 750 548, 710 548"/><path class="arrow" d="M710 548 L765 548"/><path class="arrow" d="M980 548 L1030 548"/>
+  <path class="return" d="M765 392 C690 438, 610 455, 500 530"/><text class="small" x="590" y="455">返回 Surface / Insets / InputChannel</text>
+  <rect x="58" y="648" width="1200" height="44" rx="12" fill="#f8fafc" stroke="#cbd5e1"/>
+  <text class="sub" x="78" y="675">注意：onCreate/setContentView 只是准备 View 树；真正接入窗口系统发生在 addView；真正显示要等 ViewRootImpl 产出 buffer 并由 SurfaceFlinger 合成。</text>
+</svg>

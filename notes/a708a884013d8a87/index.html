@@ -1,0 +1,209 @@
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="description" content="Lynx 容器监控指标口径 · 客户端开发、系统原理与工程实践。"><meta name="color-scheme" content="light dark"><meta name="theme-color" content="#f4f1ea"><title>Lynx 容器监控指标口径 · Joel 的技术笔记</title><link rel="icon" href="/favicon.svg"><link rel="stylesheet" href="/style.css"><script src="/app.js" defer></script></head><body><a class="skip" href="#main">跳到正文</a><header class="site-header"><a class="brand" href="/" aria-label="Joel 的技术笔记首页"><span class="brand-mark" aria-hidden="true">J</span><span>Joel 的技术笔记</span></a><div class="header-actions"><span class="header-note">CLIENT · MEDIA · SYSTEMS</span><button class="mobile-menu" type="button" aria-controls="site-directory" aria-expanded="false">目录</button><a href="/#search">搜索</a></div></header><div class="layout has-toc"><aside class="sidebar" id="site-directory"><a class="directory-home" href="/">全部目录 <span>167</span></a><nav aria-label="知识目录"><details open><summary>客户端开发 <small>43</small></summary><a class="section-overview" href="/topics/client/">分类概览 →</a><ul><li><details><summary>Android</summary><ul><li><a href="/notes/cd703068ffa81c0f/">Android</a></li><li><details><summary>系统原理</summary><ul><li><a href="/notes/fab84807ffb6d277/">Android 系统源码学习总纲</a></li><li><a href="/notes/1c136c4416d06071/">系统启动流程</a></li><li><a href="/notes/51a85ec64df5a668/">ART：JIT / AOT / Profile / GC</a></li><li><a href="/notes/579943f755f56d07/">SystemServer 启动服务流程</a></li><li><a href="/notes/08d2a56a2a759fce/">PackageManagerService 包扫描与安装流程</a></li><li><a href="/notes/84363bcc3e1a6595/">ATMS 与 AMS</a></li><li><a href="/notes/ee4541ede89330a8/">WindowManagerService 窗口管理流程</a></li><li><a href="/notes/9e5b0f3f4ca04e76/">Input 输入系统流程</a></li><li><a href="/notes/df4027642366e720/">Activity 启动与显示流程</a></li><li><a href="/notes/03953a247cdb3327/">Binder</a></li><li><a href="/notes/3428c6a7ad967847/">Android 渲染上屏流程</a></li></ul></details></li><li><details><summary>UI与渲染</summary><ul><li><a href="/notes/7582c9b1581b3665/">渲染流程</a></li><li><a href="/notes/4a594de417119321/">RecyclerView 缓存机制</a></li><li><a href="/notes/5202b7428683905e/">事件分发机制</a></li><li><a href="/notes/f6c73d82600acf33/">自定义 ItemDecoration</a></li><li><a href="/notes/22a5902d69c4c940/">ItemTouchHelper 使用</a></li><li><a href="/notes/179570f12295f1ab/">Material Design 布局使用</a></li></ul></details></li><li><details><summary>框架与工程</summary><ul><li><a href="/notes/056423c700c40391/">Android 插件化</a></li><li><a href="/notes/2beac6fcfd86382d/">Android 热更新</a></li><li><a href="/notes/029f8807a6033e04/">Dagger2 基础与多宿主实践</a></li><li><a href="/notes/e97db8270e9d1781/">Fresco</a></li><li><a href="/notes/5db034481aa59958/">Glide 源码</a></li><li><a href="/notes/56322147ef68cac3/">MMKV 源码解析</a></li><li><a href="/notes/930c095f85690ccd/">Retrofit 源码解析</a></li></ul></details></li><li><details><summary>性能稳定性</summary><ul><li><a href="/notes/e8bbec3482f2a8d4/">应用启动优化</a></li><li><a href="/notes/2d016d7297cbdba9/">ANR 排查</a></li><li><a href="/notes/689e2041f5c6b580/">内存优化</a></li><li><a href="/notes/7556cd7c3bc2b1c3/">卡顿与丢帧排查</a></li><li><a href="/notes/15be7ae7f28353e1/">TimeoutException</a></li><li><a href="/notes/79948e481206ca62/">BlockCanary</a></li><li><a href="/notes/057de36673ccdcb9/">LeakCanary 原理</a></li></ul></details></li><li><details><summary>工具链</summary><ul><li><a href="/notes/73185ba4ec50bc83/">Gradle 源码流程分析</a></li><li><a href="/notes/e5d63e4556abf9a6/">Gradle 编译流程梳理</a></li><li><a href="/notes/84901174916c45fd/">Transform 使用</a></li><li><a href="/notes/9adf88e7f5b5b11d/">编译性能优化</a></li><li><a href="/notes/689954c1e13017ea/">反编译</a></li></ul></details></li></ul></details></li><li><details><summary>鸿蒙</summary><ul><li><a href="/notes/e48e3cdc84f2a0f6/">基础入门</a></li><li><a href="/notes/6d738cc87d748c3c/">错误处理</a></li></ul></details></li><li><details open><summary>跨端</summary><ul><li><details open><summary>Lynx</summary><ul><li><a href="/notes/741ac84d1e8f8b8a/">Lynx 跨端框架优势与对比</a></li><li><a href="/notes/a708a884013d8a87/" aria-current="page">Lynx 容器监控指标口径</a></li></ul></details></li><li><details><summary>React-Native</summary><ul><li><a href="/notes/0355d59a0679ef8d/">资料</a></li><li><a href="/notes/9a243b8c0439267b/">构建源码依赖工程</a></li></ul></details></li></ul></details></li></ul></details><details><summary>基础知识 <small>40</small></summary><a class="section-overview" href="/topics/fundamentals/">分类概览 →</a><ul><li><details><summary>C++</summary><ul><li><a href="/notes/04e59128bf1e98a4/">C++</a></li><li><a href="/notes/337f3289ca817d07/">基础语义</a></li><li><a href="/notes/7da782b3a8e0f2ef/">对象与资源管理</a></li><li><a href="/posts/cpp-lifetime/">智能指针与异步生命周期</a></li><li><a href="/notes/b772f3b2675faaf5/">STL 容器</a></li><li><a href="/notes/051be1b8f1d35f56/">并发基础</a></li><li><a href="/posts/cpp-build-and-link/">编译与链接</a></li><li><a href="/notes/23212fc946d4c347/">开发问题汇总</a></li><li><a href="/notes/63c12ecbd19b0f91/">熟练度标准与自测</a></li><li><details><summary>开发问题</summary><ul><li><a href="/notes/1d1f5d117322d7da/">ABI 问题</a></li><li><a href="/notes/29c0c961be175b60/">写已释放地址与内存踩踏</a></li><li><a href="/posts/cpp-container-concurrency/">标准容器并发访问</a></li><li><a href="/notes/85ddc54e262bad58/">对象生命周期与回调</a></li><li><a href="/notes/808f19ab738e16da/">Release 偶现问题</a></li><li><a href="/notes/280f7a3ab5fd45c3/">平台运行态 Crash 分类</a></li><li><a href="/notes/e04fd0e54f9a7d47/">ASAN 场景失败与真实内存错误区分</a></li><li><a href="/notes/623620045defcbb3/">历史排查案例</a></li></ul></details></li></ul></details></li><li><details><summary>Java</summary><ul><li><a href="/notes/b1c8a52ce929a020/">Java</a></li><li><a href="/notes/048e210c85f4e2d0/">AQS</a></li><li><a href="/notes/8e9dc066a5544aab/">Synchronized</a></li><li><a href="/notes/b73248fd23c6b5f8/">多线程同步</a></li><li><a href="/notes/3d67cdd9a9231ab4/">线程池</a></li><li><a href="/notes/1e3108720115f9d3/">CopyOnWriteArrayList</a></li><li><a href="/notes/36a3d031dee2fb29/">Volatile</a></li><li><a href="/notes/e0d01430259a37d3/">垃圾回收机制</a></li></ul></details></li><li><details><summary>Kotlin</summary><ul><li><a href="/notes/8a8e5294a0285aae/">Kotlin</a></li><li><a href="/notes/4061b718089f851b/">协程使用</a></li><li><a href="/notes/7856c70c2fa1cb64/">自定义 Kotlin Compiler Plugin</a></li></ul></details></li><li><details><summary>计算机网络</summary><ul><li><a href="/notes/c4418afb3b4eb8e2/">计算机网络</a></li><li><a href="/notes/f425bc6b5bdafa80/">HTTP 协议</a></li><li><a href="/notes/15d4a1778e656754/">编码加密</a></li><li><a href="/notes/2acb0fe30800e3af/">登陆认证</a></li></ul></details></li><li><details><summary>操作系统</summary><ul><li><a href="/notes/cc459aa9bad2e365/">操作系统</a></li><li><a href="/notes/071abe42adc5d303/">CPU 调度算法</a></li><li><a href="/notes/ce6aa3943fd8ff6d/">mmap 原理</a></li><li><a href="/notes/1e29933ec8a137ff/">生产者消费者模型</a></li><li><a href="/notes/c568c645f9f52e82/">页面置换算法</a></li></ul></details></li><li><details><summary>编译原理</summary><ul><li><a href="/notes/f354f9e11ab9a802/">龙书</a></li></ul></details></li><li><details><summary>设计模式</summary><ul><li><a href="/notes/ce7abb0ac2e79516/">单例模式</a></li><li><a href="/notes/e4ca0fc073f3a05b/">建造者模式</a></li></ul></details></li></ul></details><details><summary>音视频 <small>9</small></summary><a class="section-overview" href="/topics/media/">分类概览 →</a><ul><li><a href="/notes/ef119b6df9ca84b8/">音视频处理流程</a></li><li><details><summary>WebRTC</summary><ul><li><a href="/notes/45f67730a5fb6602/">学习大纲</a></li><li><a href="/notes/5974905c4606c9c3/">连接建立</a></li><li><a href="/notes/ac2f41a67eccb700/">拥塞控制</a></li></ul></details></li><li><details><summary>OpenGL</summary><ul><li><a href="/notes/554b2442737d8d68/">基础知识</a></li><li><a href="/notes/d9b1d4ad8abe2a97/">学习资源</a></li></ul></details></li><li><details><summary>图片协议</summary><ul><li><a href="/notes/061f8cae8aec25b6/">分辨率</a></li><li><a href="/notes/162f8ef558b698a4/">RGB</a></li><li><a href="/notes/0f88bf544513e7c1/">YUV</a></li></ul></details></li></ul></details><details><summary>云游戏 <small>5</small></summary><a class="section-overview" href="/topics/cloud-gaming/">分类概览 →</a><ul><li><a href="/notes/bf95bcbbbd60604c/">框架实现</a></li><li><a href="/notes/36582d80df98846f/">云游戏优化</a></li><li><details><summary>技术实现</summary><ul><li><a href="/notes/38845869d7192ea0/">Android 容器抓屏实现</a></li><li><a href="/notes/3e3c8cfb2580f5c8/">Android 容器触摸输入原理</a></li><li><a href="/notes/95623197f800b091/">Android 云游戏免安装启动机制</a></li></ul></details></li></ul></details><details><summary>AI 与大模型 <small>2</small></summary><a class="section-overview" href="/topics/ai/">分类概览 →</a><ul><li><a href="/notes/48948eb946ee1473/">基础知识</a></li><li><a href="/notes/f156542fce17a012/">AI 工程分层与面试回答</a></li></ul></details><details><summary>算法练习 <small>52</small></summary><a class="section-overview" href="/topics/algorithms/">分类概览 →</a><ul><li><a href="/notes/93a9a083af32c3d2/">算法练习</a></li><li><a href="/notes/a78e4d2bbe575447/">高频算法题清单（通用 / 字节风格）</a></li><li><a href="/notes/f745b2389e7d23e7/">小红书高频算法题清单</a></li><li><details><summary>智力题</summary><ul><li><a href="/notes/ba2d85f388e95f73/">总览</a></li><li><a href="/notes/434b50db1b597ad4/">高频智力题清单</a></li><li><a href="/notes/b00124b11552e20b/">思维模型</a></li><li><a href="/notes/d5e1d5a9d69eaefc/">12 球称重</a></li><li><a href="/notes/68e6dc07320087af/">毒药小白鼠</a></li><li><a href="/notes/3d83d5df9cb9a3c8/">鸡蛋掉落</a></li></ul></details></li><li><details><summary>题型模板</summary><ul><li><a href="/notes/dbda860183531936/">滑动窗口</a></li><li><a href="/notes/77bdd4ba7661b40b/">滑动窗口 <small>CPP</small></a></li></ul></details></li><li><details><summary>LeetCode</summary><ul><li><a href="/notes/2d30c32c4a0e89a0/">1.两数之和 <small>CPP</small></a></li><li><a href="/notes/57a5a57f907a0ec4/">2.两数相加 <small>CPP</small></a></li><li><a href="/notes/3f08bcae660db563/">3.无重复字符的最长子串 <small>CPP</small></a></li><li><a href="/notes/b16ca27a01318d4b/">11.盛最多水的容器 <small>CPP</small></a></li><li><a href="/notes/3d08d25f75c18331/">15.三数之和 <small>CPP</small></a></li><li><a href="/notes/8b208b6f30563fb4/">19.删除链表的倒数第-n-个结点 <small>CPP</small></a></li><li><a href="/notes/437bc90908824ab8/">21.合并两个有序链表 <small>CPP</small></a></li><li><a href="/notes/83f209ba4fcd4b26/">23.合并-k-个升序链表 <small>CPP</small></a></li><li><a href="/notes/9aa34711df2551a5/">25.K-个一组翻转链表 <small>CPP</small></a></li><li><a href="/notes/d67130692b90b8f7/">33.搜索旋转排序数组 <small>CPP</small></a></li><li><a href="/notes/9d1a99705c93d424/">34.在排序数组中查找元素的第一个和最后一个位置 <small>CPP</small></a></li><li><a href="/notes/b112df5a6fc5781c/">42.接雨水 <small>CPP</small></a></li><li><a href="/notes/ecc2a5f653ffa5fa/">49.字母异位词分组 <small>CPP</small></a></li><li><a href="/notes/39c18d0756052355/">53.最大子数组和 <small>CPP</small></a></li><li><a href="/notes/e59ded4d7dea5ec5/">56.合并区间 <small>CPP</small></a></li><li><a href="/notes/18406501b8d5cc47/">72.编辑距离 <small>CPP</small></a></li><li><a href="/notes/07d983c7275b5666/">82.删除排序链表中的重复元素-ii <small>CPP</small></a></li><li><a href="/notes/0ad3d0db8dd86ec0/">83.删除排序链表中的重复元素 <small>CPP</small></a></li><li><a href="/notes/1c62040a09bc4c3a/">92.反转链表 II <small>CPP</small></a></li><li><a href="/notes/cdb661dcf6e9acbe/">93.复原 IP 地址 <small>CPP</small></a></li><li><a href="/notes/2616f4bde8260e5d/">121.买卖股票的最佳时机 <small>CPP</small></a></li><li><a href="/notes/3db84bfe65ff3824/">122.买卖股票的最佳时机-II <small>CPP</small></a></li><li><a href="/notes/5e5910321065c5f2/">128.最长连续序列 <small>CPP</small></a></li><li><a href="/notes/50db8c67d7d6c96b/">142.环形链表-ii <small>CPP</small></a></li><li><a href="/notes/a745b24e46f7e8e2/">143.重排链表 <small>CPP</small></a></li><li><a href="/notes/50be710fff45d868/">146.lru-缓存 <small>CPP</small></a></li><li><a href="/notes/98723cd4305832f1/">199.二叉树的右视图 <small>CPP</small></a></li><li><a href="/notes/8953c9820b15afeb/">206.反转链表 <small>CPP</small></a></li><li><a href="/notes/aad8d01506c865c3/">207.课程表 <small>CPP</small></a></li><li><a href="/notes/e436ea8876352dc3/">209.长度最小的子数组 <small>CPP</small></a></li><li><a href="/notes/8fa679c5f37a53c9/">215.数组中的第K个最大元素 <small>CPP</small></a></li><li><a href="/notes/2475489ce09d9280/">227.基本计算器-ii <small>CPP</small></a></li><li><a href="/notes/08d2ef416fe36746/">236.二叉树的最近公共祖先 <small>CPP</small></a></li><li><a href="/notes/110fa7fed851d549/">300.最长递增子序列 <small>CPP</small></a></li><li><a href="/notes/5c1073abb1a4354f/">387.字符串中的第一个唯一字符 <small>CPP</small></a></li><li><a href="/notes/f0fafa58fa81eced/">438.找到字符串中所有字母异位词 <small>CPP</small></a></li><li><a href="/notes/e6273d804d024ac3/">688.骑士在棋盘上的概率 <small>CPP</small></a></li><li><a href="/notes/5080a7cf177c528f/">695.岛屿的最大面积 <small>CPP</small></a></li><li><a href="/notes/002e2eddfaae4e16/">739.每日温度 <small>CPP</small></a></li><li><a href="/notes/5852112c135004af/">1143.最长公共子序列 <small>CPP</small></a></li><li><a href="/notes/85e225b9f26a2a1d/">leetcode <small>H</small></a></li></ul></details></li></ul></details><details><summary>前端 <small>3</small></summary><a class="section-overview" href="/topics/frontend/">分类概览 →</a><ul><li><a href="/notes/3ef98881b1c23e65/">CSS 引入</a></li><li><a href="/notes/3d4c145ae62d12a1/">定位</a></li><li><a href="/notes/85007c347c771cb2/">块元素和行内元素</a></li></ul></details><details><summary>业务实践 <small>7</small></summary><a class="section-overview" href="/topics/practice/">分类概览 →</a><ul><li><a href="/notes/3c9c4da576f6ac05/">AB 实验</a></li><li><a href="/notes/ac7c6e4dc35e8109/">IM 会话缓存与数据访问调度设计</a></li><li><details><summary>案例</summary><ul><li><a href="/notes/f6f786e148e57237/">直播互动玩法 - Cocos 场景切换适配问题</a></li><li><a href="/notes/c251094855ed2daa/">直播互动玩法 - Laya 动态切屏适配</a></li></ul></details></li><li><details><summary>复盘</summary><ul><li><a href="/notes/65dbf3374bf94c55/">项目</a></li><li><a href="/notes/433807cfcf2d12c2/">简历问</a></li><li><a href="/notes/cac176312066e08d/">项目</a></li></ul></details></li></ul></details><details><summary>游戏开发 <small>2</small></summary><a class="section-overview" href="/topics/games/">分类概览 →</a><ul><li><a href="/notes/486f6445d73eaecb/">ThomasBrush 教程</a></li><li><details><summary>游戏</summary><ul><li><details><summary>卡牌游戏</summary><ul><li><a href="/notes/c9dc8f92b42a56bd/">ScriptableObject</a></li></ul></details></li></ul></details></li></ul></details><details><summary>资料归档 <small>2</small></summary><a class="section-overview" href="/topics/archive/">分类概览 →</a><ul><li><a href="/notes/92f96b37e66919d4/">归档说明</a></li><li><details><summary>分享</summary><ul><li><a href="/notes/76801009021bc269/">分享资料 <small>KEY</small></a></li></ul></details></li></ul></details><details><summary>共享资源 <small>2</small></summary><a class="section-overview" href="/topics/resources/">分类概览 →</a><ul><li><a href="/notes/588247153e773e3a/">共享资源说明</a></li><li><details><summary>android</summary><ul><li><a href="/notes/21a8b4d054cc9cb6/">Okhttp拦截器链时序图 <small>POS</small></a></li></ul></details></li></ul></details></nav></aside><main id="main"><header class="post-header"><div class="breadcrumbs"><a href="/topics/client/">客户端开发</a><span>/ 跨端</span><span>/ Lynx</span></div><h1>Lynx 容器监控指标口径</h1></header><article class="prose"><h2 id="结论先行">结论先行</h2>
+<p>Lynx 容器监控不能只讲“埋了几个指标”，更准确的口径是：围绕一次 Lynx 页面打开，把链路拆成容器初始化、资源准备、模板加载、首次绘制、业务数据更新、关键内容上屏，并分别建设资源稳定性、页面性能、运行时异常和业务结果指标。</p>
+<p>对面试来说，最值得讲清楚的是以下几个结论：</p>
+<div class="code-block"><div class="code-label">Mermaid · 流程图源码</div><pre tabindex="0"><code>flowchart TD
+  A[Lynx 容器监控] --&gt; B[性能指标]
+  A --&gt; C[资源指标]
+  A --&gt; D[异常指标]
+  A --&gt; E[业务首帧]
+
+  B --&gt; B1[TotalFCP / FCP / LynxFCP]
+  B --&gt; B2[ActualFMP / TotalFMP / TTI]
+  C --&gt; C1[主模板加载成功率]
+  C --&gt; C2[离线化率 / CDN 成功率 / 缓存命中率]
+  D --&gt; D1[白屏率 / JS 错误率 / JSB 错误率]
+  E --&gt; E1[关键数据 update 后真实上屏]</code></pre></div>
+<ol start="1"><li><p>FCP、LynxFCP、FMP 的差异在“起点”和“终点”不同。</p>
+<ul><li><p>TotalFCP 从用户打开或容器 open_time 算到首次 DrawEnd，更接近用户体感。</p></li><li><p>FCP 从 PrepareTemplateStart 算到首次 DrawEnd，更偏模板准备后的首绘。</p></li><li><p>LynxFCP 从 LoadTemplateStart 算到首次 DrawEnd，更偏 Lynx 引擎自身首屏渲染。</p></li><li><p>ActualFMP/FMP 要靠业务标记关键 setState/updateData，表示核心业务内容真正完成渲染。</p></li></ul></li><li><p>“首帧”要分清楚是引擎首帧还是业务首帧。</p>
+<ul><li><p>引擎首帧通常对应 LoadTemplate 后第一次 DrawEnd。</p></li><li><p>业务首帧应以关键数据更新后的实际绘制完成为准，不能简单用接口返回或 setState 触发点替代。</p></li></ul></li><li><p>容器耗时是 Lynx 渲染前的 Native/容器准备成本。</p>
+<ul><li><p>典型包括 schema 解析、容器创建、LynxView 创建、JSB 注册、GlobalProps/initData 注入、业务插件初始化等。</p></li><li><p>如果 TotalFCP 高但 LynxFCP 正常，问题更可能在容器初始化、资源加载或前置业务链路。</p></li></ul></li><li><p>资源加载监控要能解释“从哪里加载、为什么失败、fallback 到哪里”。</p>
+<ul><li><p>主模板 template.js 是核心资源；其加载成功率、错误率、加载耗时、离线化率是 P0/P1 指标。</p></li><li><p>资源链路要看 pipeline、error_message、res_from、res_version、is_memory、is_request_reused 等字段。</p></li></ul></li><li><p>白屏率是结果指标，不是原因指标。</p>
+<ul><li><p>白屏可能由模板加载失败、离线资源/CDN 失败、JS 异常、JSB 失败、接口失败、渲染失败等导致。</p></li><li><p>白屏监控必须和资源、JS、JSB、接口、Timing 数据一起看，才能归因。</p></li></ul></li></ol>
+<h2 id="资料边界">资料边界</h2>
+<p>本篇根据 Lynx 运行机制、首屏指标和资源加载排查资料整理，只保留通用指标口径，不记录内部文档入口、平台名称、业务标识和具体看板样本。</p>
+<h2 id="一次-lynx-页面打开的监控模型">一次 Lynx 页面打开的监控模型</h2>
+<p>可以把一次页面打开抽象成这条链路：</p>
+<div class="code-block"><div class="code-label">Mermaid · 流程图源码</div><pre tabindex="0"><code>flowchart LR
+  A[open_time] --&gt; B[schema / router]
+  B --&gt; C[容器初始化]
+  C --&gt; D[PrepareTemplate]
+  D --&gt; E[主模板 template.js]
+  E --&gt; F[LoadTemplate]
+  F --&gt; G[Decode / Lepus]
+  G --&gt; H[VDOM / Diff]
+  H --&gt; I[Layout / UI flush]
+  I --&gt; J[首次 DrawEnd]
+  J --&gt; K[JSRuntime 业务逻辑]
+  K --&gt; L[接口请求 / prefetch]
+  L --&gt; M[setState / updateData]
+  M --&gt; N[Update DrawEnd]
+  N --&gt; O[关键内容上屏&lt;br/&gt;ActualFMP / 业务首帧]</code></pre></div>
+<p>对应监控分层：</p>
+<div class="table-wrap" tabindex="0" role="region" aria-label="数据表格"><table><thead><tr><th scope="col">层次</th><th scope="col">关注问题</th><th scope="col">典型指标</th></tr></thead><tbody><tr><td>容器层</td><td>页面有没有进入容器、初始化是否慢</td><td>容器初始化耗时、ContainerInited、页面加载成功率</td></tr><tr><td>资源层</td><td>template.js 和子资源有没有拿到、从哪里拿、慢在哪里</td><td>主模板资源加载成功率、错误率、离线化率、缓存命中率、CDN 成功率、资源下载耗时</td></tr><tr><td>Lynx 渲染层</td><td>模板加载后首绘是否慢</td><td>LynxFCP、FCP、TTI、Decode、VDOM、Layout、UI flush 耗时</td></tr><tr><td>JS/业务更新层</td><td>数据回来后核心内容是否上屏</td><td>ActualFMP、TotalActualFMP、业务首帧、接口耗时、WaitingUpdateDuration</td></tr><tr><td>异常层</td><td>页面为什么不可用</td><td>白屏率、JS 错误率、JSB 错误率、引擎错误率、静态资源错误率、接口请求错误率</td></tr></tbody></table></div>
+<h2 id="fcp-的实现口径">FCP 的实现口径</h2>
+<p>FCP 是 First Contentful Paint，表示页面从开始加载到任意内容首次完成绘制的耗时。这里的“内容”可以是文本、图片、SVG、非白色 canvas 等，不一定是业务真正关心的核心内容。</p>
+<p>在 Lynx Timing 里，FCP 常见有两个起点：</p>
+<div class="code-block"><div class="code-label">Mermaid · 流程图源码</div><pre tabindex="0"><code>flowchart LR
+  A[open_time] --&gt; B[PrepareTemplateStart]
+  B --&gt; C[LoadTemplateStart]
+  C --&gt; D[首次 DrawEnd]
+
+  A -. TotalFCP .-&gt; D
+  B -. FCP .-&gt; D
+  C -. LynxFCP .-&gt; D</code></pre></div>
+<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>FCP = Setup.DrawEnd - Setup.PrepareTemplateStart
+TotalFCP = Setup.DrawEnd - open_time
+LynxFCP = Setup.DrawEnd - Setup.LoadTemplateStart</code></pre></div>
+<p>两者区别：</p>
+<div class="table-wrap" tabindex="0" role="region" aria-label="数据表格"><table><thead><tr><th scope="col">指标</th><th scope="col">起点</th><th scope="col">终点</th><th scope="col">说明</th></tr></thead><tbody><tr><td>FCP</td><td>PrepareTemplateStart</td><td>LoadTemplate 后首次 DrawEnd</td><td>衡量模板准备开始后的首次内容绘制</td></tr><tr><td>TotalFCP</td><td>open_time</td><td>LoadTemplate 后首次 DrawEnd</td><td>包含用户打开到容器/资源准备/首绘的完整耗时，更贴近用户体感</td></tr></tbody></table></div>
+<p>实现方式：</p>
+<ol start="1"><li><p>容器或业务入口记录 <code>open_time</code>。</p></li><li><p>容器开始准备模板时记录 <code>PrepareTemplateStart</code>。</p></li><li><p>Lynx SDK 内部记录 <code>LoadTemplateStart/End</code>、<code>DrawEnd</code> 等 timing。</p></li><li><p>容器监控模块收集 timing 并上报。</p></li><li><p>指标看板按页面、版本、系统、资源来源等维度消费。</p></li></ol>
+<p>面试口径：</p>
+<blockquote><p>FCP 看的是首个可见内容什么时候出来。业务侧需要补齐 open_time 和模板准备起点，Lynx SDK 会提供 LoadTemplate 和 DrawEnd 等时间戳。TotalFCP 从 open_time 算，更接近用户体感；FCP 从 PrepareTemplateStart 算，更适合分析模板准备后的首绘链路。</p></blockquote>
+<h2 id="lynxfcp-的实现口径">LynxFCP 的实现口径</h2>
+<p>LynxFCP 更偏 Lynx 引擎内部指标，目的是排除容器初始化、资源下载、业务前置流程等干扰，只看模板进入 Lynx 后到首次绘制完成的耗时。</p>
+<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>LynxFCP = Setup.DrawEnd - Setup.LoadTemplateStart</code></pre></div>
+<p>它覆盖的主要阶段包括：</p>
+<div class="code-block"><div class="code-label">Mermaid · 流程图源码</div><pre tabindex="0"><code>flowchart LR
+  A[LoadTemplateStart] --&gt; B[template decode]
+  B --&gt; C[lepus 执行]
+  C --&gt; D[create VDOM]
+  D --&gt; E[dispatch DOM]
+  E --&gt; F[layout]
+  F --&gt; G[ui_operation_flush]
+  G --&gt; H[DrawEnd]
+
+  A -. LynxFCP .-&gt; H</code></pre></div>
+<p>归因方式：</p>
+<ul><li><p>TotalFCP 高、LynxFCP 正常：问题更可能在容器初始化、资源加载、CDN/离线资源、业务前置逻辑。</p></li><li><p>LynxFCP 高：问题更可能在模板复杂度、节点数量、布局计算、UI flush、Lynx 渲染链路。</p></li></ul>
+<p>面试口径：</p>
+<blockquote><p>LynxFCP 从 LoadTemplateStart 到首次 DrawEnd，主要衡量 Lynx 引擎自身首屏渲染能力。如果它高，就要看模板复杂度、VDOM、layout 和 UI flush；如果它正常但 TotalFCP 高，就说明瓶颈在进入 Lynx 前的容器或资源链路。</p></blockquote>
+<h2 id="fmp--actualfmp-的实现口径">FMP / ActualFMP 的实现口径</h2>
+<p>FMP 是 First Meaningful Paint，表示用户真正关心的关键内容完成渲染。它和 FCP 最大的区别是：FCP 可能只是 loading 或占位内容出现，FMP 必须是核心业务内容可见。</p>
+<p>Lynx SDK 无法天然知道哪个内容对业务“有意义”，所以需要业务侧主动标记。</p>
+<p>典型实现：</p>
+<div class="code-block"><div class="code-label">Mermaid · 流程图源码</div><pre tabindex="0"><code>flowchart LR
+  A[请求关键业务数据] --&gt; B[数据返回并解析]
+  B --&gt; C[setState / setData / updateData]
+  C --&gt; D[携带 __lynx_timing_actual_fmp]
+  D --&gt; E[Update 后首次 DrawEnd]
+  E --&gt; F[ActualFMP / TotalActualFMP]</code></pre></div>
+<p>常见计算：</p>
+<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>ActualFMP = Update.DrawEnd - Setup.PrepareTemplateStart
+TotalActualFMP = Update.DrawEnd - open_time
+FMP = MAX(ActualFMP, FCP)
+TotalFMP = MAX(TotalActualFMP, TotalFCP)</code></pre></div>
+<p>如果业务没有标记 ActualFMP，监控侧通常只能退化使用 FCP 或无法产出真实业务 FMP。因此对业务页面来说，关键不是“有没有 FMP 指标”，而是有没有把真正关键的 setState/updateData 标出来。</p>
+<p>业务页面可以这样定义：</p>
+<ul><li><p>loading 或骨架屏出现：最多算 FCP。</p></li><li><p>标题、封面、主按钮、价格/权益/状态等关键内容基于接口数据展示完成：算业务 FMP 或业务首帧。</p></li></ul>
+<p>面试口径：</p>
+<blockquote><p>FMP 更偏业务真实首屏。SDK 不知道哪个模块是核心内容，所以我们会在关键接口数据回来并触发 setState 时带上 <code>__lynx_timing_actual_fmp</code> 标记，取这次 update 后的 DrawEnd 作为业务首屏完成点。这样 FMP 才能代表用户真正看到核心内容，而不是 loading 出来了。</p></blockquote>
+<h2 id="容器耗时的实现口径">容器耗时的实现口径</h2>
+<p>容器耗时是进入 Lynx 渲染前，Native 容器和业务框架的准备成本，可以通过 <code>ContainerInited</code> 这类自定义指标记录容器准备业务数据或组件的时间。</p>
+<p>可以按下面方式理解：</p>
+<div class="code-block"><div class="code-label">Mermaid · 流程图源码</div><pre tabindex="0"><code>flowchart LR
+  A[open_time] --&gt; B[schema / router 解析]
+  B --&gt; C[容器实例创建]
+  C --&gt; D[LynxView 创建]
+  D --&gt; E[业务上下文准备]
+  E --&gt; F[JSB / NativeModule 注册]
+  F --&gt; G[GlobalProps / initData 注入]
+  G --&gt; H[插件初始化]
+  H --&gt; I[container_inited]
+
+  A -. ContainerInited .-&gt; I</code></pre></div>
+<p>常见计算：</p>
+<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>ContainerInited = container_init_end - open_time
+container_create_cost = container_create_end - container_create_start</code></pre></div>
+<p>实际项目里不一定只有一个容器耗时指标，可能会继续拆成 schema 解析、LynxView 创建、插件初始化、GlobalProps 注入等子阶段。是否要拆到这么细，取决于线上归因需要。</p>
+<p>面试口径：</p>
+<blockquote><p>容器耗时看的是 Lynx 开始 LoadTemplate 之前 Native 侧做了多少准备工作，包括 schema 解析、容器创建、LynxView 创建、JSB 注册、业务参数和 GlobalProps 注入等。它能帮助区分“页面慢是 Lynx 渲染慢”，还是“还没进入 Lynx 前容器和资源准备就慢”。</p></blockquote>
+<h2 id="首帧的实现口径">首帧的实现口径</h2>
+<p>“首帧”要先定义清楚，否则很容易和 FCP/FMP 混在一起。</p>
+<h3 id="引擎首帧">引擎首帧</h3>
+<p>引擎首帧通常就是 LoadTemplate 后第一次 DrawEnd，对应 LynxFCP 的结束点。</p>
+<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>引擎首帧 = first DrawEnd after LoadTemplate</code></pre></div>
+<p>它说明 Lynx 模板是否已经画出第一帧，但不保证关键业务数据已经展示。</p>
+<h3 id="业务首帧">业务首帧</h3>
+<p>业务首帧是关键业务内容真正上屏。它应该由业务定义关键模块，而不是由 SDK 自动猜。</p>
+<p>典型实现：</p>
+<div class="code-block"><div class="code-label">Mermaid · 流程图源码</div><pre tabindex="0"><code>flowchart LR
+  A[页面启动] --&gt; B[请求关键接口]
+  B --&gt; C[数据解析]
+  C --&gt; D[setState / updateData]
+  D --&gt; E[等待 2-4 帧&lt;br/&gt;或监听绘制完成]
+  E --&gt; F{关键 View 是否可见?}
+  F -- attach / visible / size / alpha 正常 --&gt; G[上报业务首帧]
+  F -- 不满足 --&gt; H[继续等待或上报异常]</code></pre></div>
+<p>为什么不能把接口返回或 setState 当成首帧：</p>
+<ul><li><p>接口返回只代表数据到了，不代表 UI 已经更新。</p></li><li><p>setState/updateData 只代表触发更新，不代表 Draw/Layout/Flush 已完成。</p></li><li><p>Android/iOS 真正显示还要经过后续渲染管线。</p></li></ul>
+<p>面试口径：</p>
+<blockquote><p>首帧我会分成引擎首帧和业务首帧。引擎首帧是 LoadTemplate 后第一次 DrawEnd，更接近 LynxFCP；业务首帧要等关键数据更新后的真实绘制完成，必要时延后 2～4 帧并检查关键 View 可见性。这样指标才接近用户真的看到内容的时间。</p></blockquote>
+<h2 id="资源加载指标的实现口径">资源加载指标的实现口径</h2>
+<p>资源层是 Lynx 稳定性和首屏性能的前置条件，尤其是主模板 <code>template.js</code>。</p>
+<div class="code-block"><div class="code-label">Mermaid · 流程图源码</div><pre tabindex="0"><code>flowchart LR
+  A[请求 template.js / 子资源] --&gt; B{Memory 命中?}
+  B -- 是 --&gt; Z[返回资源]
+  B -- 否 --&gt; C{离线资源命中?}
+  C -- 是 --&gt; Z
+  C -- 否 --&gt; D{Builtin 命中?}
+  D -- 是 --&gt; Z
+  D -- 否 --&gt; E{CDN 请求成功?}
+  E -- 是 --&gt; Z
+  E -- 否 --&gt; F[资源加载失败]
+
+  F --&gt; G[error_message]
+  A --&gt; H[pipeline 记录尝试路径]
+  Z --&gt; I[res_from / res_version / 耗时上报]</code></pre></div>
+<p>核心指标：</p>
+<div class="table-wrap" tabindex="0" role="region" aria-label="数据表格"><table><thead><tr><th scope="col">指标</th><th scope="col">口径</th><th scope="col">说明</th></tr></thead><tbody><tr><td>主模板资源加载成功率</td><td>资源加载成功 PV / 成功失败总 PV</td><td>判断 template.js 是否能成功获取</td></tr><tr><td>主模板资源加载错误率</td><td>资源加载失败 PV / 资源加载总 PV</td><td>和成功率互补，用于报警</td></tr><tr><td>主模板资源加载耗时</td><td>资源从触发请求到返回的总耗时</td><td>影响 FCP/TotalFCP</td></tr><tr><td>主模板资源离线化率</td><td>离线化资源数 / 总资源数</td><td>判断是否能走离线资源</td></tr><tr><td>静态资源错误率</td><td>发生静态资源错误的页面 PV / 页面总 PV</td><td>关注图片、样式、子资源等</td></tr><tr><td>CDN 成功率</td><td>CDN 请求成功次数 / CDN 请求总次数</td><td>离线未命中后的 fallback 能力</td></tr><tr><td>缓存命中率</td><td>memory/offline/request reuse 命中次数 / 请求总次数</td><td>影响资源下载和首屏速度</td></tr></tbody></table></div>
+<p>排查时重点看：</p>
+<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>pipeline：这次资源请求依次尝试了哪些加载方式
+error_message：每一层加载方式为什么失败
+res_from：最终资源来自哪里
+res_version：资源版本
+is_memory：是否命中内存缓存
+is_request_reused：是否命中请求复用
+res_load_perf：资源加载性能数据
+res_load_error：资源加载错误数据</code></pre></div>
+<p>面试口径：</p>
+<blockquote><p>资源监控不只是看有没有成功，还要能解释资源从哪里来。我们会看主模板 template.js 的加载成功率、离线化率、CDN fallback 成功率、缓存命中率和加载耗时。排查时看 pipeline 和 error_message，判断是 memory、离线资源、builtin、CDN 哪一层没有命中或失败。</p></blockquote>
+<h2 id="白屏率和异常率的实现口径">白屏率和异常率的实现口径</h2>
+<p>白屏率是结果指标，通常由 watchdog 或容器监控能力发现，但归因要依赖前面几层数据。</p>
+<div class="code-block"><div class="code-label">Mermaid · 流程图源码</div><pre tabindex="0"><code>flowchart TD
+  A[白屏 / 首屏超时] --&gt; B{主模板加载成功?}
+  B -- 否 --&gt; B1[资源问题&lt;br/&gt;Memory / 离线资源 / CDN]
+  B -- 是 --&gt; C{JS 是否异常?}
+  C -- 是 --&gt; C1[JS Error / Promise Reject]
+  C -- 否 --&gt; D{关键 JSB 是否失败?}
+  D -- 是 --&gt; D1[JSB 错误 / 能力不兼容]
+  D -- 否 --&gt; E{关键接口是否成功?}
+  E -- 否 --&gt; E1[接口失败 / 数据解析失败]
+  E -- 是 --&gt; F{Update 后是否绘制?}
+  F -- 否 --&gt; F1[setState 未触发 / 渲染失败]
+  F -- 是 --&gt; G[检查可见性判断或白屏检测误差]</code></pre></div>
+<p>白屏可能原因：</p>
+<ul><li><p>主模板加载失败；</p></li><li><p>CDN 或离线资源失败；</p></li><li><p>JS 初始化失败；</p></li><li><p>JS 运行异常；</p></li><li><p>JSB 关键能力失败；</p></li><li><p>接口请求失败或数据解析失败；</p></li><li><p>setState/updateData 没触发；</p></li><li><p>触发了更新但渲染失败；</p></li><li><p>容器 attach/show 生命周期异常。</p></li></ul>
+<p>业务 Lynx 监控中常见的质量指标包括：</p>
+<div class="table-wrap" tabindex="0" role="region" aria-label="数据表格"><table><thead><tr><th scope="col">指标</th><th scope="col">口径</th></tr></thead><tbody><tr><td>JS 错误率</td><td>发生 JS 错误的页面 PV / 页面总 PV</td></tr><tr><td>引擎错误率</td><td>发生引擎错误的页面 PV / 页面总 PV</td></tr><tr><td>JSB 错误率</td><td>发生 JSB 错误的页面 PV / 页面总 PV</td></tr><tr><td>静态资源错误率</td><td>发生静态资源错误的页面 PV / 页面总 PV</td></tr><tr><td>接口请求错误率</td><td>发生接口请求错误的页面 PV / 页面总 PV</td></tr></tbody></table></div>
+<p>需要注意：这些页面级错误率常以页面 PV 为分母，不等于某个 JSB、某个接口、某个资源自身的调用成功率。如果要定位具体方法或 URL，需要额外按 method/url/resource 维度上报。</p>
+<p>面试口径：</p>
+<blockquote><p>白屏率只能告诉我们用户看到空白了，不能直接说明原因。所以要把白屏事件和资源 pipeline、JS 错误、JSB 错误、接口错误、Timing 阶段耗时串起来。比如主模板加载失败导致白屏，和接口数据没回来导致业务 FMP 超时，是两类完全不同的问题。</p></blockquote>
+<h2 id="如何用这些指标做归因">如何用这些指标做归因</h2>
+<p>常见归因可以按下面判断：</p>
+<div class="code-block"><div class="code-label">Mermaid · 流程图源码</div><pre tabindex="0"><code>flowchart TD
+  A[线上指标异常] --&gt; B{TotalFCP 高?}
+  B -- 是 --&gt; C{LynxFCP 高?}
+  C -- 否 --&gt; C1[容器 / 资源 / 前置业务慢]
+  C -- 是 --&gt; C2[模板复杂 / VDOM / Layout / UI flush 慢]
+  B -- 否 --&gt; D{FCP 正常但 FMP 高?}
+  D -- 是 --&gt; D1[接口慢 / prefetch 失效 / update 慢]
+  D -- 否 --&gt; E{白屏率高?}
+  E -- 是 --&gt; E1[结合资源 / JS / JSB / 接口错误归因]
+  E -- 否 --&gt; F{JSB 错误率高?}
+  F -- 是 --&gt; F1[Native 能力不可用 / 低版本不兼容 / 参数错误]
+  F -- 否 --&gt; G[继续看页面维度和单点日志]</code></pre></div>
+<div class="table-wrap" tabindex="0" role="region" aria-label="数据表格"><table><thead><tr><th scope="col">现象</th><th scope="col">更可能的问题</th></tr></thead><tbody><tr><td>TotalFCP 高，LynxFCP 正常</td><td>容器初始化、资源加载、CDN/离线资源、前置业务逻辑慢</td></tr><tr><td>LynxFCP 高</td><td>模板复杂、节点过多、VDOM 创建、Layout、UI flush 慢</td></tr><tr><td>FCP 正常，ActualFMP/TotalFMP 高</td><td>loading 出来了，但关键接口慢、prefetch 失效、setState/update 慢</td></tr><tr><td>资源加载耗时高</td><td>离线未命中走 CDN、模板包过大、CDN 慢、缓存策略异常</td></tr><tr><td>白屏率高</td><td>结合资源错误、JS 错误、JSB 错误、接口错误、容器生命周期继续拆因</td></tr><tr><td>JSB 错误率高</td><td>Native 能力不可用、参数不兼容、低版本缺方法、权限/登录态问题</td></tr></tbody></table></div>
+<h2 id="最终可背版本">最终可背版本</h2>
+<p>如果面试只给 1 分钟，可以这样答：</p>
+<blockquote><p>Lynx 容器监控我会按打开链路拆：open_time、容器初始化、资源准备、LoadTemplate、首次 DrawEnd、业务数据 update、关键内容上屏。FCP 是首次内容绘制，TotalFCP 从 open_time 算，FCP 从 PrepareTemplateStart 算；LynxFCP 从 LoadTemplateStart 到首次 DrawEnd，主要看 Lynx 引擎自身渲染；FMP 更偏业务真实首屏，需要业务在关键 setState/updateData 上打 <code>__lynx_timing_actual_fmp</code> 标记，然后取这次 update 后的 DrawEnd。容器耗时看 schema、LynxView 创建、JSB 注册、GlobalProps 注入等 Native 准备成本。首帧要区分引擎首帧和业务首帧，业务首帧不能用接口返回或 setState 代替，要等关键模块真正绘制完成。资源侧再看主模板加载成功率、离线化率、CDN 成功率、缓存命中率、下载耗时，异常侧看白屏率、JS/JSB/引擎/接口错误率，最后用同一个 session 串起来做归因。</p></blockquote></article><p class="post-bottom"><a href="/topics/client/">← 返回客户端开发目录</a><a href="#main">回到顶部 ↑</a></p><footer><span>Joel · 技术学习与实践笔记</span><a href="#main">回到顶部 ↑</a></footer></main><aside class="toc"><span>本篇目录</span><ul><li><a href="#%E7%BB%93%E8%AE%BA%E5%85%88%E8%A1%8C">结论先行</a></li><li><a href="#%E8%B5%84%E6%96%99%E8%BE%B9%E7%95%8C">资料边界</a></li><li><a href="#%E4%B8%80%E6%AC%A1-lynx-%E9%A1%B5%E9%9D%A2%E6%89%93%E5%BC%80%E7%9A%84%E7%9B%91%E6%8E%A7%E6%A8%A1%E5%9E%8B">一次 Lynx 页面打开的监控模型</a></li><li><a href="#fcp-%E7%9A%84%E5%AE%9E%E7%8E%B0%E5%8F%A3%E5%BE%84">FCP 的实现口径</a></li><li><a href="#lynxfcp-%E7%9A%84%E5%AE%9E%E7%8E%B0%E5%8F%A3%E5%BE%84">LynxFCP 的实现口径</a></li><li><a href="#fmp--actualfmp-%E7%9A%84%E5%AE%9E%E7%8E%B0%E5%8F%A3%E5%BE%84">FMP / ActualFMP 的实现口径</a></li><li><a href="#%E5%AE%B9%E5%99%A8%E8%80%97%E6%97%B6%E7%9A%84%E5%AE%9E%E7%8E%B0%E5%8F%A3%E5%BE%84">容器耗时的实现口径</a></li><li><a href="#%E9%A6%96%E5%B8%A7%E7%9A%84%E5%AE%9E%E7%8E%B0%E5%8F%A3%E5%BE%84">首帧的实现口径</a></li><li><a href="#%E8%B5%84%E6%BA%90%E5%8A%A0%E8%BD%BD%E6%8C%87%E6%A0%87%E7%9A%84%E5%AE%9E%E7%8E%B0%E5%8F%A3%E5%BE%84">资源加载指标的实现口径</a></li><li><a href="#%E7%99%BD%E5%B1%8F%E7%8E%87%E5%92%8C%E5%BC%82%E5%B8%B8%E7%8E%87%E7%9A%84%E5%AE%9E%E7%8E%B0%E5%8F%A3%E5%BE%84">白屏率和异常率的实现口径</a></li><li><a href="#%E5%A6%82%E4%BD%95%E7%94%A8%E8%BF%99%E4%BA%9B%E6%8C%87%E6%A0%87%E5%81%9A%E5%BD%92%E5%9B%A0">如何用这些指标做归因</a></li><li><a href="#%E6%9C%80%E7%BB%88%E5%8F%AF%E8%83%8C%E7%89%88%E6%9C%AC">最终可背版本</a></li></ul></aside></div></body></html>

@@ -1,0 +1,131 @@
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="description" content="拥塞控制 · 客户端开发、系统原理与工程实践。"><meta name="color-scheme" content="light dark"><meta name="theme-color" content="#f4f1ea"><title>拥塞控制 · Joel 的技术笔记</title><link rel="icon" href="/favicon.svg"><link rel="stylesheet" href="/style.css"><script src="/app.js" defer></script></head><body><a class="skip" href="#main">跳到正文</a><header class="site-header"><a class="brand" href="/" aria-label="Joel 的技术笔记首页"><span class="brand-mark" aria-hidden="true">J</span><span>Joel 的技术笔记</span></a><div class="header-actions"><span class="header-note">CLIENT · MEDIA · SYSTEMS</span><button class="mobile-menu" type="button" aria-controls="site-directory" aria-expanded="false">目录</button><a href="/#search">搜索</a></div></header><div class="layout has-toc"><aside class="sidebar" id="site-directory"><a class="directory-home" href="/">全部目录 <span>167</span></a><nav aria-label="知识目录"><details><summary>客户端开发 <small>43</small></summary><a class="section-overview" href="/topics/client/">分类概览 →</a><ul><li><details><summary>Android</summary><ul><li><a href="/notes/cd703068ffa81c0f/">Android</a></li><li><details><summary>系统原理</summary><ul><li><a href="/notes/fab84807ffb6d277/">Android 系统源码学习总纲</a></li><li><a href="/notes/1c136c4416d06071/">系统启动流程</a></li><li><a href="/notes/51a85ec64df5a668/">ART：JIT / AOT / Profile / GC</a></li><li><a href="/notes/579943f755f56d07/">SystemServer 启动服务流程</a></li><li><a href="/notes/08d2a56a2a759fce/">PackageManagerService 包扫描与安装流程</a></li><li><a href="/notes/84363bcc3e1a6595/">ATMS 与 AMS</a></li><li><a href="/notes/ee4541ede89330a8/">WindowManagerService 窗口管理流程</a></li><li><a href="/notes/9e5b0f3f4ca04e76/">Input 输入系统流程</a></li><li><a href="/notes/df4027642366e720/">Activity 启动与显示流程</a></li><li><a href="/notes/03953a247cdb3327/">Binder</a></li><li><a href="/notes/3428c6a7ad967847/">Android 渲染上屏流程</a></li></ul></details></li><li><details><summary>UI与渲染</summary><ul><li><a href="/notes/7582c9b1581b3665/">渲染流程</a></li><li><a href="/notes/4a594de417119321/">RecyclerView 缓存机制</a></li><li><a href="/notes/5202b7428683905e/">事件分发机制</a></li><li><a href="/notes/f6c73d82600acf33/">自定义 ItemDecoration</a></li><li><a href="/notes/22a5902d69c4c940/">ItemTouchHelper 使用</a></li><li><a href="/notes/179570f12295f1ab/">Material Design 布局使用</a></li></ul></details></li><li><details><summary>框架与工程</summary><ul><li><a href="/notes/056423c700c40391/">Android 插件化</a></li><li><a href="/notes/2beac6fcfd86382d/">Android 热更新</a></li><li><a href="/notes/029f8807a6033e04/">Dagger2 基础与多宿主实践</a></li><li><a href="/notes/e97db8270e9d1781/">Fresco</a></li><li><a href="/notes/5db034481aa59958/">Glide 源码</a></li><li><a href="/notes/56322147ef68cac3/">MMKV 源码解析</a></li><li><a href="/notes/930c095f85690ccd/">Retrofit 源码解析</a></li></ul></details></li><li><details><summary>性能稳定性</summary><ul><li><a href="/notes/e8bbec3482f2a8d4/">应用启动优化</a></li><li><a href="/notes/2d016d7297cbdba9/">ANR 排查</a></li><li><a href="/notes/689e2041f5c6b580/">内存优化</a></li><li><a href="/notes/7556cd7c3bc2b1c3/">卡顿与丢帧排查</a></li><li><a href="/notes/15be7ae7f28353e1/">TimeoutException</a></li><li><a href="/notes/79948e481206ca62/">BlockCanary</a></li><li><a href="/notes/057de36673ccdcb9/">LeakCanary 原理</a></li></ul></details></li><li><details><summary>工具链</summary><ul><li><a href="/notes/73185ba4ec50bc83/">Gradle 源码流程分析</a></li><li><a href="/notes/e5d63e4556abf9a6/">Gradle 编译流程梳理</a></li><li><a href="/notes/84901174916c45fd/">Transform 使用</a></li><li><a href="/notes/9adf88e7f5b5b11d/">编译性能优化</a></li><li><a href="/notes/689954c1e13017ea/">反编译</a></li></ul></details></li></ul></details></li><li><details><summary>鸿蒙</summary><ul><li><a href="/notes/e48e3cdc84f2a0f6/">基础入门</a></li><li><a href="/notes/6d738cc87d748c3c/">错误处理</a></li></ul></details></li><li><details><summary>跨端</summary><ul><li><details><summary>Lynx</summary><ul><li><a href="/notes/741ac84d1e8f8b8a/">Lynx 跨端框架优势与对比</a></li><li><a href="/notes/a708a884013d8a87/">Lynx 容器监控指标口径</a></li></ul></details></li><li><details><summary>React-Native</summary><ul><li><a href="/notes/0355d59a0679ef8d/">资料</a></li><li><a href="/notes/9a243b8c0439267b/">构建源码依赖工程</a></li></ul></details></li></ul></details></li></ul></details><details><summary>基础知识 <small>40</small></summary><a class="section-overview" href="/topics/fundamentals/">分类概览 →</a><ul><li><details><summary>C++</summary><ul><li><a href="/notes/04e59128bf1e98a4/">C++</a></li><li><a href="/notes/337f3289ca817d07/">基础语义</a></li><li><a href="/notes/7da782b3a8e0f2ef/">对象与资源管理</a></li><li><a href="/posts/cpp-lifetime/">智能指针与异步生命周期</a></li><li><a href="/notes/b772f3b2675faaf5/">STL 容器</a></li><li><a href="/notes/051be1b8f1d35f56/">并发基础</a></li><li><a href="/posts/cpp-build-and-link/">编译与链接</a></li><li><a href="/notes/23212fc946d4c347/">开发问题汇总</a></li><li><a href="/notes/63c12ecbd19b0f91/">熟练度标准与自测</a></li><li><details><summary>开发问题</summary><ul><li><a href="/notes/1d1f5d117322d7da/">ABI 问题</a></li><li><a href="/notes/29c0c961be175b60/">写已释放地址与内存踩踏</a></li><li><a href="/posts/cpp-container-concurrency/">标准容器并发访问</a></li><li><a href="/notes/85ddc54e262bad58/">对象生命周期与回调</a></li><li><a href="/notes/808f19ab738e16da/">Release 偶现问题</a></li><li><a href="/notes/280f7a3ab5fd45c3/">平台运行态 Crash 分类</a></li><li><a href="/notes/e04fd0e54f9a7d47/">ASAN 场景失败与真实内存错误区分</a></li><li><a href="/notes/623620045defcbb3/">历史排查案例</a></li></ul></details></li></ul></details></li><li><details><summary>Java</summary><ul><li><a href="/notes/b1c8a52ce929a020/">Java</a></li><li><a href="/notes/048e210c85f4e2d0/">AQS</a></li><li><a href="/notes/8e9dc066a5544aab/">Synchronized</a></li><li><a href="/notes/b73248fd23c6b5f8/">多线程同步</a></li><li><a href="/notes/3d67cdd9a9231ab4/">线程池</a></li><li><a href="/notes/1e3108720115f9d3/">CopyOnWriteArrayList</a></li><li><a href="/notes/36a3d031dee2fb29/">Volatile</a></li><li><a href="/notes/e0d01430259a37d3/">垃圾回收机制</a></li></ul></details></li><li><details><summary>Kotlin</summary><ul><li><a href="/notes/8a8e5294a0285aae/">Kotlin</a></li><li><a href="/notes/4061b718089f851b/">协程使用</a></li><li><a href="/notes/7856c70c2fa1cb64/">自定义 Kotlin Compiler Plugin</a></li></ul></details></li><li><details><summary>计算机网络</summary><ul><li><a href="/notes/c4418afb3b4eb8e2/">计算机网络</a></li><li><a href="/notes/f425bc6b5bdafa80/">HTTP 协议</a></li><li><a href="/notes/15d4a1778e656754/">编码加密</a></li><li><a href="/notes/2acb0fe30800e3af/">登陆认证</a></li></ul></details></li><li><details><summary>操作系统</summary><ul><li><a href="/notes/cc459aa9bad2e365/">操作系统</a></li><li><a href="/notes/071abe42adc5d303/">CPU 调度算法</a></li><li><a href="/notes/ce6aa3943fd8ff6d/">mmap 原理</a></li><li><a href="/notes/1e29933ec8a137ff/">生产者消费者模型</a></li><li><a href="/notes/c568c645f9f52e82/">页面置换算法</a></li></ul></details></li><li><details><summary>编译原理</summary><ul><li><a href="/notes/f354f9e11ab9a802/">龙书</a></li></ul></details></li><li><details><summary>设计模式</summary><ul><li><a href="/notes/ce7abb0ac2e79516/">单例模式</a></li><li><a href="/notes/e4ca0fc073f3a05b/">建造者模式</a></li></ul></details></li></ul></details><details open><summary>音视频 <small>9</small></summary><a class="section-overview" href="/topics/media/">分类概览 →</a><ul><li><a href="/notes/ef119b6df9ca84b8/">音视频处理流程</a></li><li><details open><summary>WebRTC</summary><ul><li><a href="/notes/45f67730a5fb6602/">学习大纲</a></li><li><a href="/notes/5974905c4606c9c3/">连接建立</a></li><li><a href="/notes/ac2f41a67eccb700/" aria-current="page">拥塞控制</a></li></ul></details></li><li><details><summary>OpenGL</summary><ul><li><a href="/notes/554b2442737d8d68/">基础知识</a></li><li><a href="/notes/d9b1d4ad8abe2a97/">学习资源</a></li></ul></details></li><li><details><summary>图片协议</summary><ul><li><a href="/notes/061f8cae8aec25b6/">分辨率</a></li><li><a href="/notes/162f8ef558b698a4/">RGB</a></li><li><a href="/notes/0f88bf544513e7c1/">YUV</a></li></ul></details></li></ul></details><details><summary>云游戏 <small>5</small></summary><a class="section-overview" href="/topics/cloud-gaming/">分类概览 →</a><ul><li><a href="/notes/bf95bcbbbd60604c/">框架实现</a></li><li><a href="/notes/36582d80df98846f/">云游戏优化</a></li><li><details><summary>技术实现</summary><ul><li><a href="/notes/38845869d7192ea0/">Android 容器抓屏实现</a></li><li><a href="/notes/3e3c8cfb2580f5c8/">Android 容器触摸输入原理</a></li><li><a href="/notes/95623197f800b091/">Android 云游戏免安装启动机制</a></li></ul></details></li></ul></details><details><summary>AI 与大模型 <small>2</small></summary><a class="section-overview" href="/topics/ai/">分类概览 →</a><ul><li><a href="/notes/48948eb946ee1473/">基础知识</a></li><li><a href="/notes/f156542fce17a012/">AI 工程分层与面试回答</a></li></ul></details><details><summary>算法练习 <small>52</small></summary><a class="section-overview" href="/topics/algorithms/">分类概览 →</a><ul><li><a href="/notes/93a9a083af32c3d2/">算法练习</a></li><li><a href="/notes/a78e4d2bbe575447/">高频算法题清单（通用 / 字节风格）</a></li><li><a href="/notes/f745b2389e7d23e7/">小红书高频算法题清单</a></li><li><details><summary>智力题</summary><ul><li><a href="/notes/ba2d85f388e95f73/">总览</a></li><li><a href="/notes/434b50db1b597ad4/">高频智力题清单</a></li><li><a href="/notes/b00124b11552e20b/">思维模型</a></li><li><a href="/notes/d5e1d5a9d69eaefc/">12 球称重</a></li><li><a href="/notes/68e6dc07320087af/">毒药小白鼠</a></li><li><a href="/notes/3d83d5df9cb9a3c8/">鸡蛋掉落</a></li></ul></details></li><li><details><summary>题型模板</summary><ul><li><a href="/notes/dbda860183531936/">滑动窗口</a></li><li><a href="/notes/77bdd4ba7661b40b/">滑动窗口 <small>CPP</small></a></li></ul></details></li><li><details><summary>LeetCode</summary><ul><li><a href="/notes/2d30c32c4a0e89a0/">1.两数之和 <small>CPP</small></a></li><li><a href="/notes/57a5a57f907a0ec4/">2.两数相加 <small>CPP</small></a></li><li><a href="/notes/3f08bcae660db563/">3.无重复字符的最长子串 <small>CPP</small></a></li><li><a href="/notes/b16ca27a01318d4b/">11.盛最多水的容器 <small>CPP</small></a></li><li><a href="/notes/3d08d25f75c18331/">15.三数之和 <small>CPP</small></a></li><li><a href="/notes/8b208b6f30563fb4/">19.删除链表的倒数第-n-个结点 <small>CPP</small></a></li><li><a href="/notes/437bc90908824ab8/">21.合并两个有序链表 <small>CPP</small></a></li><li><a href="/notes/83f209ba4fcd4b26/">23.合并-k-个升序链表 <small>CPP</small></a></li><li><a href="/notes/9aa34711df2551a5/">25.K-个一组翻转链表 <small>CPP</small></a></li><li><a href="/notes/d67130692b90b8f7/">33.搜索旋转排序数组 <small>CPP</small></a></li><li><a href="/notes/9d1a99705c93d424/">34.在排序数组中查找元素的第一个和最后一个位置 <small>CPP</small></a></li><li><a href="/notes/b112df5a6fc5781c/">42.接雨水 <small>CPP</small></a></li><li><a href="/notes/ecc2a5f653ffa5fa/">49.字母异位词分组 <small>CPP</small></a></li><li><a href="/notes/39c18d0756052355/">53.最大子数组和 <small>CPP</small></a></li><li><a href="/notes/e59ded4d7dea5ec5/">56.合并区间 <small>CPP</small></a></li><li><a href="/notes/18406501b8d5cc47/">72.编辑距离 <small>CPP</small></a></li><li><a href="/notes/07d983c7275b5666/">82.删除排序链表中的重复元素-ii <small>CPP</small></a></li><li><a href="/notes/0ad3d0db8dd86ec0/">83.删除排序链表中的重复元素 <small>CPP</small></a></li><li><a href="/notes/1c62040a09bc4c3a/">92.反转链表 II <small>CPP</small></a></li><li><a href="/notes/cdb661dcf6e9acbe/">93.复原 IP 地址 <small>CPP</small></a></li><li><a href="/notes/2616f4bde8260e5d/">121.买卖股票的最佳时机 <small>CPP</small></a></li><li><a href="/notes/3db84bfe65ff3824/">122.买卖股票的最佳时机-II <small>CPP</small></a></li><li><a href="/notes/5e5910321065c5f2/">128.最长连续序列 <small>CPP</small></a></li><li><a href="/notes/50db8c67d7d6c96b/">142.环形链表-ii <small>CPP</small></a></li><li><a href="/notes/a745b24e46f7e8e2/">143.重排链表 <small>CPP</small></a></li><li><a href="/notes/50be710fff45d868/">146.lru-缓存 <small>CPP</small></a></li><li><a href="/notes/98723cd4305832f1/">199.二叉树的右视图 <small>CPP</small></a></li><li><a href="/notes/8953c9820b15afeb/">206.反转链表 <small>CPP</small></a></li><li><a href="/notes/aad8d01506c865c3/">207.课程表 <small>CPP</small></a></li><li><a href="/notes/e436ea8876352dc3/">209.长度最小的子数组 <small>CPP</small></a></li><li><a href="/notes/8fa679c5f37a53c9/">215.数组中的第K个最大元素 <small>CPP</small></a></li><li><a href="/notes/2475489ce09d9280/">227.基本计算器-ii <small>CPP</small></a></li><li><a href="/notes/08d2ef416fe36746/">236.二叉树的最近公共祖先 <small>CPP</small></a></li><li><a href="/notes/110fa7fed851d549/">300.最长递增子序列 <small>CPP</small></a></li><li><a href="/notes/5c1073abb1a4354f/">387.字符串中的第一个唯一字符 <small>CPP</small></a></li><li><a href="/notes/f0fafa58fa81eced/">438.找到字符串中所有字母异位词 <small>CPP</small></a></li><li><a href="/notes/e6273d804d024ac3/">688.骑士在棋盘上的概率 <small>CPP</small></a></li><li><a href="/notes/5080a7cf177c528f/">695.岛屿的最大面积 <small>CPP</small></a></li><li><a href="/notes/002e2eddfaae4e16/">739.每日温度 <small>CPP</small></a></li><li><a href="/notes/5852112c135004af/">1143.最长公共子序列 <small>CPP</small></a></li><li><a href="/notes/85e225b9f26a2a1d/">leetcode <small>H</small></a></li></ul></details></li></ul></details><details><summary>前端 <small>3</small></summary><a class="section-overview" href="/topics/frontend/">分类概览 →</a><ul><li><a href="/notes/3ef98881b1c23e65/">CSS 引入</a></li><li><a href="/notes/3d4c145ae62d12a1/">定位</a></li><li><a href="/notes/85007c347c771cb2/">块元素和行内元素</a></li></ul></details><details><summary>业务实践 <small>7</small></summary><a class="section-overview" href="/topics/practice/">分类概览 →</a><ul><li><a href="/notes/3c9c4da576f6ac05/">AB 实验</a></li><li><a href="/notes/ac7c6e4dc35e8109/">IM 会话缓存与数据访问调度设计</a></li><li><details><summary>案例</summary><ul><li><a href="/notes/f6f786e148e57237/">直播互动玩法 - Cocos 场景切换适配问题</a></li><li><a href="/notes/c251094855ed2daa/">直播互动玩法 - Laya 动态切屏适配</a></li></ul></details></li><li><details><summary>复盘</summary><ul><li><a href="/notes/65dbf3374bf94c55/">项目</a></li><li><a href="/notes/433807cfcf2d12c2/">简历问</a></li><li><a href="/notes/cac176312066e08d/">项目</a></li></ul></details></li></ul></details><details><summary>游戏开发 <small>2</small></summary><a class="section-overview" href="/topics/games/">分类概览 →</a><ul><li><a href="/notes/486f6445d73eaecb/">ThomasBrush 教程</a></li><li><details><summary>游戏</summary><ul><li><details><summary>卡牌游戏</summary><ul><li><a href="/notes/c9dc8f92b42a56bd/">ScriptableObject</a></li></ul></details></li></ul></details></li></ul></details><details><summary>资料归档 <small>2</small></summary><a class="section-overview" href="/topics/archive/">分类概览 →</a><ul><li><a href="/notes/92f96b37e66919d4/">归档说明</a></li><li><details><summary>分享</summary><ul><li><a href="/notes/76801009021bc269/">分享资料 <small>KEY</small></a></li></ul></details></li></ul></details><details><summary>共享资源 <small>2</small></summary><a class="section-overview" href="/topics/resources/">分类概览 →</a><ul><li><a href="/notes/588247153e773e3a/">共享资源说明</a></li><li><details><summary>android</summary><ul><li><a href="/notes/21a8b4d054cc9cb6/">Okhttp拦截器链时序图 <small>POS</small></a></li></ul></details></li></ul></details></nav></aside><main id="main"><header class="post-header"><div class="breadcrumbs"><a href="/topics/media/">音视频</a><span>/ WebRTC</span></div><h1>拥塞控制</h1></header><article class="prose"><blockquote><p>目标：先把拥塞控制相关名词放到正确层级，再沿着“网络反馈 → 拥塞判断 → 码率 / Pacing / CWND / Padding 调整 → 下一轮反馈”的闭环逐层学习。避免把 RTCP、TWCC、BWE、GCC、BWA、Pacer、Encoder 混成一类。</p></blockquote>
+<h2 id="一句话结论">一句话结论</h2>
+<p>拥塞控制不是一个单点模块，而是一条从“网络反馈”到“编码器执行”的控制链：</p>
+<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>RTP 是被观测的媒体数据面
+RTCP / TWCC 负责把网络观测回传回来
+BWE 表示带宽估计这项职责
+GCC 或其他场景化控制器是拥塞控制层内实现 BWE 与码率决策的具体算法
+BWA 负责把总带宽分给媒体、FEC、RTX、padding、多路流
+Pacer 负责按节奏发包
+Encoder 负责根据目标码率调整 QP、分辨率、帧率或丢帧策略</code></pre></div>
+<p>所以要严格区分：</p>
+<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>RTCP 是反馈协议族
+TWCC 是 RTCP 里一种逐包到达反馈
+BWE 是带宽估计职责/模块边界
+GCC 和场景化控制器是拥塞控制 / BWE 层里的算法实现
+BWA 是带宽分配
+Pacer 和 Encoder 是执行层</code></pre></div>
+<h2 id="架构层次图">架构层次图</h2>
+<p><img src="/media/8bc9622e097e98a7.svg" alt="拥塞控制架构层次" loading="lazy" decoding="async"></p>
+<p>图中的横带才是架构层级，横带里的方框是该层内部的模块：</p>
+<ul><li><p>第 1 层是 RTP 媒体传输数据面，也是被观测对象。</p></li><li><p>第 2 层负责测量和回传；TWCC 位于 RTCP 反馈协议族内部。</p></li><li><p>第 3 层负责拥塞控制和带宽估计；BWE 是职责边界，GCC 和场景化控制器是该层的具体算法实现，并不是 BWE 的下一层。</p></li><li><p>第 4 层把控制结果分配并调度到不同发送对象。</p></li><li><p>第 5 层由编码器和抗丢包模块执行最终的媒体适配。</p></li></ul>
+<p>图中只保留三类必要连线：蓝灰虚线表示网络观测向上反馈，蓝灰实线表示控制结果向上生效，米棕实线表示编码后的媒体向下进入 RTP 数据面。跨层关系沿层间空隙或左侧通道布线，层内只保留最短的数据流箭头。</p>
+<h2 id="各层到底负责什么">各层到底负责什么</h2>
+<h3 id="1-rtcp-是反馈协议族">1. RTCP 是反馈协议族</h3>
+<p>RTCP 是 RTP 的控制协议，负责回传媒体质量和网络状态。它不是一种具体拥塞控制策略，也不是 RTP 媒体数据本身。</p>
+<p>常见 RTCP 反馈包括：</p>
+<div class="table-wrap" tabindex="0" role="region" aria-label="数据表格"><table><thead><tr><th scope="col">类型</th><th scope="col">主要内容</th><th scope="col">用途</th></tr></thead><tbody><tr><td>SR / RR</td><td>收发统计、丢包、jitter、RTT 计算字段</td><td>粗粒度质量与 RTT 统计</td></tr><tr><td>NACK</td><td>丢失的 RTP sequence number</td><td>请求 RTX 重传</td></tr><tr><td>PLI / FIR</td><td>请求关键帧</td><td>解码恢复</td></tr><tr><td>REMB</td><td>接收端估算的最大码率</td><td>老式带宽反馈</td></tr><tr><td>TWCC</td><td>逐包到达状态和到达时间差</td><td>给 BWE/GCC 等算法提供高精度输入</td></tr></tbody></table></div>
+<p>所以 RTCP 是反馈大容器，TWCC 只是其中一种反馈类型；RTP 是被这些反馈观测的媒体数据面。</p>
+<h3 id="2-twcc-是逐包到达反馈不是算法">2. TWCC 是逐包到达反馈，不是算法</h3>
+<p>TWCC 的核心是：发送端给 RTP 包打一个 transport-wide sequence number，接收端记录每个包是否到达、什么时候到，再通过 RTCP Transport-CC feedback 回传。</p>
+<p>它提供的是观测数据，例如：</p>
+<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>seq=1001 arrived at t0
+seq=1002 arrived at t0 + 5ms
+seq=1003 lost
+seq=1004 arrived at t0 + 18ms
+seq=1005 arrived at t0 + 40ms</code></pre></div>
+<p>发送端结合自己记录的 send time 和 packet size，可以计算：</p>
+<ul><li><p>到达间隔变化</p></li><li><p>acked bitrate / delivery rate</p></li><li><p>丢包率</p></li><li><p>RTT 变化</p></li><li><p>queue delay 趋势</p></li><li><p>in-flight 数据量</p></li></ul>
+<p>TWCC 只回传这些数据，不负责判断拥塞，也不直接调码率。</p>
+<h3 id="3-bwe-是带宽估计职责">3. BWE 是带宽估计职责</h3>
+<p>BWE 是 Bandwidth Estimation，表示“估算当前链路还能承受多少发送带宽”这个职责或模块。</p>
+<p>BWE 的输入可能来自：</p>
+<ul><li><p>TWCC 逐包到达反馈</p></li><li><p>RTCP RR 的丢包、jitter、RTT 信息</p></li><li><p>NACK / RTX 相关信号</p></li><li><p>Pacer 队列</p></li><li><p>已发送速率、已确认速率、in-flight 数据量</p></li></ul>
+<p>BWE / 拥塞控制层的输出通常是：</p>
+<ul><li><p>estimated bitrate</p></li><li><p>target bitrate</p></li><li><p>pacing rate</p></li><li><p>congestion window</p></li><li><p>带宽状态：过载、正常、欠用等</p></li></ul>
+<p>注意：BWE 不是一个具体策略名称。GCC、BBR-like 或面向特定场景的控制器都可以实现 BWE 与拥塞决策职责。因此架构关系应理解为“具体控制器位于拥塞控制 / BWE 层内部”，而不是先经过一个独立 BWE 层，再进入某个算法层。</p>
+<h3 id="4-gcc-是-webrtc-的拥塞控制算法">4. GCC 是 WebRTC 的拥塞控制算法</h3>
+<p>GCC / GoogCC 是 WebRTC 常见的媒体拥塞控制算法。它通常结合 delay-based 和 loss-based 信号。</p>
+<p>简化理解：</p>
+<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>如果发送端按稳定节奏发包，但接收端看到包越来越晚到
+  → arrival_delta 持续大于 send_delta
+  → 网络队列在堆积
+  → GCC 判断 overuse
+  → 降低 target bitrate / pacing rate</code></pre></div>
+<p>GCC 的输出不是 QP，而是目标码率和发送节奏。QP 是编码器根据目标码率自行调整的结果。</p>
+<h3 id="5-云游戏会叠加场景化控制策略">5. 云游戏会叠加场景化控制策略</h3>
+<p>云游戏的场景化控制器和 GCC 处在同一层级，都属于发送侧拥塞控制算法或策略。区别是云游戏更强调低排队、快速降速和及时恢复，因此通常会组合观察更多实时状态：</p>
+<ul><li><p>当前上行估计带宽</p></li><li><p>队列延迟、相对队列延迟</p></li><li><p>overuse 状态</p></li><li><p>上行丢包、反向链路丢包</p></li><li><p>RTT / min RTT</p></li><li><p>pacing rate / pacing gain</p></li><li><p>congestion window / target congestion window</p></li><li><p>estimate rate / target rate</p></li></ul>
+<p>这些信号并不是某一种私有算法的专属概念，而是低延迟拥塞控制常见的设计维度。具体配置示例见 <span class="unpublished">云游戏 RTC 策略与配置记录（未公开或已移动）</span>。</p>
+<h2 id="拥塞发生后如何调整">拥塞发生后如何调整</h2>
+<p><img src="/media/c3b7375024b995de.svg" alt="拥塞调整闭环：传统 GCC 与低延迟场景化策略" loading="lazy" decoding="async"></p>
+<p>这个闭环不是“拥塞算法直接把 QP 改大”，而是网络控制和媒体执行两个阶段：</p>
+<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>拥塞控制根据反馈产生控制输出
+  → Target Bitrate 下降
+  → Pacing Rate 下降，发包间隔变大
+  → 可选地用 CWND 限制 In-flight
+  → 减少或停止 Padding / Probe
+
+发送执行层消费这些输出
+  → Encoder 少产生视频数据
+  → 分辨率和 FPS 不变时，QP 通常上升
+  → Pacer 降低向网络注入数据的速度
+  → 瓶颈队列逐步排空</code></pre></div>
+<h3 id="cwnd-控制的不是本地发送队列">CWND 控制的不是本地发送队列</h3>
+<p>CWND 是 In-flight 的准入上限：</p>
+<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>In-flight = 已发出但尚未收到到达反馈的数据
+
+当 In-flight + next_packet_size &gt; CWND
+  → Pacer 暂时不再向网络发新包
+  → 等 TWCC 反馈释放 In-flight 额度</code></pre></div>
+<p>它不直接修改路由器队列大小，也不等于本地 Pacer 队列。关系可以近似理解为：</p>
+<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>In-flight ≈ 正在链路上传输的 BDP + 瓶颈处排队的数据
+瓶颈队列 ≈ max(In-flight - BDP, 0)</code></pre></div>
+<p>因此，把 CWND 控制在 BDP 附近，意味着尽量填满链路而不额外堆高瓶颈队列。如果 CWND 已满，编码器还在按旧码率产生数据，本地 Pacer 队列反而可能短时增大，所以 CWND 通常要和编码码率反压、Pacing 一起调整。</p>
+<h3 id="padding-为什么要减少">Padding 为什么要减少</h3>
+<p>Padding 是为了探测带宽或填满 Pacing 配额而发送的填充流量，不承载有效视频画面。例如：</p>
+<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>真实媒体数据 = 5 Mbps
+Pacing Rate     = 7 Mbps
+Padding         = 2 Mbps</code></pre></div>
+<p>拥塞期间继续发 Padding，相当于用探测流量继续占用已经紧张的链路。因此排空阶段会减少或停止 Padding，先把带宽留给有效媒体、音频和必要的恢复流量。</p>
+<h3 id="传统-gcc-与低延迟场景化策略的差异">传统 GCC 与低延迟场景化策略的差异</h3>
+<div class="table-wrap" tabindex="0" role="region" aria-label="数据表格"><table><thead><tr><th scope="col">对比维度</th><th scope="col">传统 WebRTC GCC / GoogCC</th><th scope="col">低延迟场景化策略</th></tr></thead><tbody><tr><td>共同基础</td><td>都依赖 RTP 发送历史和 TWCC / RTCP 反馈，都在发送侧形成闭环</td><td>同左</td></tr><tr><td>主要观测</td><td>到达时间趋势、丢包、acked throughput，现代 GoogCC 会融合 delay-based 与 loss / throughput-based 结果</td><td>在逐包反馈上增加 queue / relative delay、pass ratio、In-flight / CWND、近期链路容量等复合状态</td></tr><tr><td>拥塞判断</td><td>delay-based 识别 overuse / normal / underuse，再结合丢包和吞吐估计调整目标码率</td><td>增加包级可疑拥塞、mild / aggressive 分级降速和 Burst RTT 恢复判断</td></tr><tr><td>降码率</td><td>主要降低 target bitrate，带宽分配再反压到编码器</td><td>除 target rate 外，还可以通过 encoding discount 进一步降低视频媒体预算</td></tr><tr><td>排空手段</td><td>Pacing Rate 跟随目标码率下降；部分配置可用 CWND pushback；Probe / Padding 由探测链调度</td><td>可联动 pacing gain、In-flight drain ratio、CWND / BDP 和 Padding suppression，专门对过高 In-flight 加快排空</td></tr><tr><td>误判恢复</td><td>通过后续 normal / underuse 和探测逐步上调</td><td>可利用连续无拥塞、近期链路容量和 Burst RTT 分类快速恢复</td></tr></tbody></table></div>
+<p>这个对比的重点不是“GCC 没有 Pacer / CWND / Probe”。它们同样是 WebRTC 发送端拥塞控制链的组成部分。场景化策略的差别主要在于如何组合早期拥塞信号、编码预算、In-flight 排空和短时 Burst 恢复。具体能力仍取决于控制器实现与配置开关，不能把一种实现的行为泛化成所有 GCC 或所有云游戏会话的固定行为。</p>
+<h3 id="6-bwa-是带宽分配">6. BWA 是带宽分配</h3>
+<p>拥塞控制器在 BWE 职责内估出可用总带宽，但发送端实际要发很多东西：</p>
+<ul><li><p>媒体数据</p></li><li><p>FEC 冗余</p></li><li><p>RTX 重传</p></li><li><p>padding / probe</p></li><li><p>多路音视频流</p></li></ul>
+<p>BWA 负责回答：可用带宽怎么分给这些对象。</p>
+<p>例如：</p>
+<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>BWE 估计可用 3Mbps
+  → 视频媒体 2.3Mbps
+  → 音频 80kbps
+  → FEC 300kbps
+  → RTX 200kbps
+  → padding/probe 120kbps</code></pre></div>
+<p>不同场景会有不同分配策略，例如低延迟场景更可能压低排队、减少过期重传；平滑播放场景更可能保留更大的恢复和缓冲空间。</p>
+<h3 id="7-pacer-和-encoder-是执行层">7. Pacer 和 Encoder 是执行层</h3>
+<p>拥塞控制最终要落到两个执行点：</p>
+<ul><li><p>Pacer：控制包以什么节奏发出去，避免编码器瞬间吐包打爆网络。</p></li><li><p>Encoder：根据目标码率调整 QP、分辨率、帧率、丢帧策略。</p></li></ul>
+<p>关键点：拥塞控制通常不直接设置 QP。</p>
+<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>拥塞控制输出 target bitrate
+  → 编码器 RateControl 接收目标码率
+  → 编码器内部根据画面复杂度、buffer、码控模式调整 QP</code></pre></div>
+<p>因此 QP 是编码器对目标码率的执行结果，而不是 TWCC 或拥塞控制器直接给出的网络判断。</p>
+<h2 id="云游戏为什么更关心这条链">云游戏为什么更关心这条链</h2>
+<p>普通直播/RTC 里，拥塞控制主要在“画质”和“流畅”之间折中。云游戏多了“操作跟手”这个目标，因此更怕队列堆积。</p>
+<p>云游戏里的危险情况是：</p>
+<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>视频包没有立刻丢
+但到达越来越晚
+JitterBuffer 被迫堆得越来越大
+用户操作反馈越来越慢</code></pre></div>
+<p>所以云游戏更关心：</p>
+<ul><li><p>queue delay 是否上升</p></li><li><p>relative delay 是否异常</p></li><li><p>pacer queue 是否堆积</p></li><li><p>RTT / min RTT 是否变差</p></li><li><p>in-flight 是否过大</p></li><li><p>过期帧是否还值得等重传</p></li></ul>
+<p>策略取向通常是：</p>
+<ul><li><p>更早识别 overuse</p></li><li><p>更快降码率</p></li><li><p>更严格控制 Pacer 队列</p></li><li><p>更低的 JitterBuffer target delay</p></li><li><p>更短的重传价值窗口</p></li><li><p>必要时丢帧保实时</p></li></ul>
+<p>场景化控制器是拥塞控制实现，BWE 是职责，BWA 是带宽分配；三者不是互相替代的同类概念。云游戏还会在控制器和执行模块之上叠加参数、阈值与实时性取舍。</p>
+<h2 id="后续学习顺序">后续学习顺序</h2>
+<p>后面按层学习：</p>
+<ol start="1"><li><p>先看 RTCP 具体有哪些反馈：RR/SR、NACK、PLI/FIR、REMB、TWCC。</p></li><li><p>再看 TWCC 逐包反馈怎么组织数据。</p></li><li><p>再看 GCC 如何用 delay/loss 判断 overuse。</p></li><li><p>再对比 BBR-like 思路：delivery rate、min RTT、in-flight。</p></li><li><p>再对比通用 GCC 与低延迟场景化策略关注的状态和决策。</p></li><li><p>最后看 target bitrate 如何传给 Encoder，并影响 QP、分辨率、帧率。</p></li></ol>
+<h2 id="小结">小结</h2>
+<p>一句话记：</p>
+<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>RTP 是媒体数据面；RTCP 是反馈协议族；TWCC 是 RTCP 里的逐包反馈；BWE 是带宽估计职责；GCC 是 WebRTC 常见拥塞控制实现；业务可以在同层实现低延迟场景化控制器；BWA 是带宽分配；Pacer/Encoder 是执行层。</code></pre></div></article><p class="post-bottom"><a href="/topics/media/">← 返回音视频目录</a><a href="#main">回到顶部 ↑</a></p><footer><span>Joel · 技术学习与实践笔记</span><a href="#main">回到顶部 ↑</a></footer></main><aside class="toc"><span>本篇目录</span><ul><li><a href="#%E4%B8%80%E5%8F%A5%E8%AF%9D%E7%BB%93%E8%AE%BA">一句话结论</a></li><li><a href="#%E6%9E%B6%E6%9E%84%E5%B1%82%E6%AC%A1%E5%9B%BE">架构层次图</a></li><li><a href="#%E5%90%84%E5%B1%82%E5%88%B0%E5%BA%95%E8%B4%9F%E8%B4%A3%E4%BB%80%E4%B9%88">各层到底负责什么</a></li><li><a href="#%E6%8B%A5%E5%A1%9E%E5%8F%91%E7%94%9F%E5%90%8E%E5%A6%82%E4%BD%95%E8%B0%83%E6%95%B4">拥塞发生后如何调整</a></li><li><a href="#%E4%BA%91%E6%B8%B8%E6%88%8F%E4%B8%BA%E4%BB%80%E4%B9%88%E6%9B%B4%E5%85%B3%E5%BF%83%E8%BF%99%E6%9D%A1%E9%93%BE">云游戏为什么更关心这条链</a></li><li><a href="#%E5%90%8E%E7%BB%AD%E5%AD%A6%E4%B9%A0%E9%A1%BA%E5%BA%8F">后续学习顺序</a></li><li><a href="#%E5%B0%8F%E7%BB%93">小结</a></li></ul></aside></div></body></html>

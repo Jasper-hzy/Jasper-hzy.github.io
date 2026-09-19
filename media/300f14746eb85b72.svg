@@ -1,0 +1,70 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="620" viewBox="0 0 1200 620" role="img" aria-labelledby="title desc">
+  <title id="title">Binder mmap 与一次拷贝</title>
+  <desc id="desc">展示发送端 Parcel 通过 copy_from_user 复制一次到接收进程 Binder buffer，接收端借助 mmap 地址直接读取，没有第二次 copy_to_user。</desc>
+  <defs>
+    <style>
+      .bg { fill: #fffdf8; }
+      .title { font: 700 26px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #172033; }
+      .sub { font: 14px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #64748b; }
+      .lane { stroke-width: 1.6; rx: 16; }
+      .sender { fill: #eef7ff; stroke: #60a5fa; }
+      .kernel { fill: #fff7ed; stroke: #fb923c; }
+      .receiver { fill: #f0fdf4; stroke: #4ade80; }
+      .lt { font: 700 18px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #172033; }
+      .box { fill: #fff; stroke: #64748b; stroke-width: 1.2; rx: 10; }
+      .bt { font: 700 14px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #1e293b; }
+      .txt { font: 13px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #475569; }
+      .small { font: 12px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #64748b; }
+      .copy { stroke: #dc2626; stroke-width: 3; fill: none; marker-end: url(#red); }
+      .map { stroke: #059669; stroke-width: 2.2; fill: none; stroke-dasharray: 8 6; marker-start: url(#greenBack); marker-end: url(#green); }
+      .read { stroke: #2563eb; stroke-width: 2.2; fill: none; marker-end: url(#blue); }
+      .cross { stroke: #94a3b8; stroke-width: 2.5; }
+    </style>
+    <marker id="red" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#dc2626"/></marker>
+    <marker id="green" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#059669"/></marker>
+    <marker id="greenBack" markerWidth="10" markerHeight="10" refX="2" refY="3" orient="auto"><path d="M8,0 L0,3 L8,6 Z" fill="#059669"/></marker>
+    <marker id="blue" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#2563eb"/></marker>
+  </defs>
+  <rect class="bg" width="1200" height="620"/>
+  <text class="title" x="48" y="46">Binder 的 mmap 与“一次拷贝”</text>
+  <text class="sub" x="48" y="74">mmap 建立接收进程虚拟地址与 Binder buffer 的映射；真正搬运请求数据的是 copy_from_user()。</text>
+
+  <rect class="lane sender" x="50" y="118" width="290" height="386"/>
+  <text class="lt" x="77" y="156">发送端用户空间</text>
+  <rect class="box" x="78" y="220" width="234" height="96"/>
+  <text class="bt" x="102" y="251">Parcel data</text>
+  <text class="small" x="102" y="275">普通参数 + 对象偏移表</text>
+  <text class="small" x="102" y="297">位于发送进程用户内存</text>
+
+  <rect class="lane kernel" x="455" y="118" width="290" height="386"/>
+  <text class="lt" x="482" y="156">Binder Driver</text>
+  <rect class="box" x="483" y="220" width="234" height="96"/>
+  <text class="bt" x="507" y="251">目标 Binder buffer</text>
+  <text class="small" x="507" y="275">驱动为接收进程分配</text>
+  <text class="small" x="507" y="297">同时处理 Binder 对象与 fd</text>
+
+  <rect class="lane receiver" x="860" y="118" width="290" height="386"/>
+  <text class="lt" x="887" y="156">接收端用户空间</text>
+  <rect class="box" x="888" y="210" width="234" height="112"/>
+  <text class="bt" x="912" y="241">mmap 虚拟地址区</text>
+  <text class="small" x="912" y="265">映射目标 Binder buffer</text>
+  <text class="small" x="912" y="287">接收端可直接读取事务数据</text>
+  <text class="small" x="912" y="307">不是普通进程间共享内存</text>
+  <rect class="box" x="888" y="382" width="234" height="70"/>
+  <text class="bt" x="912" y="411">Stub / 服务实现</text>
+  <text class="small" x="912" y="433">从 Parcel 解包并执行</text>
+
+  <path class="copy" d="M312 268 L483 268"/>
+  <text class="bt" x="338" y="247" fill="#dc2626">copy_from_user()</text>
+  <text class="small" x="366" y="291">唯一一次数据复制</text>
+  <path class="map" d="M717 268 L888 268"/>
+  <text class="bt" x="766" y="247" fill="#059669">mmap 映射</text>
+  <text class="small" x="756" y="291">建立映射，不复制</text>
+  <path class="read" d="M1005 322 L1005 382"/>
+  <text class="small" x="1021" y="356">直接读取</text>
+
+  <line class="cross" x1="765" y1="350" x2="830" y2="400"/>
+  <line class="cross" x1="830" y1="350" x2="765" y2="400"/>
+  <text class="small" x="742" y="425">没有第二次 copy_to_user()</text>
+  <text class="small" x="50" y="554">结论：Binder 是“一次拷贝”，不是“零拷贝”。回复方向也要把数据复制到原调用进程的 Binder 接收区。</text>
+</svg>

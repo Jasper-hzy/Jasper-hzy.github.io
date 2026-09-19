@@ -1,0 +1,85 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="600" viewBox="0 0 1600 600" role="img" aria-labelledby="title desc">
+  <title id="title">云游戏多指触摸链路</title>
+  <desc id="desc">展示 Android MotionEvent 从客户端采集、协议传输到云端重建注入的过程，以及身份、坐标和时间三类精度。</desc>
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L9,3 z" fill="#667085"/>
+    </marker>
+    <style>
+      .lane-title { font: 700 22px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #344054; }
+      .box-title { font: 700 17px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #101828; }
+      .box-text { font: 15px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #475467; }
+      .callout-title { font: 700 16px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #344054; }
+      .callout-text { font: 14px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #475467; }
+      .arrow { stroke: #667085; stroke-width: 2.2; fill: none; marker-end: url(#arrow); }
+    </style>
+  </defs>
+  <rect width="1600" height="600" rx="24" fill="#ffffff"/>
+  <rect x="24" y="24" width="750" height="548" rx="18" fill="#f5f8ff" stroke="#c7d7fe"/>
+  <rect x="794" y="24" width="330" height="548" rx="18" fill="#f7f5ff" stroke="#d9d0ff"/>
+  <rect x="1144" y="24" width="432" height="548" rx="18" fill="#f2fbf6" stroke="#b7e4c7"/>
+  <text x="48" y="62" class="lane-title">Android 客户端</text>
+  <text x="818" y="62" class="lane-title">跨端传输</text>
+  <text x="1168" y="62" class="lane-title">Android 云端</text>
+  <rect x="48" y="94" width="200" height="112" rx="14" fill="#ffffff" stroke="#84adff" stroke-width="2"/>
+  <text x="148" y="126" text-anchor="middle" class="box-title">MotionEvent</text>
+  <text x="148" y="156" text-anchor="middle" class="box-text">action + actionIndex</text>
+  <text x="148" y="181" text-anchor="middle" class="box-text">pointerId + x/y</text>
+  <rect x="286" y="94" width="210" height="112" rx="14" fill="#ffffff" stroke="#84adff" stroke-width="2"/>
+  <text x="391" y="126" text-anchor="middle" class="box-title">触摸事件采集</text>
+  <text x="391" y="156" text-anchor="middle" class="box-text">遍历 pointerCount</text>
+  <text x="391" y="181" text-anchor="middle" class="box-text">保留当前指针顺序</text>
+  <rect x="534" y="94" width="216" height="112" rx="14" fill="#ffffff" stroke="#84adff" stroke-width="2"/>
+  <text x="642" y="126" text-anchor="middle" class="box-title">多指事件帧</text>
+  <text x="642" y="156" text-anchor="middle" class="box-text">x/y 归一化为 float</text>
+  <text x="642" y="181" text-anchor="middle" class="box-text">action + pointerId</text>
+  <path d="M248 150 H278" class="arrow"/>
+  <path d="M496 150 H526" class="arrow"/>
+  <rect x="818" y="94" width="282" height="112" rx="14" fill="#ffffff" stroke="#a78bfa" stroke-width="2"/>
+  <text x="959" y="126" text-anchor="middle" class="box-title">事件编码与传输</text>
+  <text x="959" y="156" text-anchor="middle" class="box-text">完整指针快照 + 序号</text>
+  <text x="959" y="181" text-anchor="middle" class="box-text">关键动作保证到达和顺序</text>
+  <path d="M750 150 H810" class="arrow"/>
+  <rect x="1168" y="94" width="178" height="112" rx="14" fill="#ffffff" stroke="#5cc58a" stroke-width="2"/>
+  <text x="1257" y="126" text-anchor="middle" class="box-title">重建事件</text>
+  <text x="1257" y="156" text-anchor="middle" class="box-text">指针身份数组</text>
+  <text x="1257" y="181" text-anchor="middle" class="box-text">指针坐标数组</text>
+  <rect x="1374" y="94" width="178" height="112" rx="14" fill="#ffffff" stroke="#5cc58a" stroke-width="2"/>
+  <text x="1463" y="126" text-anchor="middle" class="box-title">注入系统</text>
+  <text x="1463" y="156" text-anchor="middle" class="box-text">构造 MotionEvent</text>
+  <text x="1463" y="181" text-anchor="middle" class="box-text">进入系统输入分发</text>
+  <path d="M1100 150 H1160" class="arrow"/>
+  <path d="M1346 150 H1366" class="arrow"/>
+  <text x="48" y="262" class="callout-title">三个不能丢的维度</text>
+  <rect x="48" y="286" width="330" height="222" rx="14" fill="#ffffff" stroke="#84adff"/>
+  <circle cx="82" cy="322" r="17" fill="#dbe8ff"/>
+  <text x="82" y="328" text-anchor="middle" class="box-title">1</text>
+  <text x="110" y="328" class="callout-title">手指身份</text>
+  <text x="72" y="365" class="callout-text">pointerIndex 只是当前数组下标</text>
+  <text x="72" y="393" class="callout-text">pointerId 在按下到抬起间稳定</text>
+  <text x="72" y="421" class="callout-text">action 高位指向变化的 index</text>
+  <text x="72" y="459" class="callout-text" fill="#b54708">不能重排指针数组</text>
+  <rect x="402" y="286" width="348" height="222" rx="14" fill="#ffffff" stroke="#84adff"/>
+  <circle cx="436" cy="322" r="17" fill="#dbe8ff"/>
+  <text x="436" y="328" text-anchor="middle" class="box-title">2</text>
+  <text x="464" y="328" class="callout-title">坐标映射</text>
+  <text x="426" y="365" class="callout-text">以实际画面矩形做归一化</text>
+  <text x="426" y="393" class="callout-text">处理黑边、裁剪和旋转逆变换</text>
+  <text x="426" y="421" class="callout-text">传输阶段保留浮点精度</text>
+  <text x="426" y="459" class="callout-text" fill="#b54708">坐标系错位比 float 误差更常见</text>
+  <rect x="818" y="286" width="282" height="222" rx="14" fill="#ffffff" stroke="#a78bfa"/>
+  <circle cx="852" cy="322" r="17" fill="#e9e2ff"/>
+  <text x="852" y="328" text-anchor="middle" class="box-title">3</text>
+  <text x="880" y="328" class="callout-title">时间与顺序</text>
+  <text x="842" y="365" class="callout-text">关键动作保证顺序</text>
+  <text x="842" y="393" class="callout-text">携带 eventTime 还原时间</text>
+  <text x="842" y="421" class="callout-text">按场景保留历史采样点</text>
+  <text x="842" y="459" class="callout-text" fill="#b54708">积压 MOVE 会放大操作滞后</text>
+  <rect x="1168" y="286" width="384" height="222" rx="14" fill="#ffffff" stroke="#5cc58a"/>
+  <text x="1192" y="326" class="callout-title">云端状态机约束</text>
+  <text x="1192" y="365" class="callout-text">整个数组重建为一个 MotionEvent</text>
+  <text x="1192" y="393" class="callout-text">POINTER_UP 注入后再删除手指</text>
+  <text x="1192" y="421" class="callout-text">CANCEL / 断线时清空活跃指针</text>
+  <text x="1192" y="459" class="callout-text" fill="#b54708">状态异常时取消整段手势</text>
+  <text x="48" y="552" class="box-text">核心：手指身份稳定、坐标系一致、关键事件有序、移动事件保持低延迟</text>
+</svg>

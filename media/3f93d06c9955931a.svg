@@ -1,0 +1,83 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="680" viewBox="0 0 1400 680" role="img" aria-labelledby="title desc">
+  <title id="title">一次同步 Binder 事务</title>
+  <desc id="desc">展示客户端 Proxy 写入 Parcel，经 libbinder 和 Binder 驱动送达服务端 Binder 线程，再由 Stub 调用实现并原路返回 reply 的过程。</desc>
+  <defs>
+    <style>
+      .bg { fill: #fffdf8; }
+      .title { font: 700 26px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #172033; }
+      .sub { font: 14px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #64748b; }
+      .lane { stroke-width: 1.6; rx: 16; }
+      .client { fill: #eef7ff; stroke: #60a5fa; }
+      .driver { fill: #fff7ed; stroke: #fb923c; }
+      .server { fill: #f0fdf4; stroke: #4ade80; }
+      .lt { font: 700 18px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #172033; }
+      .box { fill: #fff; stroke: #64748b; stroke-width: 1.2; rx: 10; }
+      .bt { font: 700 13px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #1e293b; }
+      .small { font: 12px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #64748b; }
+      .num { fill: #1d4ed8; }
+      .nt { font: 700 12px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #fff; text-anchor: middle; dominant-baseline: middle; }
+      .req { stroke: #2563eb; stroke-width: 2.3; fill: none; marker-end: url(#blue); }
+      .reply { stroke: #059669; stroke-width: 2.1; fill: none; stroke-dasharray: 8 6; marker-end: url(#green); }
+    </style>
+    <marker id="blue" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#2563eb"/></marker>
+    <marker id="green" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#059669"/></marker>
+  </defs>
+  <rect class="bg" width="1400" height="680"/>
+  <text class="title" x="48" y="46">一次同步 Binder 事务</text>
+  <text class="sub" x="48" y="74">蓝线是请求，绿虚线是 reply；客户端调用线程等待期间，服务端由 Binder 线程执行。</text>
+
+  <rect class="lane client" x="45" y="112" width="395" height="480"/>
+  <text class="lt" x="72" y="150">客户端进程</text>
+  <rect class="box" x="76" y="196" width="330" height="72"/>
+  <circle class="num" cx="99" cy="218" r="13"/><text class="nt" x="99" y="218">1</text>
+  <text class="bt" x="122" y="221">AIDL Proxy：参数写入 Parcel</text>
+  <text class="small" x="122" y="244">方法编号 code + data</text>
+  <rect class="box" x="76" y="318" width="330" height="92"/>
+  <circle class="num" cx="99" cy="341" r="13"/><text class="nt" x="99" y="341">2</text>
+  <text class="bt" x="122" y="344">BpBinder / IPCThreadState</text>
+  <text class="small" x="122" y="367">transact(handle, code, data)</text>
+  <text class="small" x="122" y="388">写出 BC_TRANSACTION</text>
+  <rect class="box" x="76" y="476" width="330" height="66"/>
+  <circle class="num" cx="99" cy="499" r="13"/><text class="nt" x="99" y="499">8</text>
+  <text class="bt" x="122" y="502">收到 BR_REPLY，调用线程继续</text>
+  <text class="small" x="122" y="524">从 reply Parcel 读取返回值</text>
+
+  <rect class="lane driver" x="502" y="112" width="395" height="480"/>
+  <text class="lt" x="529" y="150">Binder Driver</text>
+  <rect class="box" x="533" y="196" width="330" height="72"/>
+  <circle class="num" cx="556" cy="218" r="13"/><text class="nt" x="556" y="218">3</text>
+  <text class="bt" x="579" y="221">ioctl(BINDER_WRITE_READ)</text>
+  <text class="small" x="579" y="244">请求从用户态进入驱动</text>
+  <rect class="box" x="533" y="318" width="330" height="116"/>
+  <circle class="num" cx="556" cy="341" r="13"/><text class="nt" x="556" y="341">4</text>
+  <text class="bt" x="579" y="344">handle → ref → node</text>
+  <text class="small" x="579" y="367">定位目标进程和 Binder 实体</text>
+  <text class="small" x="579" y="388">复制 / 转换数据，写入目标队列</text>
+  <text class="small" x="579" y="409">唤醒目标 Binder 线程</text>
+  <rect class="box" x="533" y="476" width="330" height="66"/>
+  <circle class="num" cx="556" cy="499" r="13"/><text class="nt" x="556" y="499">7</text>
+  <text class="bt" x="579" y="502">将 reply 送回原调用进程</text>
+  <text class="small" x="579" y="524">唤醒正在等待的客户端线程</text>
+
+  <rect class="lane server" x="959" y="112" width="395" height="480"/>
+  <text class="lt" x="986" y="150">服务端进程</text>
+  <rect class="box" x="990" y="196" width="330" height="72"/>
+  <circle class="num" cx="1013" cy="218" r="13"/><text class="nt" x="1013" y="218">5</text>
+  <text class="bt" x="1036" y="221">Binder 线程收到 BR_TRANSACTION</text>
+  <text class="small" x="1036" y="244">IPCThreadState.executeCommand()</text>
+  <rect class="box" x="990" y="318" width="330" height="116"/>
+  <circle class="num" cx="1013" cy="341" r="13"/><text class="nt" x="1013" y="341">6</text>
+  <text class="bt" x="1036" y="344">BBinder → Stub.onTransact()</text>
+  <text class="small" x="1036" y="367">根据 code 解包参数</text>
+  <text class="small" x="1036" y="388">调用真正的 Service 方法</text>
+  <text class="small" x="1036" y="409">结果写入 reply Parcel</text>
+
+  <path class="req" d="M241 268 L241 318"/>
+  <path class="req" d="M406 364 C460 364, 480 232, 533 232"/>
+  <path class="req" d="M698 268 L698 318"/>
+  <path class="req" d="M863 376 C920 376, 935 232, 990 232"/>
+  <path class="req" d="M1155 268 L1155 318"/>
+  <path class="reply" d="M990 410 C940 460, 915 500, 863 509"/>
+  <path class="reply" d="M533 509 L406 509"/>
+  <text class="small" x="45" y="634">线程切换：Client 调用线程 → Server Binder 线程 → Client 调用线程；需要更新服务端主线程状态时，还要额外 post 到主线程。</text>
+</svg>
