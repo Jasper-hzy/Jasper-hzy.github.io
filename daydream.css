@@ -44,3 +44,5 @@ header{justify-content:flex-end;gap:28px;align-items:center}.scene-switch{displa
 .hero-copy{z-index:8}
 .snoopy-scene .scarf{display:none}
 @media(max-width:760px){.celestial{width:28px;height:28px}[data-scene=day] .celestial,[data-scene=night] .celestial{top:47%;width:24px;height:24px}}
+
+#articles{scroll-margin-top:0;background:var(--paper)}html{scroll-padding-top:16px}
