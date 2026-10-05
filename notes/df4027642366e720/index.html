@@ -1,9 +1,9 @@
-<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light"><meta name="theme-color" content="#f7f6f2"><title>Activity 启动与显示流程</title><meta name="description" content="技术学习与工程实践。"><link rel="icon" href="/favicon.svg?v=14ae5a412d40f95d"><link rel="stylesheet" href="/reader.css?v=14ae5a412d40f95d"><script src="/reader.js?v=14ae5a412d40f95d" defer></script></head><body><div class="reading-progress" aria-hidden="true"></div><a class="skip" href="#main">跳到正文</a><header class="reader-nav"><nav aria-label="站点导航"><a href="/">← 首页</a><a href="/#articles">全部文章 ↗</a></nav></header><div class="reading-layout"><main id="main"><nav class="breadcrumbs" aria-label="当前位置"><a href="/#articles">文章</a><span>/</span><a href="/?category=client#articles">客户端开发</a><span>/</span><span>Android</span><span>/</span><span>系统原理</span></nav>
-  <header class="article-heading"><p class="article-category">客户端开发</p><h1>Activity 启动与显示流程</h1></header>
-  <details class="mobile-toc"><summary>本篇目录 <span>4 节</span></summary><nav aria-label="本篇目录"><ol><li><a href="#%E4%BB%8E%E5%90%AF%E5%8A%A8%E8%AF%B7%E6%B1%82%E5%88%B0%E7%94%BB%E9%9D%A2%E6%98%BE%E7%A4%BA">从启动请求到画面显示</a></li><li><a href="#%E7%BB%84%E4%BB%B6%E5%88%9B%E5%BB%BA%E8%BF%9B%E7%A8%8B%E4%B8%8E-activity-%E5%88%9D%E5%A7%8B%E5%8C%96">组件创建：进程与 Activity 初始化</a></li><li><a href="#%E7%AA%97%E5%8F%A3%E6%8E%A5%E5%85%A5%E4%B8%8E%E9%A6%96%E5%B8%A7%E7%94%9F%E4%BA%A7">窗口接入与首帧生产</a></li><li><a href="#%E8%BE%93%E5%85%A5%E9%93%BE%E8%B7%AF%E4%B8%8E%E5%B8%B8%E8%A7%81%E8%AF%AF%E5%8C%BA">输入链路与常见误区</a></li></ol></nav></details><article class="prose" id="content"><p>这篇梳理一个 Activity 从 <code>startActivity</code> 发起，到目标 Activity 创建、窗口接入、View 绘制，再到首帧上屏的主链路。</p>
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light"><meta name="theme-color" content="#f7f6f2"><title>Activity 启动与显示流程</title><meta name="description" content="技术学习与工程实践。"><link rel="icon" href="/favicon.svg?v=7ea8198bf5c60782"><link rel="stylesheet" href="/reader.css?v=7ea8198bf5c60782"><script src="/reader.js?v=7ea8198bf5c60782" defer></script></head><body><div class="reading-progress" aria-hidden="true"></div><a class="skip" href="#main">跳到正文</a><header class="reader-nav"><nav aria-label="站点导航"><a href="/">← 首页</a><a href="/#articles">全部文章 ↗</a></nav></header><div class="reading-layout"><main id="main"><nav class="breadcrumbs" aria-label="当前位置"><a href="/#articles">文章</a><span>/</span><a href="/?category=client#articles">客户端开发</a><span>/</span><span>Android</span><span>/</span><span>系统原理</span></nav>
+  <header class="article-heading"><h1>Activity 启动与显示流程</h1></header>
+  <details class="mobile-toc"><summary>本篇目录 <span>4 节</span></summary><nav aria-label="本篇目录"><ol><li><a href="#%E4%BB%8E%E5%90%AF%E5%8A%A8%E8%AF%B7%E6%B1%82%E5%88%B0%E7%94%BB%E9%9D%A2%E6%98%BE%E7%A4%BA">从启动请求到画面显示</a></li><li><a href="#%E7%BB%84%E4%BB%B6%E5%88%9B%E5%BB%BA%E8%BF%9B%E7%A8%8B%E4%B8%8E-activity-%E5%88%9D%E5%A7%8B%E5%8C%96">组件创建：进程与 Activity 初始化</a></li><li class="toc-child"><a href="#1-app-%E5%8F%91%E8%B5%B7%E7%AB%AF">1. App 发起端</a></li><li class="toc-child"><a href="#2-systemserver-%E8%B0%83%E5%BA%A6%E7%AB%AF">2. system_server 调度端</a></li><li class="toc-child"><a href="#3-%E7%9B%AE%E6%A0%87%E8%BF%9B%E7%A8%8B%E5%92%8C-activitythread">3. 目标进程和 ActivityThread</a></li><li class="toc-child"><a href="#4-performlaunchactivity">4. performLaunchActivity</a></li><li><a href="#%E7%AA%97%E5%8F%A3%E6%8E%A5%E5%85%A5%E4%B8%8E%E9%A6%96%E5%B8%A7%E7%94%9F%E4%BA%A7">窗口接入与首帧生产</a></li><li class="toc-child"><a href="#%E6%98%BE%E7%A4%BA%E9%98%B6%E6%AE%B5%E9%A1%B5%E9%9D%A2%E5%A6%82%E4%BD%95%E6%8E%A5%E5%85%A5%E7%AA%97%E5%8F%A3%E7%B3%BB%E7%BB%9F">显示阶段：页面如何接入窗口系统</a></li><li class="toc-child"><a href="#%E4%BB%8E-setcontentview-%E5%88%B0%E9%A6%96%E5%B8%A7%E4%B8%8A%E5%B1%8F">从 setContentView 到首帧上屏</a></li><li><a href="#%E8%BE%93%E5%85%A5%E9%93%BE%E8%B7%AF%E4%B8%8E%E5%B8%B8%E8%A7%81%E8%AF%AF%E5%8C%BA">输入链路与常见误区</a></li><li class="toc-child"><a href="#%E8%BE%93%E5%85%A5%E4%B9%9F%E8%B5%B0%E7%AA%97%E5%8F%A3%E4%BD%93%E7%B3%BB">输入也走窗口体系</a></li><li class="toc-child"><a href="#%E5%B8%B8%E8%A7%81%E8%AF%AF%E5%8C%BA">常见误区</a></li></ol></nav></details><article class="prose" id="content"><p>这篇梳理一个 Activity 从 <code>startActivity</code> 发起，到目标 Activity 创建、窗口接入、View 绘制，再到首帧上屏的主链路。</p>
 <p><img src="/media/f32a35614a40810d.svg" alt="Activity 从启动到首帧显示流转图" loading="lazy" decoding="async"></p>
 <h2 id="从启动请求到画面显示">从启动请求到画面显示</h2>
-<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>App 发起 startActivity
+<div class="code-block" data-language="text"><div class="code-label"><span>示意</span></div><pre tabindex="0"><code>App 发起 startActivity
   -&gt; Instrumentation
   -&gt; Binder 调用 ATMS / AMS
   -&gt; Intent 解析 / Manifest 校验 / Task 调度 / 进程调度
@@ -25,7 +25,7 @@
 <h2 id="组件创建进程与-activity-初始化">组件创建：进程与 Activity 初始化</h2>
 <h3 id="1-app-发起端">1. App 发起端</h3>
 <p>业务调用 <code>startActivity</code> 后，先在发起方 App 进程内走到：</p>
-<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>Activity.startActivity
+<div class="code-block" data-language="text"><div class="code-label"><span>示意</span></div><pre tabindex="0"><code>Activity.startActivity
   -&gt; Activity.startActivityForResult
   -&gt; Instrumentation.execStartActivity
   -&gt; Binder 调用 ATMS / AMS</code></pre></div>
@@ -47,7 +47,7 @@
 <h4 id="1-对象分工">1. 对象分工</h4>
 <div class="table-wrap" tabindex="0" role="region" aria-label="数据表格"><table><thead><tr><th scope="col">概念</th><th scope="col">所在位置</th><th scope="col">职责</th></tr></thead><tbody><tr><td>Activity</td><td>App / ATMS 有记录</td><td>页面身份、生命周期、任务栈入口</td></tr><tr><td>PhoneWindow</td><td>App</td><td>Activity 持有的窗口抽象</td></tr><tr><td>DecorView</td><td>App</td><td>View 树根节点</td></tr><tr><td>ViewRootImpl</td><td>App</td><td>View 树根控制器，负责 traversal、输入、relayout、Surface 使用</td></tr><tr><td>ATMS/AMS</td><td>system_server</td><td>Activity、Task、进程、生命周期和权限调度</td></tr><tr><td>WMS</td><td>system_server</td><td>Window token、层级、焦点、布局、输入目标、SurfaceControl</td></tr><tr><td>Surface</td><td>App 进程句柄</td><td>App 写 buffer 的入口</td></tr><tr><td>Layer</td><td>SurfaceFlinger</td><td>合成单位</td></tr><tr><td>SurfaceFlinger</td><td>独立系统进程</td><td>合成所有 Layer 并输出到屏幕</td></tr></tbody></table></div>
 <h4 id="2-windowsurfacelayer-的关系">2. Window、Surface、Layer 的关系</h4>
-<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>ActivityRecord
+<div class="code-block" data-language="text"><div class="code-label"><span>示意</span></div><pre tabindex="0"><code>ActivityRecord
   -&gt; token
     -&gt; WindowState
       -&gt; SurfaceControl
@@ -57,7 +57,7 @@
 <p>WMS 通过 <code>SurfaceControl</code> 控制 Layer 的位置、大小、裁剪、层级和显示隐藏。App 通过 <code>Surface</code> 写 buffer。SurfaceFlinger 只负责拿各个 Layer 的 buffer 做合成。</p>
 <h3 id="从-setcontentview-到首帧上屏">从 setContentView 到首帧上屏</h3>
 <p>resume 阶段会把 DecorView 加入窗口系统：</p>
-<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>ActivityThread.handleResumeActivity
+<div class="code-block" data-language="text"><div class="code-label"><span>示意</span></div><pre tabindex="0"><code>ActivityThread.handleResumeActivity
   -&gt; WindowManager.addView(decorView)
   -&gt; WindowManagerGlobal.addView
   -&gt; new ViewRootImpl
@@ -72,7 +72,7 @@
 <h2 id="输入链路与常见误区">输入链路与常见误区</h2>
 <h3 id="输入也走窗口体系">输入也走窗口体系</h3>
 <p>触摸事件不是直接给 Activity，也不是直接给 Surface。InputDispatcher 会根据 WMS 提供的窗口焦点和可触摸区域找到目标 Window，再通过 InputChannel 发给 App，最后由 ViewRootImpl 分发到 DecorView、Activity 和具体 View。</p>
-<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>Kernel input
+<div class="code-block" data-language="text"><div class="code-label"><span>示意</span></div><pre tabindex="0"><code>Kernel input
   -&gt; EventHub / InputReader
   -&gt; InputDispatcher
   -&gt; 目标 Window 的 InputChannel
@@ -85,11 +85,11 @@
 <p><code>onCreate</code> 只是生命周期回调。首帧显示还要经过 <code>WindowManager.addView</code>、ViewRootImpl traversal、Surface 提交 buffer 和 SurfaceFlinger 合成。</p>
 <h4 id="3-activity-不是绘制器">3. Activity 不是绘制器</h4>
 <p>Activity 是生命周期和任务栈单位。真正显示链路是：</p>
-<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>PhoneWindow -&gt; DecorView -&gt; ViewRootImpl -&gt; Surface -&gt; SurfaceFlinger</code></pre></div>
+<div class="code-block" data-language="text"><div class="code-label"><span>示意</span></div><pre tabindex="0"><code>PhoneWindow -&gt; DecorView -&gt; ViewRootImpl -&gt; Surface -&gt; SurfaceFlinger</code></pre></div>
 <h4 id="4-window-不等于-activity">4. Window 不等于 Activity</h4>
 <p>一个 Activity 可以有主窗口、Dialog、PopupWindow；也有些窗口不是 Activity，比如输入法、状态栏、导航栏、Toast、悬浮窗、壁纸。</p>
 <h4 id="5-classloader-来自-loadedapk">5. ClassLoader 来自 LoadedApk</h4>
 <p>ActivityThread 创建 Activity 时会从 <code>LoadedApk</code> 拿 <code>ClassLoader</code>。插件化如果只替换 Intent、不处理类加载，最终会在创建 Activity 时出现 <code>ClassNotFoundException</code>。</p>
 <h4 id="6-新旧-android-启动消息不同">6. 新旧 Android 启动消息不同</h4>
 <p>Android P 前主要看 <code>LAUNCH_ACTIVITY / ActivityClientRecord</code>；P 后主要看 <code>EXECUTE_TRANSACTION / LaunchActivityItem</code>。做 Hook 或源码对照时要注意版本差异。</p></article><footer class="article-footer"><a href="/#articles">← 返回文章列表</a><a href="#main">回到顶部 ↑</a></footer></main>
-  <aside class="desktop-toc"><p>本篇目录</p><nav aria-label="本篇目录"><ol><li><a href="#%E4%BB%8E%E5%90%AF%E5%8A%A8%E8%AF%B7%E6%B1%82%E5%88%B0%E7%94%BB%E9%9D%A2%E6%98%BE%E7%A4%BA">从启动请求到画面显示</a></li><li><a href="#%E7%BB%84%E4%BB%B6%E5%88%9B%E5%BB%BA%E8%BF%9B%E7%A8%8B%E4%B8%8E-activity-%E5%88%9D%E5%A7%8B%E5%8C%96">组件创建：进程与 Activity 初始化</a></li><li><a href="#%E7%AA%97%E5%8F%A3%E6%8E%A5%E5%85%A5%E4%B8%8E%E9%A6%96%E5%B8%A7%E7%94%9F%E4%BA%A7">窗口接入与首帧生产</a></li><li><a href="#%E8%BE%93%E5%85%A5%E9%93%BE%E8%B7%AF%E4%B8%8E%E5%B8%B8%E8%A7%81%E8%AF%AF%E5%8C%BA">输入链路与常见误区</a></li></ol></nav><a class="toc-return" href="/#articles">← 全部文章</a></aside></div></body></html>
+  <aside class="desktop-toc"><p>本篇目录</p><nav aria-label="本篇目录"><ol><li><a href="#%E4%BB%8E%E5%90%AF%E5%8A%A8%E8%AF%B7%E6%B1%82%E5%88%B0%E7%94%BB%E9%9D%A2%E6%98%BE%E7%A4%BA">从启动请求到画面显示</a></li><li><a href="#%E7%BB%84%E4%BB%B6%E5%88%9B%E5%BB%BA%E8%BF%9B%E7%A8%8B%E4%B8%8E-activity-%E5%88%9D%E5%A7%8B%E5%8C%96">组件创建：进程与 Activity 初始化</a></li><li class="toc-child"><a href="#1-app-%E5%8F%91%E8%B5%B7%E7%AB%AF">1. App 发起端</a></li><li class="toc-child"><a href="#2-systemserver-%E8%B0%83%E5%BA%A6%E7%AB%AF">2. system_server 调度端</a></li><li class="toc-child"><a href="#3-%E7%9B%AE%E6%A0%87%E8%BF%9B%E7%A8%8B%E5%92%8C-activitythread">3. 目标进程和 ActivityThread</a></li><li class="toc-child"><a href="#4-performlaunchactivity">4. performLaunchActivity</a></li><li><a href="#%E7%AA%97%E5%8F%A3%E6%8E%A5%E5%85%A5%E4%B8%8E%E9%A6%96%E5%B8%A7%E7%94%9F%E4%BA%A7">窗口接入与首帧生产</a></li><li class="toc-child"><a href="#%E6%98%BE%E7%A4%BA%E9%98%B6%E6%AE%B5%E9%A1%B5%E9%9D%A2%E5%A6%82%E4%BD%95%E6%8E%A5%E5%85%A5%E7%AA%97%E5%8F%A3%E7%B3%BB%E7%BB%9F">显示阶段：页面如何接入窗口系统</a></li><li class="toc-child"><a href="#%E4%BB%8E-setcontentview-%E5%88%B0%E9%A6%96%E5%B8%A7%E4%B8%8A%E5%B1%8F">从 setContentView 到首帧上屏</a></li><li><a href="#%E8%BE%93%E5%85%A5%E9%93%BE%E8%B7%AF%E4%B8%8E%E5%B8%B8%E8%A7%81%E8%AF%AF%E5%8C%BA">输入链路与常见误区</a></li><li class="toc-child"><a href="#%E8%BE%93%E5%85%A5%E4%B9%9F%E8%B5%B0%E7%AA%97%E5%8F%A3%E4%BD%93%E7%B3%BB">输入也走窗口体系</a></li><li class="toc-child"><a href="#%E5%B8%B8%E8%A7%81%E8%AF%AF%E5%8C%BA">常见误区</a></li></ol></nav><a class="toc-return" href="/#articles">← 全部文章</a></aside></div></body></html>

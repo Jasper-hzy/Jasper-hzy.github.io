@@ -1,8 +1,8 @@
-<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light"><meta name="theme-color" content="#f7f6f2"><title>PackageManagerService 包扫描与安装流程</title><meta name="description" content="技术学习与工程实践。"><link rel="icon" href="/favicon.svg?v=14ae5a412d40f95d"><link rel="stylesheet" href="/reader.css?v=14ae5a412d40f95d"><script src="/reader.js?v=14ae5a412d40f95d" defer></script></head><body><div class="reading-progress" aria-hidden="true"></div><a class="skip" href="#main">跳到正文</a><header class="reader-nav"><nav aria-label="站点导航"><a href="/">← 首页</a><a href="/#articles">全部文章 ↗</a></nav></header><div class="reading-layout"><main id="main"><nav class="breadcrumbs" aria-label="当前位置"><a href="/#articles">文章</a><span>/</span><a href="/?category=client#articles">客户端开发</a><span>/</span><span>Android</span><span>/</span><span>系统原理</span></nav>
-  <header class="article-heading"><p class="article-category">客户端开发</p><h1>PackageManagerService 包扫描与安装流程</h1></header>
-  <details class="mobile-toc"><summary>本篇目录 <span>4 节</span></summary><nav aria-label="本篇目录"><ol><li><a href="#pms-%E7%9A%84%E8%81%8C%E8%B4%A3%E8%8C%83%E5%9B%B4">PMS 的职责范围</a></li><li><a href="#%E5%BC%80%E6%9C%BA%E5%A6%82%E4%BD%95%E5%BB%BA%E7%AB%8B%E5%8C%85%E4%B8%8E%E7%BB%84%E4%BB%B6%E8%A7%86%E5%9B%BE">开机如何建立包与组件视图</a></li><li><a href="#%E5%AE%89%E8%A3%85%E6%B5%81%E7%A8%8B%E5%A6%82%E4%BD%95%E6%9B%B4%E6%96%B0%E5%8C%85%E7%8A%B6%E6%80%81">安装流程如何更新包状态</a></li><li><a href="#%E5%BA%94%E7%94%A8%E5%90%AF%E5%8A%A8%E4%B8%AD%E7%9A%84%E5%8D%8F%E4%BD%9C%E4%B8%8E%E7%BB%93%E8%AE%BA">应用启动中的协作与结论</a></li></ol></nav></details><article class="prose" id="content"><p><code>PackageManagerService</code>，简称 PMS，是 Android 的包与组件索引中心。它让系统知道设备上有哪些应用、每个应用声明了哪些组件、组件能响应什么 Intent，以及包对应的 uid、签名、权限和安装状态。</p>
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light"><meta name="theme-color" content="#f7f6f2"><title>PackageManagerService 包扫描与安装流程</title><meta name="description" content="技术学习与工程实践。"><link rel="icon" href="/favicon.svg?v=7ea8198bf5c60782"><link rel="stylesheet" href="/reader.css?v=7ea8198bf5c60782"><script src="/reader.js?v=7ea8198bf5c60782" defer></script></head><body><div class="reading-progress" aria-hidden="true"></div><a class="skip" href="#main">跳到正文</a><header class="reader-nav"><nav aria-label="站点导航"><a href="/">← 首页</a><a href="/#articles">全部文章 ↗</a></nav></header><div class="reading-layout"><main id="main"><nav class="breadcrumbs" aria-label="当前位置"><a href="/#articles">文章</a><span>/</span><a href="/?category=client#articles">客户端开发</a><span>/</span><span>Android</span><span>/</span><span>系统原理</span></nav>
+  <header class="article-heading"><h1>PackageManagerService 包扫描与安装流程</h1></header>
+  <details class="mobile-toc"><summary>本篇目录 <span>4 节</span></summary><nav aria-label="本篇目录"><ol><li><a href="#pms-%E7%9A%84%E8%81%8C%E8%B4%A3%E8%8C%83%E5%9B%B4">PMS 的职责范围</a></li><li><a href="#%E5%BC%80%E6%9C%BA%E5%A6%82%E4%BD%95%E5%BB%BA%E7%AB%8B%E5%8C%85%E4%B8%8E%E7%BB%84%E4%BB%B6%E8%A7%86%E5%9B%BE">开机如何建立包与组件视图</a></li><li class="toc-child"><a href="#%E5%BC%80%E6%9C%BA%E6%89%AB%E6%8F%8F%E7%B3%BB%E7%BB%9F%E6%9C%89%E5%93%AA%E4%BA%9B%E5%8C%85">开机扫描：系统有哪些包</a></li><li class="toc-child"><a href="#%E5%8C%85%E7%8A%B6%E6%80%81%E4%B8%8D%E5%8F%AA%E6%98%AF%E6%89%AB%E6%8F%8F-apk">包状态：不只是扫描 APK</a></li><li class="toc-child"><a href="#manifest-%E8%A7%A3%E6%9E%90%E7%B3%BB%E7%BB%9F%E6%9C%89%E5%93%AA%E4%BA%9B%E7%BB%84%E4%BB%B6">Manifest 解析：系统有哪些组件</a></li><li><a href="#%E5%AE%89%E8%A3%85%E6%B5%81%E7%A8%8B%E5%A6%82%E4%BD%95%E6%9B%B4%E6%96%B0%E5%8C%85%E7%8A%B6%E6%80%81">安装流程如何更新包状态</a></li><li class="toc-child"><a href="#pmsinstaller-%E4%B8%8E-installd">PMS、Installer 与 installd</a></li><li><a href="#%E5%BA%94%E7%94%A8%E5%90%AF%E5%8A%A8%E4%B8%AD%E7%9A%84%E5%8D%8F%E4%BD%9C%E4%B8%8E%E7%BB%93%E8%AE%BA">应用启动中的协作与结论</a></li><li class="toc-child"><a href="#pms-%E5%A6%82%E4%BD%95%E6%94%AF%E6%92%91-launcher-%E5%92%8C-app-%E5%90%AF%E5%8A%A8">PMS 如何支撑 Launcher 和 App 启动</a></li><li class="toc-child"><a href="#%E5%85%B3%E9%94%AE%E7%BB%93%E8%AE%BA">关键结论</a></li></ol></nav></details><article class="prose" id="content"><p><code>PackageManagerService</code>，简称 PMS，是 Android 的包与组件索引中心。它让系统知道设备上有哪些应用、每个应用声明了哪些组件、组件能响应什么 Intent，以及包对应的 uid、签名、权限和安装状态。</p>
 <p>一句话概括：</p>
-<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>PMS 告诉系统“有什么”，AMS/ATMS 决定这些组件“怎么运行”。</code></pre></div>
+<div class="code-block" data-language="text"><div class="code-label"><span>示意</span></div><pre tabindex="0"><code>PMS 告诉系统“有什么”，AMS/ATMS 决定这些组件“怎么运行”。</code></pre></div>
 <h2 id="pms-的职责范围">PMS 的职责范围</h2>
 <p>PMS 主要维护静态包信息和组件信息。系统里很多运行时动作都要先问 PMS：</p>
 <ul><li><p>Launcher 要显示桌面图标，需要查询哪些 Activity 声明了 <code>CATEGORY_LAUNCHER</code>。</p></li><li><p>AMS/ATMS 要启动 Activity，需要 PMS 返回目标 <code>ActivityInfo</code>。</p></li><li><p>权限系统要判断调用方能力，需要 PMS 提供包、uid、签名和权限声明。</p></li><li><p>安装、更新、卸载应用时，需要 PMS 更新包状态和持久化记录。</p></li></ul>
@@ -10,7 +10,7 @@
 <h2 id="开机如何建立包与组件视图">开机如何建立包与组件视图</h2>
 <h3 id="开机扫描系统有哪些包">开机扫描：系统有哪些包</h3>
 <p>PMS 启动时会扫描系统分区和数据分区里的包。常见目录包括：</p>
-<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>/system/app
+<div class="code-block" data-language="text"><div class="code-label"><span>示意</span></div><pre tabindex="0"><code>/system/app
 /system/priv-app
 /system_ext/app
 /system_ext/priv-app
@@ -28,23 +28,23 @@
 <p>安装 APK 时，APK 本体通常进入 <code>/data/app</code>；<code>/data/data/&lt;package&gt;</code> 或 <code>/data/user/0/&lt;package&gt;</code> 是应用运行数据目录，不是 PMS 扫描 APK 的主要位置。</p>
 <h3 id="包状态不只是扫描-apk">包状态：不只是扫描 APK</h3>
 <p>开机扫描不是简单遍历 APK。PMS 还会读取历史包状态，并和磁盘扫描结果合并。常见状态文件包括：</p>
-<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>/data/system/packages.xml
+<div class="code-block" data-language="text"><div class="code-label"><span>示意</span></div><pre tabindex="0"><code>/data/system/packages.xml
 /data/system/packages.list
 /data/system/users/&lt;userId&gt;/package-restrictions.xml</code></pre></div>
 <p>可以这样区分：</p>
-<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>APK / Manifest：说明包本身声明了什么
+<div class="code-block" data-language="text"><div class="code-label"><span>示意</span></div><pre tabindex="0"><code>APK / Manifest：说明包本身声明了什么
 packages.xml：说明系统记录的包状态是什么</code></pre></div>
 <p>包状态里会包含：</p>
 <ul><li><p>appId / uid。</p></li><li><p>签名信息。</p></li><li><p>权限授予状态。</p></li><li><p>enabled / disabled 状态。</p></li><li><p>安装用户和多用户状态。</p></li><li><p>版本、安装路径、系统 App 更新状态。</p></li></ul>
 <p>因此 PMS 启动时做的是：</p>
-<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>扫描磁盘 APK
+<div class="code-block" data-language="text"><div class="code-label"><span>示意</span></div><pre tabindex="0"><code>扫描磁盘 APK
   -&gt; 解析 Manifest
   -&gt; 读取历史 package state
   -&gt; 合并成当前系统的包数据库</code></pre></div>
 <h3 id="manifest-解析系统有哪些组件">Manifest 解析：系统有哪些组件</h3>
 <p>PMS 解析 APK 里的 <code>AndroidManifest.xml</code> 后，会建立一组组件和权限索引。</p>
 <p>核心信息包括：</p>
-<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>PackageInfo / ApplicationInfo
+<div class="code-block" data-language="text"><div class="code-label"><span>示意</span></div><pre tabindex="0"><code>PackageInfo / ApplicationInfo
 ActivityInfo / ServiceInfo / ProviderInfo / Receiver 信息
 IntentFilter -&gt; 可匹配组件
 权限声明和 uses-permission
@@ -54,7 +54,7 @@ uid / appId
 enabled / disabled 状态
 多用户安装状态</code></pre></div>
 <p>例如一个 Activity 声明：</p>
-<div class="code-block"><div class="code-label">xml</div><pre tabindex="0"><code>&lt;activity android:name=&quot;.MainActivity&quot;&gt;
+<div class="code-block" data-language="xml"><div class="code-label"><span>xml</span></div><pre tabindex="0"><code>&lt;activity android:name=&quot;.MainActivity&quot;&gt;
     &lt;intent-filter&gt;
         &lt;action android:name=&quot;android.intent.action.MAIN&quot; /&gt;
         &lt;category android:name=&quot;android.intent.category.LAUNCHER&quot; /&gt;
@@ -64,7 +64,7 @@ enabled / disabled 状态
 <p>如果某个 Activity 声明 <code>CATEGORY_HOME</code>，PMS 就会把它纳入 HOME Activity 候选，供 AMS/ATMS 启动 Launcher 时解析。</p>
 <h2 id="安装流程如何更新包状态">安装流程如何更新包状态</h2>
 <p>安装不是单纯复制 APK。典型链路可以概括为：</p>
-<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>PackageInstaller
+<div class="code-block" data-language="text"><div class="code-label"><span>示意</span></div><pre tabindex="0"><code>PackageInstaller
   -&gt; PMS / PackageInstallerService
   -&gt; 校验 APK
   -&gt; 拷贝 APK 到 /data/app
@@ -77,7 +77,7 @@ enabled / disabled 状态
 <p>系统 App 更新也会走 PMS 状态管理：系统分区里的原始 APK 仍在，只读不可删；更新包可以放在 <code>/data/app</code>，PMS 根据版本、签名和状态决定当前使用哪个版本。</p>
 <h3 id="pmsinstaller-与-installd">PMS、Installer 与 installd</h3>
 <p>安装流程里的 <code>Installer</code> 不是应用商店，也不是 App 侧提交安装会话使用的 <code>PackageInstaller</code>。它是 <code>system_server</code> 中访问 native <code>installd</code> 服务的 Java 封装。</p>
-<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>PackageInstaller
+<div class="code-block" data-language="text"><div class="code-label"><span>示意</span></div><pre tabindex="0"><code>PackageInstaller
   -&gt; 接收并组织安装请求
   -&gt; PMS 校验包并更新包状态
   -&gt; Installer 通过 Binder 调用 installd
@@ -85,7 +85,7 @@ enabled / disabled 状态
 <p>几者的职责可以这样区分：</p>
 <div class="table-wrap" tabindex="0" role="region" aria-label="数据表格"><table><thead><tr><th scope="col">对象</th><th scope="col">职责</th></tr></thead><tbody><tr><td><code>PackageInstaller</code></td><td>创建和提交安装会话，把安装请求交给系统</td></tr><tr><td>PMS</td><td>解析 APK、校验签名和版本，管理 uid、权限、组件及包状态</td></tr><tr><td><code>Installer</code></td><td><code>system_server</code> 中调用 <code>installd</code> 的 Java 接口封装</td></tr><tr><td><code>installd</code></td><td>native daemon，执行应用目录、缓存、dexopt、profile 等底层操作</td></tr></tbody></table></div>
 <p>例如安装过程中需要准备应用数据时，概念链路是：</p>
-<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>PMS
+<div class="code-block" data-language="text"><div class="code-label"><span>示意</span></div><pre tabindex="0"><code>PMS
   -&gt; Installer
   -&gt; Binder
   -&gt; installd
@@ -95,16 +95,16 @@ enabled / disabled 状态
 <h2 id="应用启动中的协作与结论">应用启动中的协作与结论</h2>
 <h3 id="pms-如何支撑-launcher-和-app-启动">PMS 如何支撑 Launcher 和 App 启动</h3>
 <p>系统启动 Launcher 时：</p>
-<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>AMS/ATMS 构造 HOME Intent
+<div class="code-block" data-language="text"><div class="code-label"><span>示意</span></div><pre tabindex="0"><code>AMS/ATMS 构造 HOME Intent
   -&gt; PMS resolveActivity
   -&gt; 返回 Launcher ActivityInfo
   -&gt; AMS/ATMS 启动 Launcher Activity</code></pre></div>
 <p>Launcher 展示桌面图标时：</p>
-<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>Launcher 构造 ACTION_MAIN + CATEGORY_LAUNCHER Intent
+<div class="code-block" data-language="text"><div class="code-label"><span>示意</span></div><pre tabindex="0"><code>Launcher 构造 ACTION_MAIN + CATEGORY_LAUNCHER Intent
   -&gt; PMS queryIntentActivities
   -&gt; 返回所有桌面入口 Activity</code></pre></div>
 <p>用户点击图标启动普通 App 时：</p>
-<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>Launcher.startActivity
+<div class="code-block" data-language="text"><div class="code-label"><span>示意</span></div><pre tabindex="0"><code>Launcher.startActivity
   -&gt; AMS/ATMS
   -&gt; PMS 解析目标 ActivityInfo
   -&gt; AMS/ATMS 判断进程、Task 和生命周期
@@ -115,4 +115,4 @@ enabled / disabled 状态
 <p>AMS/ATMS 则负责运行时调度：进程、任务栈、生命周期和前后台状态。</p>
 <h3 id="关键结论">关键结论</h3>
 <ol start="1"><li><p>PMS 是系统的包与组件索引中心。</p></li><li><p>开机时，PMS 扫描系统分区和 <code>/data/app</code>，并结合 <code>packages.xml</code> 恢复包状态。</p></li><li><p>安装时，APK 本体进入 <code>/data/app</code>；<code>/data/data</code> 或 <code>/data/user/0</code> 是应用数据目录。</p></li><li><p>PMS 解析 Manifest 后建立组件、IntentFilter、权限、签名、uid 等索引。</p></li><li><p>Launcher 的 HOME 入口和桌面图标列表都依赖 PMS 的 Intent 解析结果。</p></li><li><p>PMS 负责“有什么”，AMS/ATMS 负责“怎么运行”。</p></li></ol></article><footer class="article-footer"><a href="/#articles">← 返回文章列表</a><a href="#main">回到顶部 ↑</a></footer></main>
-  <aside class="desktop-toc"><p>本篇目录</p><nav aria-label="本篇目录"><ol><li><a href="#pms-%E7%9A%84%E8%81%8C%E8%B4%A3%E8%8C%83%E5%9B%B4">PMS 的职责范围</a></li><li><a href="#%E5%BC%80%E6%9C%BA%E5%A6%82%E4%BD%95%E5%BB%BA%E7%AB%8B%E5%8C%85%E4%B8%8E%E7%BB%84%E4%BB%B6%E8%A7%86%E5%9B%BE">开机如何建立包与组件视图</a></li><li><a href="#%E5%AE%89%E8%A3%85%E6%B5%81%E7%A8%8B%E5%A6%82%E4%BD%95%E6%9B%B4%E6%96%B0%E5%8C%85%E7%8A%B6%E6%80%81">安装流程如何更新包状态</a></li><li><a href="#%E5%BA%94%E7%94%A8%E5%90%AF%E5%8A%A8%E4%B8%AD%E7%9A%84%E5%8D%8F%E4%BD%9C%E4%B8%8E%E7%BB%93%E8%AE%BA">应用启动中的协作与结论</a></li></ol></nav><a class="toc-return" href="/#articles">← 全部文章</a></aside></div></body></html>
+  <aside class="desktop-toc"><p>本篇目录</p><nav aria-label="本篇目录"><ol><li><a href="#pms-%E7%9A%84%E8%81%8C%E8%B4%A3%E8%8C%83%E5%9B%B4">PMS 的职责范围</a></li><li><a href="#%E5%BC%80%E6%9C%BA%E5%A6%82%E4%BD%95%E5%BB%BA%E7%AB%8B%E5%8C%85%E4%B8%8E%E7%BB%84%E4%BB%B6%E8%A7%86%E5%9B%BE">开机如何建立包与组件视图</a></li><li class="toc-child"><a href="#%E5%BC%80%E6%9C%BA%E6%89%AB%E6%8F%8F%E7%B3%BB%E7%BB%9F%E6%9C%89%E5%93%AA%E4%BA%9B%E5%8C%85">开机扫描：系统有哪些包</a></li><li class="toc-child"><a href="#%E5%8C%85%E7%8A%B6%E6%80%81%E4%B8%8D%E5%8F%AA%E6%98%AF%E6%89%AB%E6%8F%8F-apk">包状态：不只是扫描 APK</a></li><li class="toc-child"><a href="#manifest-%E8%A7%A3%E6%9E%90%E7%B3%BB%E7%BB%9F%E6%9C%89%E5%93%AA%E4%BA%9B%E7%BB%84%E4%BB%B6">Manifest 解析：系统有哪些组件</a></li><li><a href="#%E5%AE%89%E8%A3%85%E6%B5%81%E7%A8%8B%E5%A6%82%E4%BD%95%E6%9B%B4%E6%96%B0%E5%8C%85%E7%8A%B6%E6%80%81">安装流程如何更新包状态</a></li><li class="toc-child"><a href="#pmsinstaller-%E4%B8%8E-installd">PMS、Installer 与 installd</a></li><li><a href="#%E5%BA%94%E7%94%A8%E5%90%AF%E5%8A%A8%E4%B8%AD%E7%9A%84%E5%8D%8F%E4%BD%9C%E4%B8%8E%E7%BB%93%E8%AE%BA">应用启动中的协作与结论</a></li><li class="toc-child"><a href="#pms-%E5%A6%82%E4%BD%95%E6%94%AF%E6%92%91-launcher-%E5%92%8C-app-%E5%90%AF%E5%8A%A8">PMS 如何支撑 Launcher 和 App 启动</a></li><li class="toc-child"><a href="#%E5%85%B3%E9%94%AE%E7%BB%93%E8%AE%BA">关键结论</a></li></ol></nav><a class="toc-return" href="/#articles">← 全部文章</a></aside></div></body></html>

@@ -1,11 +1,11 @@
-<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light"><meta name="theme-color" content="#f7f6f2"><title>Lynx 容器监控指标口径</title><meta name="description" content="技术学习与工程实践。"><link rel="icon" href="/favicon.svg?v=14ae5a412d40f95d"><link rel="stylesheet" href="/reader.css?v=14ae5a412d40f95d"><script src="/reader.js?v=14ae5a412d40f95d" defer></script></head><body><div class="reading-progress" aria-hidden="true"></div><a class="skip" href="#main">跳到正文</a><header class="reader-nav"><nav aria-label="站点导航"><a href="/">← 首页</a><a href="/#articles">全部文章 ↗</a></nav></header><div class="reading-layout"><main id="main"><nav class="breadcrumbs" aria-label="当前位置"><a href="/#articles">文章</a><span>/</span><a href="/?category=client#articles">客户端开发</a><span>/</span><span>跨端</span><span>/</span><span>Lynx</span></nav>
-  <header class="article-heading"><p class="article-category">客户端开发</p><h1>Lynx 容器监控指标口径</h1></header>
-  <details class="mobile-toc"><summary>本篇目录 <span>4 节</span></summary><nav aria-label="本篇目录"><ol><li><a href="#%E9%80%82%E7%94%A8%E8%8C%83%E5%9B%B4%E4%B8%8E%E9%A1%B5%E9%9D%A2%E7%9B%91%E6%8E%A7%E6%A8%A1%E5%9E%8B">适用范围与页面监控模型</a></li><li><a href="#%E5%86%85%E5%AE%B9%E5%8F%AF%E8%A7%81%E6%80%A7fcplynxfcp-%E4%B8%8E-fmp">内容可见性：FCP、LynxFCP 与 FMP</a></li><li><a href="#%E9%93%BE%E8%B7%AF%E5%88%86%E8%A7%A3%E5%AE%B9%E5%99%A8%E9%A6%96%E5%B8%A7%E4%B8%8E%E8%B5%84%E6%BA%90%E5%8A%A0%E8%BD%BD">链路分解：容器、首帧与资源加载</a></li><li><a href="#%E5%BC%82%E5%B8%B8%E6%8C%87%E6%A0%87%E4%B8%8E%E6%80%A7%E8%83%BD%E5%BD%92%E5%9B%A0">异常指标与性能归因</a></li></ol></nav></details><article class="prose" id="content"><h2 id="适用范围与页面监控模型">适用范围与页面监控模型</h2>
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light"><meta name="theme-color" content="#f7f6f2"><title>Lynx 容器监控指标口径</title><meta name="description" content="技术学习与工程实践。"><link rel="icon" href="/favicon.svg?v=7ea8198bf5c60782"><link rel="stylesheet" href="/reader.css?v=7ea8198bf5c60782"><script src="/reader.js?v=7ea8198bf5c60782" defer></script></head><body><div class="reading-progress" aria-hidden="true"></div><a class="skip" href="#main">跳到正文</a><header class="reader-nav"><nav aria-label="站点导航"><a href="/">← 首页</a><a href="/#articles">全部文章 ↗</a></nav></header><div class="reading-layout"><main id="main"><nav class="breadcrumbs" aria-label="当前位置"><a href="/#articles">文章</a><span>/</span><a href="/?category=client#articles">客户端开发</a><span>/</span><span>跨端</span><span>/</span><span>Lynx</span></nav>
+  <header class="article-heading"><h1>Lynx 容器监控指标口径</h1></header>
+  <details class="mobile-toc"><summary>本篇目录 <span>4 节</span></summary><nav aria-label="本篇目录"><ol><li><a href="#%E9%80%82%E7%94%A8%E8%8C%83%E5%9B%B4%E4%B8%8E%E9%A1%B5%E9%9D%A2%E7%9B%91%E6%8E%A7%E6%A8%A1%E5%9E%8B">适用范围与页面监控模型</a></li><li class="toc-child"><a href="#%E8%B5%84%E6%96%99%E8%BE%B9%E7%95%8C">资料边界</a></li><li class="toc-child"><a href="#%E7%BB%93%E8%AE%BA%E5%85%88%E8%A1%8C">结论先行</a></li><li class="toc-child"><a href="#%E4%B8%80%E6%AC%A1-lynx-%E9%A1%B5%E9%9D%A2%E6%89%93%E5%BC%80%E7%9A%84%E7%9B%91%E6%8E%A7%E6%A8%A1%E5%9E%8B">一次 Lynx 页面打开的监控模型</a></li><li><a href="#%E5%86%85%E5%AE%B9%E5%8F%AF%E8%A7%81%E6%80%A7fcplynxfcp-%E4%B8%8E-fmp">内容可见性：FCP、LynxFCP 与 FMP</a></li><li class="toc-child"><a href="#fcp-%E7%9A%84%E5%AE%9E%E7%8E%B0%E5%8F%A3%E5%BE%84">FCP 的实现口径</a></li><li class="toc-child"><a href="#lynxfcp-%E7%9A%84%E5%AE%9E%E7%8E%B0%E5%8F%A3%E5%BE%84">LynxFCP 的实现口径</a></li><li class="toc-child"><a href="#fmp--actualfmp-%E7%9A%84%E5%AE%9E%E7%8E%B0%E5%8F%A3%E5%BE%84">FMP / ActualFMP 的实现口径</a></li><li><a href="#%E9%93%BE%E8%B7%AF%E5%88%86%E8%A7%A3%E5%AE%B9%E5%99%A8%E9%A6%96%E5%B8%A7%E4%B8%8E%E8%B5%84%E6%BA%90%E5%8A%A0%E8%BD%BD">链路分解：容器、首帧与资源加载</a></li><li class="toc-child"><a href="#%E5%AE%B9%E5%99%A8%E8%80%97%E6%97%B6%E7%9A%84%E5%AE%9E%E7%8E%B0%E5%8F%A3%E5%BE%84">容器耗时的实现口径</a></li><li class="toc-child"><a href="#%E9%A6%96%E5%B8%A7%E7%9A%84%E5%AE%9E%E7%8E%B0%E5%8F%A3%E5%BE%84">首帧的实现口径</a></li><li class="toc-child"><a href="#%E8%B5%84%E6%BA%90%E5%8A%A0%E8%BD%BD%E6%8C%87%E6%A0%87%E7%9A%84%E5%AE%9E%E7%8E%B0%E5%8F%A3%E5%BE%84">资源加载指标的实现口径</a></li><li><a href="#%E5%BC%82%E5%B8%B8%E6%8C%87%E6%A0%87%E4%B8%8E%E6%80%A7%E8%83%BD%E5%BD%92%E5%9B%A0">异常指标与性能归因</a></li><li class="toc-child"><a href="#%E7%99%BD%E5%B1%8F%E7%8E%87%E5%92%8C%E5%BC%82%E5%B8%B8%E7%8E%87%E7%9A%84%E5%AE%9E%E7%8E%B0%E5%8F%A3%E5%BE%84">白屏率和异常率的实现口径</a></li><li class="toc-child"><a href="#%E5%A6%82%E4%BD%95%E7%94%A8%E8%BF%99%E4%BA%9B%E6%8C%87%E6%A0%87%E5%81%9A%E5%BD%92%E5%9B%A0">如何用这些指标做归因</a></li></ol></nav></details><article class="prose" id="content"><h2 id="适用范围与页面监控模型">适用范围与页面监控模型</h2>
 <h3 id="资料边界">资料边界</h3>
 <p>本篇根据 Lynx 运行机制、首屏指标和资源加载排查资料整理，只保留通用指标口径，不记录内部文档入口、平台名称、业务标识和具体看板样本。</p>
 <h3 id="结论先行">结论先行</h3>
 <p>Lynx 容器监控不能只讲“埋了几个指标”，更准确的口径是：围绕一次 Lynx 页面打开，把链路拆成容器初始化、资源准备、模板加载、首次绘制、业务数据更新、关键内容上屏，并分别建设资源稳定性、页面性能、运行时异常和业务结果指标。</p>
-<div class="code-block"><div class="code-label">Mermaid · 流程图源码</div><pre tabindex="0"><code>flowchart TD
+<div class="code-block" data-language="mermaid"><div class="code-label"><span>Mermaid · 流程图源码</span></div><pre tabindex="0"><code>flowchart TD
   A[Lynx 容器监控] --&gt; B[性能指标]
   A --&gt; C[资源指标]
   A --&gt; D[异常指标]
@@ -25,7 +25,7 @@
 <ul><li><p>白屏可能由模板加载失败、离线资源/CDN 失败、JS 异常、JSB 失败、接口失败、渲染失败等导致。</p></li><li><p>白屏监控必须和资源、JS、JSB、接口、Timing 数据一起看，才能归因。</p></li></ul></li></ol>
 <h3 id="一次-lynx-页面打开的监控模型">一次 Lynx 页面打开的监控模型</h3>
 <p>可以把一次页面打开抽象成这条链路：</p>
-<div class="code-block"><div class="code-label">Mermaid · 流程图源码</div><pre tabindex="0"><code>flowchart LR
+<div class="code-block" data-language="mermaid"><div class="code-label"><span>Mermaid · 流程图源码</span></div><pre tabindex="0"><code>flowchart LR
   A[open_time] --&gt; B[schema / router]
   B --&gt; C[容器初始化]
   C --&gt; D[PrepareTemplate]
@@ -46,7 +46,7 @@
 <h3 id="fcp-的实现口径">FCP 的实现口径</h3>
 <p>FCP 是 First Contentful Paint，表示页面从开始加载到任意内容首次完成绘制的耗时。这里的“内容”可以是文本、图片、SVG、非白色 canvas 等，不一定是业务真正关心的核心内容。</p>
 <p>在 Lynx Timing 里，FCP 常见有两个起点：</p>
-<div class="code-block"><div class="code-label">Mermaid · 流程图源码</div><pre tabindex="0"><code>flowchart LR
+<div class="code-block" data-language="mermaid"><div class="code-label"><span>Mermaid · 流程图源码</span></div><pre tabindex="0"><code>flowchart LR
   A[open_time] --&gt; B[PrepareTemplateStart]
   B --&gt; C[LoadTemplateStart]
   C --&gt; D[首次 DrawEnd]
@@ -54,7 +54,7 @@
   A -. TotalFCP .-&gt; D
   B -. FCP .-&gt; D
   C -. LynxFCP .-&gt; D</code></pre></div>
-<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>FCP = Setup.DrawEnd - Setup.PrepareTemplateStart
+<div class="code-block" data-language="text"><div class="code-label"><span>示意</span></div><pre tabindex="0"><code>FCP = Setup.DrawEnd - Setup.PrepareTemplateStart
 TotalFCP = Setup.DrawEnd - open_time
 LynxFCP = Setup.DrawEnd - Setup.LoadTemplateStart</code></pre></div>
 <p>两者区别：</p>
@@ -63,9 +63,9 @@ LynxFCP = Setup.DrawEnd - Setup.LoadTemplateStart</code></pre></div>
 <ol start="1"><li><p>容器或业务入口记录 <code>open_time</code>。</p></li><li><p>容器开始准备模板时记录 <code>PrepareTemplateStart</code>。</p></li><li><p>Lynx SDK 内部记录 <code>LoadTemplateStart/End</code>、<code>DrawEnd</code> 等 timing。</p></li><li><p>容器监控模块收集 timing 并上报。</p></li><li><p>指标看板按页面、版本、系统、资源来源等维度消费。</p></li></ol>
 <h3 id="lynxfcp-的实现口径">LynxFCP 的实现口径</h3>
 <p>LynxFCP 更偏 Lynx 引擎内部指标，目的是排除容器初始化、资源下载、业务前置流程等干扰，只看模板进入 Lynx 后到首次绘制完成的耗时。</p>
-<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>LynxFCP = Setup.DrawEnd - Setup.LoadTemplateStart</code></pre></div>
+<div class="code-block" data-language="text"><div class="code-label"><span>示意</span></div><pre tabindex="0"><code>LynxFCP = Setup.DrawEnd - Setup.LoadTemplateStart</code></pre></div>
 <p>它覆盖的主要阶段包括：</p>
-<div class="code-block"><div class="code-label">Mermaid · 流程图源码</div><pre tabindex="0"><code>flowchart LR
+<div class="code-block" data-language="mermaid"><div class="code-label"><span>Mermaid · 流程图源码</span></div><pre tabindex="0"><code>flowchart LR
   A[LoadTemplateStart] --&gt; B[template decode]
   B --&gt; C[lepus 执行]
   C --&gt; D[create VDOM]
@@ -81,14 +81,14 @@ LynxFCP = Setup.DrawEnd - Setup.LoadTemplateStart</code></pre></div>
 <p>FMP 是 First Meaningful Paint，表示用户真正关心的关键内容完成渲染。它和 FCP 最大的区别是：FCP 可能只是 loading 或占位内容出现，FMP 必须是核心业务内容可见。</p>
 <p>Lynx SDK 无法天然知道哪个内容对业务“有意义”，所以需要业务侧主动标记。</p>
 <p>典型实现：</p>
-<div class="code-block"><div class="code-label">Mermaid · 流程图源码</div><pre tabindex="0"><code>flowchart LR
+<div class="code-block" data-language="mermaid"><div class="code-label"><span>Mermaid · 流程图源码</span></div><pre tabindex="0"><code>flowchart LR
   A[请求关键业务数据] --&gt; B[数据返回并解析]
   B --&gt; C[setState / setData / updateData]
   C --&gt; D[携带 __lynx_timing_actual_fmp]
   D --&gt; E[Update 后首次 DrawEnd]
   E --&gt; F[ActualFMP / TotalActualFMP]</code></pre></div>
 <p>常见计算：</p>
-<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>ActualFMP = Update.DrawEnd - Setup.PrepareTemplateStart
+<div class="code-block" data-language="text"><div class="code-label"><span>示意</span></div><pre tabindex="0"><code>ActualFMP = Update.DrawEnd - Setup.PrepareTemplateStart
 TotalActualFMP = Update.DrawEnd - open_time
 FMP = MAX(ActualFMP, FCP)
 TotalFMP = MAX(TotalActualFMP, TotalFCP)</code></pre></div>
@@ -99,7 +99,7 @@ TotalFMP = MAX(TotalActualFMP, TotalFCP)</code></pre></div>
 <h3 id="容器耗时的实现口径">容器耗时的实现口径</h3>
 <p>容器耗时是进入 Lynx 渲染前，Native 容器和业务框架的准备成本，可以通过 <code>ContainerInited</code> 这类自定义指标记录容器准备业务数据或组件的时间。</p>
 <p>可以按下面方式理解：</p>
-<div class="code-block"><div class="code-label">Mermaid · 流程图源码</div><pre tabindex="0"><code>flowchart LR
+<div class="code-block" data-language="mermaid"><div class="code-label"><span>Mermaid · 流程图源码</span></div><pre tabindex="0"><code>flowchart LR
   A[open_time] --&gt; B[schema / router 解析]
   B --&gt; C[容器实例创建]
   C --&gt; D[LynxView 创建]
@@ -111,19 +111,19 @@ TotalFMP = MAX(TotalActualFMP, TotalFCP)</code></pre></div>
 
   A -. ContainerInited .-&gt; I</code></pre></div>
 <p>常见计算：</p>
-<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>ContainerInited = container_init_end - open_time
+<div class="code-block" data-language="text"><div class="code-label"><span>示意</span></div><pre tabindex="0"><code>ContainerInited = container_init_end - open_time
 container_create_cost = container_create_end - container_create_start</code></pre></div>
 <p>实际项目里不一定只有一个容器耗时指标，可能会继续拆成 schema 解析、LynxView 创建、插件初始化、GlobalProps 注入等子阶段。是否要拆到这么细，取决于线上归因需要。</p>
 <h3 id="首帧的实现口径">首帧的实现口径</h3>
 <p>“首帧”要先定义清楚，否则很容易和 FCP/FMP 混在一起。</p>
 <h4 id="引擎首帧">引擎首帧</h4>
 <p>引擎首帧通常就是 LoadTemplate 后第一次 DrawEnd，对应 LynxFCP 的结束点。</p>
-<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>引擎首帧 = first DrawEnd after LoadTemplate</code></pre></div>
+<div class="code-block" data-language="text"><div class="code-label"><span>示意</span></div><pre tabindex="0"><code>引擎首帧 = first DrawEnd after LoadTemplate</code></pre></div>
 <p>它说明 Lynx 模板是否已经画出第一帧，但不保证关键业务数据已经展示。</p>
 <h4 id="业务首帧">业务首帧</h4>
 <p>业务首帧是关键业务内容真正上屏。它应该由业务定义关键模块，而不是由 SDK 自动猜。</p>
 <p>典型实现：</p>
-<div class="code-block"><div class="code-label">Mermaid · 流程图源码</div><pre tabindex="0"><code>flowchart LR
+<div class="code-block" data-language="mermaid"><div class="code-label"><span>Mermaid · 流程图源码</span></div><pre tabindex="0"><code>flowchart LR
   A[页面启动] --&gt; B[请求关键接口]
   B --&gt; C[数据解析]
   C --&gt; D[setState / updateData]
@@ -135,7 +135,7 @@ container_create_cost = container_create_end - container_create_start</code></pr
 <ul><li><p>接口返回只代表数据到了，不代表 UI 已经更新。</p></li><li><p>setState/updateData 只代表触发更新，不代表 Draw/Layout/Flush 已完成。</p></li><li><p>Android/iOS 真正显示还要经过后续渲染管线。</p></li></ul>
 <h3 id="资源加载指标的实现口径">资源加载指标的实现口径</h3>
 <p>资源层是 Lynx 稳定性和首屏性能的前置条件，尤其是主模板 <code>template.js</code>。</p>
-<div class="code-block"><div class="code-label">Mermaid · 流程图源码</div><pre tabindex="0"><code>flowchart LR
+<div class="code-block" data-language="mermaid"><div class="code-label"><span>Mermaid · 流程图源码</span></div><pre tabindex="0"><code>flowchart LR
   A[请求 template.js / 子资源] --&gt; B{Memory 命中?}
   B -- 是 --&gt; Z[返回资源]
   B -- 否 --&gt; C{离线资源命中?}
@@ -152,7 +152,7 @@ container_create_cost = container_create_end - container_create_start</code></pr
 <p>核心指标：</p>
 <div class="table-wrap" tabindex="0" role="region" aria-label="数据表格"><table><thead><tr><th scope="col">指标</th><th scope="col">口径</th><th scope="col">说明</th></tr></thead><tbody><tr><td>主模板资源加载成功率</td><td>资源加载成功 PV / 成功失败总 PV</td><td>判断 template.js 是否能成功获取</td></tr><tr><td>主模板资源加载错误率</td><td>资源加载失败 PV / 资源加载总 PV</td><td>和成功率互补，用于报警</td></tr><tr><td>主模板资源加载耗时</td><td>资源从触发请求到返回的总耗时</td><td>影响 FCP/TotalFCP</td></tr><tr><td>主模板资源离线化率</td><td>离线化资源数 / 总资源数</td><td>判断是否能走离线资源</td></tr><tr><td>静态资源错误率</td><td>发生静态资源错误的页面 PV / 页面总 PV</td><td>关注图片、样式、子资源等</td></tr><tr><td>CDN 成功率</td><td>CDN 请求成功次数 / CDN 请求总次数</td><td>离线未命中后的 fallback 能力</td></tr><tr><td>缓存命中率</td><td>memory/offline/request reuse 命中次数 / 请求总次数</td><td>影响资源下载和首屏速度</td></tr></tbody></table></div>
 <p>排查时重点看：</p>
-<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>pipeline：这次资源请求依次尝试了哪些加载方式
+<div class="code-block" data-language="text"><div class="code-label"><span>示意</span></div><pre tabindex="0"><code>pipeline：这次资源请求依次尝试了哪些加载方式
 error_message：每一层加载方式为什么失败
 res_from：最终资源来自哪里
 res_version：资源版本
@@ -163,7 +163,7 @@ res_load_error：资源加载错误数据</code></pre></div>
 <h2 id="异常指标与性能归因">异常指标与性能归因</h2>
 <h3 id="白屏率和异常率的实现口径">白屏率和异常率的实现口径</h3>
 <p>白屏率是结果指标，通常由 watchdog 或容器监控能力发现，但归因要依赖前面几层数据。</p>
-<div class="code-block"><div class="code-label">Mermaid · 流程图源码</div><pre tabindex="0"><code>flowchart TD
+<div class="code-block" data-language="mermaid"><div class="code-label"><span>Mermaid · 流程图源码</span></div><pre tabindex="0"><code>flowchart TD
   A[白屏 / 首屏超时] --&gt; B{主模板加载成功?}
   B -- 否 --&gt; B1[资源问题&lt;br/&gt;Memory / 离线资源 / CDN]
   B -- 是 --&gt; C{JS 是否异常?}
@@ -182,7 +182,7 @@ res_load_error：资源加载错误数据</code></pre></div>
 <p>需要注意：这些页面级错误率常以页面 PV 为分母，不等于某个 JSB、某个接口、某个资源自身的调用成功率。如果要定位具体方法或 URL，需要额外按 method/url/resource 维度上报。</p>
 <h3 id="如何用这些指标做归因">如何用这些指标做归因</h3>
 <p>常见归因可以按下面判断：</p>
-<div class="code-block"><div class="code-label">Mermaid · 流程图源码</div><pre tabindex="0"><code>flowchart TD
+<div class="code-block" data-language="mermaid"><div class="code-label"><span>Mermaid · 流程图源码</span></div><pre tabindex="0"><code>flowchart TD
   A[线上指标异常] --&gt; B{TotalFCP 高?}
   B -- 是 --&gt; C{LynxFCP 高?}
   C -- 否 --&gt; C1[容器 / 资源 / 前置业务慢]
@@ -195,4 +195,4 @@ res_load_error：资源加载错误数据</code></pre></div>
   F -- 是 --&gt; F1[Native 能力不可用 / 低版本不兼容 / 参数错误]
   F -- 否 --&gt; G[继续看页面维度和单点日志]</code></pre></div>
 <div class="table-wrap" tabindex="0" role="region" aria-label="数据表格"><table><thead><tr><th scope="col">现象</th><th scope="col">更可能的问题</th></tr></thead><tbody><tr><td>TotalFCP 高，LynxFCP 正常</td><td>容器初始化、资源加载、CDN/离线资源、前置业务逻辑慢</td></tr><tr><td>LynxFCP 高</td><td>模板复杂、节点过多、VDOM 创建、Layout、UI flush 慢</td></tr><tr><td>FCP 正常，ActualFMP/TotalFMP 高</td><td>loading 出来了，但关键接口慢、prefetch 失效、setState/update 慢</td></tr><tr><td>资源加载耗时高</td><td>离线未命中走 CDN、模板包过大、CDN 慢、缓存策略异常</td></tr><tr><td>白屏率高</td><td>结合资源错误、JS 错误、JSB 错误、接口错误、容器生命周期继续拆因</td></tr><tr><td>JSB 错误率高</td><td>Native 能力不可用、参数不兼容、低版本缺方法、权限/登录态问题</td></tr></tbody></table></div></article><footer class="article-footer"><a href="/#articles">← 返回文章列表</a><a href="#main">回到顶部 ↑</a></footer></main>
-  <aside class="desktop-toc"><p>本篇目录</p><nav aria-label="本篇目录"><ol><li><a href="#%E9%80%82%E7%94%A8%E8%8C%83%E5%9B%B4%E4%B8%8E%E9%A1%B5%E9%9D%A2%E7%9B%91%E6%8E%A7%E6%A8%A1%E5%9E%8B">适用范围与页面监控模型</a></li><li><a href="#%E5%86%85%E5%AE%B9%E5%8F%AF%E8%A7%81%E6%80%A7fcplynxfcp-%E4%B8%8E-fmp">内容可见性：FCP、LynxFCP 与 FMP</a></li><li><a href="#%E9%93%BE%E8%B7%AF%E5%88%86%E8%A7%A3%E5%AE%B9%E5%99%A8%E9%A6%96%E5%B8%A7%E4%B8%8E%E8%B5%84%E6%BA%90%E5%8A%A0%E8%BD%BD">链路分解：容器、首帧与资源加载</a></li><li><a href="#%E5%BC%82%E5%B8%B8%E6%8C%87%E6%A0%87%E4%B8%8E%E6%80%A7%E8%83%BD%E5%BD%92%E5%9B%A0">异常指标与性能归因</a></li></ol></nav><a class="toc-return" href="/#articles">← 全部文章</a></aside></div></body></html>
+  <aside class="desktop-toc"><p>本篇目录</p><nav aria-label="本篇目录"><ol><li><a href="#%E9%80%82%E7%94%A8%E8%8C%83%E5%9B%B4%E4%B8%8E%E9%A1%B5%E9%9D%A2%E7%9B%91%E6%8E%A7%E6%A8%A1%E5%9E%8B">适用范围与页面监控模型</a></li><li class="toc-child"><a href="#%E8%B5%84%E6%96%99%E8%BE%B9%E7%95%8C">资料边界</a></li><li class="toc-child"><a href="#%E7%BB%93%E8%AE%BA%E5%85%88%E8%A1%8C">结论先行</a></li><li class="toc-child"><a href="#%E4%B8%80%E6%AC%A1-lynx-%E9%A1%B5%E9%9D%A2%E6%89%93%E5%BC%80%E7%9A%84%E7%9B%91%E6%8E%A7%E6%A8%A1%E5%9E%8B">一次 Lynx 页面打开的监控模型</a></li><li><a href="#%E5%86%85%E5%AE%B9%E5%8F%AF%E8%A7%81%E6%80%A7fcplynxfcp-%E4%B8%8E-fmp">内容可见性：FCP、LynxFCP 与 FMP</a></li><li class="toc-child"><a href="#fcp-%E7%9A%84%E5%AE%9E%E7%8E%B0%E5%8F%A3%E5%BE%84">FCP 的实现口径</a></li><li class="toc-child"><a href="#lynxfcp-%E7%9A%84%E5%AE%9E%E7%8E%B0%E5%8F%A3%E5%BE%84">LynxFCP 的实现口径</a></li><li class="toc-child"><a href="#fmp--actualfmp-%E7%9A%84%E5%AE%9E%E7%8E%B0%E5%8F%A3%E5%BE%84">FMP / ActualFMP 的实现口径</a></li><li><a href="#%E9%93%BE%E8%B7%AF%E5%88%86%E8%A7%A3%E5%AE%B9%E5%99%A8%E9%A6%96%E5%B8%A7%E4%B8%8E%E8%B5%84%E6%BA%90%E5%8A%A0%E8%BD%BD">链路分解：容器、首帧与资源加载</a></li><li class="toc-child"><a href="#%E5%AE%B9%E5%99%A8%E8%80%97%E6%97%B6%E7%9A%84%E5%AE%9E%E7%8E%B0%E5%8F%A3%E5%BE%84">容器耗时的实现口径</a></li><li class="toc-child"><a href="#%E9%A6%96%E5%B8%A7%E7%9A%84%E5%AE%9E%E7%8E%B0%E5%8F%A3%E5%BE%84">首帧的实现口径</a></li><li class="toc-child"><a href="#%E8%B5%84%E6%BA%90%E5%8A%A0%E8%BD%BD%E6%8C%87%E6%A0%87%E7%9A%84%E5%AE%9E%E7%8E%B0%E5%8F%A3%E5%BE%84">资源加载指标的实现口径</a></li><li><a href="#%E5%BC%82%E5%B8%B8%E6%8C%87%E6%A0%87%E4%B8%8E%E6%80%A7%E8%83%BD%E5%BD%92%E5%9B%A0">异常指标与性能归因</a></li><li class="toc-child"><a href="#%E7%99%BD%E5%B1%8F%E7%8E%87%E5%92%8C%E5%BC%82%E5%B8%B8%E7%8E%87%E7%9A%84%E5%AE%9E%E7%8E%B0%E5%8F%A3%E5%BE%84">白屏率和异常率的实现口径</a></li><li class="toc-child"><a href="#%E5%A6%82%E4%BD%95%E7%94%A8%E8%BF%99%E4%BA%9B%E6%8C%87%E6%A0%87%E5%81%9A%E5%BD%92%E5%9B%A0">如何用这些指标做归因</a></li></ol></nav><a class="toc-return" href="/#articles">← 全部文章</a></aside></div></body></html>

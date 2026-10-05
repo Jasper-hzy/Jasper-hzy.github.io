@@ -1,13 +1,13 @@
-<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light"><meta name="theme-color" content="#f7f6f2"><title>卡顿与丢帧排查</title><meta name="description" content="技术学习与工程实践。"><link rel="icon" href="/favicon.svg?v=14ae5a412d40f95d"><link rel="stylesheet" href="/reader.css?v=14ae5a412d40f95d"><script src="/reader.js?v=14ae5a412d40f95d" defer></script></head><body><div class="reading-progress" aria-hidden="true"></div><a class="skip" href="#main">跳到正文</a><header class="reader-nav"><nav aria-label="站点导航"><a href="/">← 首页</a><a href="/#articles">全部文章 ↗</a></nav></header><div class="reading-layout"><main id="main"><nav class="breadcrumbs" aria-label="当前位置"><a href="/#articles">文章</a><span>/</span><a href="/?category=client#articles">客户端开发</a><span>/</span><span>Android</span><span>/</span><span>性能稳定性</span></nav>
-  <header class="article-heading"><p class="article-category">客户端开发</p><h1>卡顿与丢帧排查</h1></header>
-  <details class="mobile-toc"><summary>本篇目录 <span>5 节</span></summary><nav aria-label="本篇目录"><ol><li><a href="#%E5%AE%9A%E4%B9%89%E9%97%AE%E9%A2%98%E4%B8%A2%E5%B8%A7%E4%B8%8E%E8%B4%A3%E4%BB%BB%E9%93%BE">定义问题：丢帧与责任链</a></li><li><a href="#%E7%AC%AC%E4%B8%80%E6%AD%A5%E5%8C%BA%E5%88%86%E8%B4%A3%E4%BB%BB%E5%B1%82%E5%B9%B6%E9%80%89%E6%8B%A9%E8%AF%81%E6%8D%AE">第一步：区分责任层并选择证据</a></li><li><a href="#%E7%AC%AC%E4%BA%8C%E6%AD%A5%E4%BB%8E%E7%9B%91%E6%8E%A7%E7%BA%BF%E7%B4%A2%E5%AE%9A%E4%BD%8D%E6%A0%B9%E5%9B%A0">第二步：从监控线索定位根因</a></li><li><a href="#%E7%AC%AC%E4%B8%89%E6%AD%A5%E6%8C%89%E8%B4%A3%E4%BB%BB%E5%B1%82%E4%BC%98%E5%8C%96%E5%B9%B6%E6%8E%92%E9%99%A4%E8%AF%AF%E5%88%A4">第三步：按责任层优化并排除误判</a></li><li><a href="#%E5%8F%82%E8%80%83%E8%B5%84%E6%96%99">参考资料</a></li></ol></nav></details><article class="prose" id="content"><p>卡顿排查的目标不是找到一个“超过 16.6ms 的函数”，而是确认哪一帧没有按计划显示，以及延误发生在 App、系统调度、SurfaceFlinger、GPU、DisplayHAL 还是输入链路。</p>
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light"><meta name="theme-color" content="#f7f6f2"><title>卡顿与丢帧排查</title><meta name="description" content="技术学习与工程实践。"><link rel="icon" href="/favicon.svg?v=7ea8198bf5c60782"><link rel="stylesheet" href="/reader.css?v=7ea8198bf5c60782"><script src="/reader.js?v=7ea8198bf5c60782" defer></script></head><body><div class="reading-progress" aria-hidden="true"></div><a class="skip" href="#main">跳到正文</a><header class="reader-nav"><nav aria-label="站点导航"><a href="/">← 首页</a><a href="/#articles">全部文章 ↗</a></nav></header><div class="reading-layout"><main id="main"><nav class="breadcrumbs" aria-label="当前位置"><a href="/#articles">文章</a><span>/</span><a href="/?category=client#articles">客户端开发</a><span>/</span><span>Android</span><span>/</span><span>性能稳定性</span></nav>
+  <header class="article-heading"><h1>卡顿与丢帧排查</h1></header>
+  <details class="mobile-toc"><summary>本篇目录 <span>5 节</span></summary><nav aria-label="本篇目录"><ol><li><a href="#%E5%AE%9A%E4%B9%89%E9%97%AE%E9%A2%98%E4%B8%A2%E5%B8%A7%E4%B8%8E%E8%B4%A3%E4%BB%BB%E9%93%BE">定义问题：丢帧与责任链</a></li><li class="toc-child"><a href="#%E4%BB%80%E4%B9%88%E6%89%8D%E7%AE%97%E4%B8%A2%E5%B8%A7">什么才算丢帧</a></li><li class="toc-child"><a href="#%E4%BB%8E%E8%BE%93%E5%85%A5%E5%88%B0%E5%B1%8F%E5%B9%95%E7%9A%84%E8%B4%A3%E4%BB%BB%E9%93%BE">从输入到屏幕的责任链</a></li><li><a href="#%E7%AC%AC%E4%B8%80%E6%AD%A5%E5%8C%BA%E5%88%86%E8%B4%A3%E4%BB%BB%E5%B1%82%E5%B9%B6%E9%80%89%E6%8B%A9%E8%AF%81%E6%8D%AE">第一步：区分责任层并选择证据</a></li><li class="toc-child"><a href="#%E5%85%88%E5%88%A4%E6%96%AD-app-%E8%BF%98%E6%98%AF%E7%B3%BB%E7%BB%9F">先判断 App 还是系统</a></li><li class="toc-child"><a href="#frametimeline-%E5%A6%82%E4%BD%95%E5%BD%92%E5%9B%A0">FrameTimeline 如何归因</a></li><li class="toc-child"><a href="#%E4%B8%8D%E5%90%8C%E5%B7%A5%E5%85%B7%E5%88%86%E5%88%AB%E8%83%BD%E8%AF%81%E6%98%8E%E4%BB%80%E4%B9%88">不同工具分别能证明什么</a></li><li><a href="#%E7%AC%AC%E4%BA%8C%E6%AD%A5%E4%BB%8E%E7%9B%91%E6%8E%A7%E7%BA%BF%E7%B4%A2%E5%AE%9A%E4%BD%8D%E6%A0%B9%E5%9B%A0">第二步：从监控线索定位根因</a></li><li class="toc-child"><a href="#%E7%B3%BB%E7%BB%9F%E4%BE%A7%E5%B8%B8%E8%A7%81%E6%A0%B9%E5%9B%A0">系统侧常见根因</a></li><li class="toc-child"><a href="#%E7%BA%BF%E4%B8%8A%E7%9B%91%E6%8E%A7%E5%88%B0%E7%BA%BF%E4%B8%8B%E5%AE%9A%E4%BD%8D">线上监控到线下定位</a></li><li><a href="#%E7%AC%AC%E4%B8%89%E6%AD%A5%E6%8C%89%E8%B4%A3%E4%BB%BB%E5%B1%82%E4%BC%98%E5%8C%96%E5%B9%B6%E6%8E%92%E9%99%A4%E8%AF%AF%E5%88%A4">第三步：按责任层优化并排除误判</a></li><li class="toc-child"><a href="#%E6%8C%89%E8%B4%A3%E4%BB%BB%E5%B1%82%E4%BC%98%E5%8C%96">按责任层优化</a></li><li class="toc-child"><a href="#%E5%B8%B8%E8%A7%81%E8%AF%AF%E5%88%A4">常见误判</a></li><li><a href="#%E5%8F%82%E8%80%83%E8%B5%84%E6%96%99">参考资料</a></li></ol></nav></details><article class="prose" id="content"><p>卡顿排查的目标不是找到一个“超过 16.6ms 的函数”，而是确认哪一帧没有按计划显示，以及延误发生在 App、系统调度、SurfaceFlinger、GPU、DisplayHAL 还是输入链路。</p>
 <p>Android 一帧的生产和上屏机制见 <a href="/notes/7582c9b1581b3665/">渲染流程</a> 与 <a href="/notes/3428c6a7ad967847/">Android 渲染上屏流程</a>。本文只保留定位丢帧所需的系统边界和排查方法。</p>
 <h2 id="定义问题丢帧与责任链">定义问题：丢帧与责任链</h2>
 <h3 id="什么才算丢帧">什么才算丢帧</h3>
 <p>显示系统会为每一帧预测一个呈现时间。现代 Android 的 FrameTimeline 将一帧判定为 Jank，核心依据是实际呈现是否符合调度器预测的呈现时间，而不只是某个函数是否超过固定时长。</p>
 <div class="table-wrap" tabindex="0" role="region" aria-label="数据表格"><table><thead><tr><th scope="col">刷新率</th><th scope="col">名义刷新周期</th></tr></thead><tbody><tr><td>60 Hz</td><td>16.67ms</td></tr><tr><td>90 Hz</td><td>11.11ms</td></tr><tr><td>120 Hz</td><td>8.33ms</td></tr></tbody></table></div>
 <p>刷新周期只是理解帧预算的起点。真正的 deadline 还受 VSYNC 调度、应用提交、GPU Fence、SurfaceFlinger 合成和显示设备呈现时机影响。</p>
-<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>某次 doFrame 超过 16.6ms
+<div class="code-block" data-language="text"><div class="code-label"><span>示意</span></div><pre tabindex="0"><code>某次 doFrame 超过 16.6ms
   ≠ 必然能直接证明最终屏幕掉帧
 
 某次 doFrame 没超过 16.6ms
@@ -16,7 +16,7 @@
 <ol start="1"><li><p>呈现 Jank：新帧没有在预测时间显示，屏幕延迟显示或重复旧内容。</p></li><li><p>高延迟：画面可能仍然保持均匀，但 Buffer 排队使输入到显示的延迟变大。</p></li><li><p>逻辑卡顿：每帧都按时上屏，但动画位移、数据时间戳或手势采样不均匀，肉眼仍然感觉跳变。</p></li></ol>
 <p>平均 FPS 会掩盖连续卡顿和帧率波动。监控应同时观察 Jank 率、连续丢帧、最大超期时间和 P50/P90/P95/P99 分布。</p>
 <h3 id="从输入到屏幕的责任链">从输入到屏幕的责任链</h3>
-<div class="code-block"><div class="code-label">Mermaid · 流程图源码</div><pre tabindex="0"><code>flowchart LR
+<div class="code-block" data-language="mermaid"><div class="code-label"><span>Mermaid · 流程图源码</span></div><pre tabindex="0"><code>flowchart LR
     I[InputReader /&lt;br/&gt;InputDispatcher] --&gt; U[App UI Thread&lt;br/&gt;Choreographer / ViewRootImpl]
     U --&gt; R[RenderThread / HWUI]
     R --&gt; G[GPU 绘制]
@@ -34,7 +34,7 @@
 <p>因此“前台 App 卡了”只描述现象，不能直接把责任归给 App。</p>
 <h2 id="第一步区分责任层并选择证据">第一步：区分责任层并选择证据</h2>
 <h3 id="先判断-app-还是系统">先判断 App 还是系统</h3>
-<div class="code-block"><div class="code-label">Mermaid · 流程图源码</div><pre tabindex="0"><code>flowchart TD
+<div class="code-block" data-language="mermaid"><div class="code-label"><span>Mermaid · 流程图源码</span></div><pre tabindex="0"><code>flowchart TD
     A[用户感知卡顿] --&gt; B[定位具体场景和问题帧]
     B --&gt; C{FrameTimeline 归因}
     C --&gt;|AppDeadlineMissed| D[检查 UI Thread&lt;br/&gt;RenderThread / GPU]
@@ -51,7 +51,7 @@
 <ol start="1"><li><p>明确操作、页面、Window/Layer、刷新率和问题时间点。</p></li><li><p>用 FrameTimeline 判断 App 帧还是 SurfaceFlinger/DisplayFrame 延误。</p></li><li><p>关联 App UI Thread、RenderThread、GPU completion 和 SurfaceFlinger 帧 token。</p></li><li><p>根据线程状态判断是执行、调度、锁、Binder 还是 I/O。</p></li><li><p>检查 CPU 频率、Thermal、内存压力和后台负载等系统条件。</p></li><li><p>回到源码或业务 TraceSection，确认具体函数和依赖关系。</p></li></ol>
 <h3 id="frametimeline-如何归因">FrameTimeline 如何归因</h3>
 <p>Android 12 及以上的 Perfetto FrameTimeline 同时提供 App 和 SurfaceFlinger 的 Expected Timeline、Actual Timeline，并用 token 把 App 帧关联到最终 DisplayFrame。</p>
-<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>App Expected / Actual Frame
+<div class="code-block" data-language="text"><div class="code-label"><span>示意</span></div><pre tabindex="0"><code>App Expected / Actual Frame
        │ frame token
        ▼
 SurfaceFlinger Expected / Actual Frame
@@ -74,7 +74,7 @@ SurfaceFlinger Expected / Actual Frame
 <p>单看进程 CPU 使用率无法证明主线程卡在哪里。必须结合 <code>sched_wakeup</code>、<code>sched_switch</code>、线程状态、CPU frequency 和 Thermal 轨道。</p>
 <h4 id="2-systemserverbinder-和锁">2. system_server、Binder 和锁</h4>
 <p>App 在主线程同步调用系统服务时，可能等待：</p>
-<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>App 主线程 Binder 调用
+<div class="code-block" data-language="text"><div class="code-label"><span>示意</span></div><pre tabindex="0"><code>App 主线程 Binder 调用
   -&gt; system_server Binder 线程排队
   -&gt; 等待 AMS / ATMS / WMS 等关键锁
   -&gt; 系统服务处理
@@ -85,7 +85,7 @@ SurfaceFlinger Expected / Actual Frame
 <p>“主线程没有执行耗时 Java 方法”不能排除 App 帧超时，它可能一直在等待系统服务返回。</p>
 <h4 id="3-surfaceflinger-和显示链路">3. SurfaceFlinger 和显示链路</h4>
 <p>系统篇文章中的 SurfaceFlinger、HWC、CRTC 问题，可以在现代链路中归纳为：</p>
-<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>SurfaceFlinger 主线程
+<div class="code-block" data-language="text"><div class="code-label"><span>示意</span></div><pre tabindex="0"><code>SurfaceFlinger 主线程
   -&gt; 处理 Layer / Transaction
   -&gt; 选择 HWC Device Composition 或 GPU Client Composition
   -&gt; 等待 GPU / Acquire Fence
@@ -96,7 +96,7 @@ SurfaceFlinger Expected / Actual Frame
 <p>App 的 <code>queueBuffer()</code> 或 <code>dequeueBuffer()</code> 阻塞，有时只是下游 SurfaceFlinger、GPU 或 BufferQueue 拥塞向上游传播的结果，不能看到调用点就直接归因于 App。</p>
 <h4 id="4-内存压力和-io">4. 内存压力和 I/O</h4>
 <p>现代 Android 主要由 userspace <code>lmkd</code> 监控内存压力，Android 10 及以上可使用 PSI 描述任务因为 CPU、内存或 I/O 资源不足而被阻塞的时间。</p>
-<div class="code-block"><div class="code-label">Mermaid · 流程图源码</div><pre tabindex="0"><code>flowchart LR
+<div class="code-block" data-language="mermaid"><div class="code-label"><span>Mermaid · 流程图源码</span></div><pre tabindex="0"><code>flowchart LR
     A[可用内存不足] --&gt; B[直接回收 / kswapd&lt;br/&gt;swap / page cache refault]
     B --&gt; C[CPU 与磁盘 I/O 竞争]
     C --&gt; D[UI / RenderThread&lt;br/&gt;调度或缺页变慢]
@@ -111,7 +111,7 @@ SurfaceFlinger Expected / Actual Frame
 <h4 id="5-input-链路不均匀">5. Input 链路不均匀</h4>
 <p>连续滑动时，如果 InputReader 报点不均匀、InputDispatcher 调度延迟、目标窗口切换或 Accessibility 处理过重，App 收到的输入本身就可能出现空洞。</p>
 <p>这类问题不一定是“画面渲染失败”，而可能是没有新的输入状态可供动画或手势更新，用户同样会感到画面停顿。应同时检查：</p>
-<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>EventHub / InputReader 报点
+<div class="code-block" data-language="text"><div class="code-label"><span>示意</span></div><pre tabindex="0"><code>EventHub / InputReader 报点
   -&gt; InputDispatcher 选窗与派发
   -&gt; InputChannel
   -&gt; App InputEventReceiver
@@ -119,7 +119,7 @@ SurfaceFlinger Expected / Actual Frame
   -&gt; 动画与绘制</code></pre></div>
 <p>完整输入链路见 <a href="/notes/9e5b0f3f4ca04e76/">Input 输入系统流程</a>。</p>
 <h3 id="线上监控到线下定位">线上监控到线下定位</h3>
-<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>JankStats / FrameMetrics / 自研监控
+<div class="code-block" data-language="text"><div class="code-label"><span>示意</span></div><pre tabindex="0"><code>JankStats / FrameMetrics / 自研监控
   -&gt; 聚合页面、操作、设备、刷新率、版本、温度和内存状态
   -&gt; 识别高频场景与连续卡顿
   -&gt; Macrobenchmark 或本地脚本稳定复现
@@ -138,4 +138,4 @@ SurfaceFlinger Expected / Actual Frame
 <ol start="1"><li><p><strong>主线程超过 16.6ms 就一定掉帧</strong>：刷新率和实际 deadline 会变化，还要看 RenderThread、GPU、SurfaceFlinger 和最终呈现。</p></li><li><p><strong>主线程没耗时就是系统问题</strong>：主线程可能在 Runnable、Binder、锁或 I/O 等待中。</p></li><li><p><strong>三缓冲能解决掉帧</strong>：它能降低 producer 阻塞、改善吞吐，也可能带来 BufferStuffing 和额外输入延迟。</p></li><li><p><strong>平均 FPS 高就足够流畅</strong>：连续两三帧超期通常比零散慢帧更明显，帧间隔方差也很重要。</p></li><li><p><strong>Choreographer 回调就是屏幕帧</strong>：它只看到 App 侧 Looper 的帧调度，不能证明最终显示时间。</p></li><li><p><strong>看到 <code>queueBuffer/dequeueBuffer</code> 慢就是 App 问题</strong>：可能是下游 buffer、Fence、SurfaceFlinger 或显示链路反压。</p></li><li><p><strong>低内存只会导致 LMK 杀进程</strong>：回收、swap、缺页、I/O 和重启风暴在 kill 前后都可能造成卡顿。</p></li><li><p><strong>所有卡顿都能在 FrameTimeline 里解释</strong>：输入不均、逻辑动画跳变和部分独立 Surface 场景还需要其他证据。</p></li></ol>
 <h2 id="参考资料">参考资料</h2>
 <ul><li><p><a href="https://www.androidperformance.com/2019/09/05/Android-Jank-Debug/">Android 中的卡顿丢帧原因概述：方法论</a></p></li><li><p><a href="https://androidperformance.com/2019/09/05/Android-Jank-Due-To-System/">Android 中的卡顿丢帧原因概述：系统篇</a></p></li><li><p><a href="https://androidperformance.com/2019/09/05/Android-Jank-Due-To-App/">Android 中的卡顿丢帧原因概述：应用篇</a></p></li><li><p><a href="https://androidperformance.com/2019/09/18/Android-Jank-Due-To-Low-Memory/">Android 中的卡顿丢帧原因概述：低内存篇</a></p></li><li><p><a href="https://androidperformance.com/2019/12/15/Android-Systrace-Triple-Buffer/">Android Systrace：Triple Buffer 解读</a></p></li><li><p><a href="https://perfetto.dev/docs/data-sources/frametimeline">Perfetto：Android Jank detection with FrameTimeline</a></p></li><li><p><a href="https://developer.android.com/topic/performance/jankstats">Android Developers：JankStats</a></p></li><li><p><a href="https://developer.android.com/topic/performance/benchmarking/macrobenchmark-metrics">Android Developers：Macrobenchmark metrics</a></p></li><li><p><a href="https://source.android.com/docs/core/graphics/surfaceflinger-windowmanager">AOSP：SurfaceFlinger and WindowManager</a></p></li><li><p><a href="https://source.android.com/docs/core/perf/lmkd">AOSP：Low memory killer daemon</a></p></li></ul></article><footer class="article-footer"><a href="/#articles">← 返回文章列表</a><a href="#main">回到顶部 ↑</a></footer></main>
-  <aside class="desktop-toc"><p>本篇目录</p><nav aria-label="本篇目录"><ol><li><a href="#%E5%AE%9A%E4%B9%89%E9%97%AE%E9%A2%98%E4%B8%A2%E5%B8%A7%E4%B8%8E%E8%B4%A3%E4%BB%BB%E9%93%BE">定义问题：丢帧与责任链</a></li><li><a href="#%E7%AC%AC%E4%B8%80%E6%AD%A5%E5%8C%BA%E5%88%86%E8%B4%A3%E4%BB%BB%E5%B1%82%E5%B9%B6%E9%80%89%E6%8B%A9%E8%AF%81%E6%8D%AE">第一步：区分责任层并选择证据</a></li><li><a href="#%E7%AC%AC%E4%BA%8C%E6%AD%A5%E4%BB%8E%E7%9B%91%E6%8E%A7%E7%BA%BF%E7%B4%A2%E5%AE%9A%E4%BD%8D%E6%A0%B9%E5%9B%A0">第二步：从监控线索定位根因</a></li><li><a href="#%E7%AC%AC%E4%B8%89%E6%AD%A5%E6%8C%89%E8%B4%A3%E4%BB%BB%E5%B1%82%E4%BC%98%E5%8C%96%E5%B9%B6%E6%8E%92%E9%99%A4%E8%AF%AF%E5%88%A4">第三步：按责任层优化并排除误判</a></li><li><a href="#%E5%8F%82%E8%80%83%E8%B5%84%E6%96%99">参考资料</a></li></ol></nav><a class="toc-return" href="/#articles">← 全部文章</a></aside></div></body></html>
+  <aside class="desktop-toc"><p>本篇目录</p><nav aria-label="本篇目录"><ol><li><a href="#%E5%AE%9A%E4%B9%89%E9%97%AE%E9%A2%98%E4%B8%A2%E5%B8%A7%E4%B8%8E%E8%B4%A3%E4%BB%BB%E9%93%BE">定义问题：丢帧与责任链</a></li><li class="toc-child"><a href="#%E4%BB%80%E4%B9%88%E6%89%8D%E7%AE%97%E4%B8%A2%E5%B8%A7">什么才算丢帧</a></li><li class="toc-child"><a href="#%E4%BB%8E%E8%BE%93%E5%85%A5%E5%88%B0%E5%B1%8F%E5%B9%95%E7%9A%84%E8%B4%A3%E4%BB%BB%E9%93%BE">从输入到屏幕的责任链</a></li><li><a href="#%E7%AC%AC%E4%B8%80%E6%AD%A5%E5%8C%BA%E5%88%86%E8%B4%A3%E4%BB%BB%E5%B1%82%E5%B9%B6%E9%80%89%E6%8B%A9%E8%AF%81%E6%8D%AE">第一步：区分责任层并选择证据</a></li><li class="toc-child"><a href="#%E5%85%88%E5%88%A4%E6%96%AD-app-%E8%BF%98%E6%98%AF%E7%B3%BB%E7%BB%9F">先判断 App 还是系统</a></li><li class="toc-child"><a href="#frametimeline-%E5%A6%82%E4%BD%95%E5%BD%92%E5%9B%A0">FrameTimeline 如何归因</a></li><li class="toc-child"><a href="#%E4%B8%8D%E5%90%8C%E5%B7%A5%E5%85%B7%E5%88%86%E5%88%AB%E8%83%BD%E8%AF%81%E6%98%8E%E4%BB%80%E4%B9%88">不同工具分别能证明什么</a></li><li><a href="#%E7%AC%AC%E4%BA%8C%E6%AD%A5%E4%BB%8E%E7%9B%91%E6%8E%A7%E7%BA%BF%E7%B4%A2%E5%AE%9A%E4%BD%8D%E6%A0%B9%E5%9B%A0">第二步：从监控线索定位根因</a></li><li class="toc-child"><a href="#%E7%B3%BB%E7%BB%9F%E4%BE%A7%E5%B8%B8%E8%A7%81%E6%A0%B9%E5%9B%A0">系统侧常见根因</a></li><li class="toc-child"><a href="#%E7%BA%BF%E4%B8%8A%E7%9B%91%E6%8E%A7%E5%88%B0%E7%BA%BF%E4%B8%8B%E5%AE%9A%E4%BD%8D">线上监控到线下定位</a></li><li><a href="#%E7%AC%AC%E4%B8%89%E6%AD%A5%E6%8C%89%E8%B4%A3%E4%BB%BB%E5%B1%82%E4%BC%98%E5%8C%96%E5%B9%B6%E6%8E%92%E9%99%A4%E8%AF%AF%E5%88%A4">第三步：按责任层优化并排除误判</a></li><li class="toc-child"><a href="#%E6%8C%89%E8%B4%A3%E4%BB%BB%E5%B1%82%E4%BC%98%E5%8C%96">按责任层优化</a></li><li class="toc-child"><a href="#%E5%B8%B8%E8%A7%81%E8%AF%AF%E5%88%A4">常见误判</a></li><li><a href="#%E5%8F%82%E8%80%83%E8%B5%84%E6%96%99">参考资料</a></li></ol></nav><a class="toc-return" href="/#articles">← 全部文章</a></aside></div></body></html>

@@ -1,8 +1,8 @@
-<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light"><meta name="theme-color" content="#f7f6f2"><title>系统启动流程</title><meta name="description" content="技术学习与工程实践。"><link rel="icon" href="/favicon.svg?v=14ae5a412d40f95d"><link rel="stylesheet" href="/reader.css?v=14ae5a412d40f95d"><script src="/reader.js?v=14ae5a412d40f95d" defer></script></head><body><div class="reading-progress" aria-hidden="true"></div><a class="skip" href="#main">跳到正文</a><header class="reader-nav"><nav aria-label="站点导航"><a href="/">← 首页</a><a href="/#articles">全部文章 ↗</a></nav></header><div class="reading-layout"><main id="main"><nav class="breadcrumbs" aria-label="当前位置"><a href="/#articles">文章</a><span>/</span><a href="/?category=client#articles">客户端开发</a><span>/</span><span>Android</span><span>/</span><span>系统原理</span></nav>
-  <header class="article-heading"><p class="article-category">客户端开发</p><h1>系统启动流程</h1></header>
-  <details class="mobile-toc"><summary>本篇目录 <span>4 节</span></summary><nav aria-label="本篇目录"><ol><li><a href="#%E4%BB%8E%E5%86%85%E6%A0%B8%E8%BF%9B%E5%85%A5-android-%E7%94%A8%E6%88%B7%E7%A9%BA%E9%97%B4">从内核进入 Android 用户空间</a></li><li><a href="#zygote%E5%BB%BA%E7%AB%8B-java-%E8%BF%9B%E7%A8%8B%E8%BF%90%E8%A1%8C%E5%9F%BA%E7%A1%80">Zygote：建立 Java 进程运行基础</a></li><li><a href="#%E7%B3%BB%E7%BB%9F%E6%9C%8D%E5%8A%A1%E7%9A%84%E5%90%AF%E5%8A%A8%E7%AE%A1%E7%90%86%E4%B8%8E%E5%8F%91%E7%8E%B0">系统服务的启动、管理与发现</a></li><li><a href="#launcher-%E5%90%AF%E5%8A%A8%E4%B8%8E%E9%93%BE%E8%B7%AF%E6%80%BB%E7%BB%93">Launcher 启动与链路总结</a></li></ol></nav></details><article class="prose" id="content"><p>Android 启动链路可以先抓住一条主线：Linux 内核启动 <code>init</code>，<code>init</code> 拉起 Android 用户空间的基础进程，Zygote fork 出 <code>system_server</code> 和普通 App 进程，<code>system_server</code> 启动 Framework 系统服务，最后启动 Launcher 让系统进入可交互状态。</p>
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light"><meta name="theme-color" content="#f7f6f2"><title>系统启动流程</title><meta name="description" content="技术学习与工程实践。"><link rel="icon" href="/favicon.svg?v=7ea8198bf5c60782"><link rel="stylesheet" href="/reader.css?v=7ea8198bf5c60782"><script src="/reader.js?v=7ea8198bf5c60782" defer></script></head><body><div class="reading-progress" aria-hidden="true"></div><a class="skip" href="#main">跳到正文</a><header class="reader-nav"><nav aria-label="站点导航"><a href="/">← 首页</a><a href="/#articles">全部文章 ↗</a></nav></header><div class="reading-layout"><main id="main"><nav class="breadcrumbs" aria-label="当前位置"><a href="/#articles">文章</a><span>/</span><a href="/?category=client#articles">客户端开发</a><span>/</span><span>Android</span><span>/</span><span>系统原理</span></nav>
+  <header class="article-heading"><h1>系统启动流程</h1></header>
+  <details class="mobile-toc"><summary>本篇目录 <span>4 节</span></summary><nav aria-label="本篇目录"><ol><li><a href="#%E4%BB%8E%E5%86%85%E6%A0%B8%E8%BF%9B%E5%85%A5-android-%E7%94%A8%E6%88%B7%E7%A9%BA%E9%97%B4">从内核进入 Android 用户空间</a></li><li class="toc-child"><a href="#bootloader-%E5%92%8C-kernel">Bootloader 和 Kernel</a></li><li class="toc-child"><a href="#initandroid-%E7%94%A8%E6%88%B7%E7%A9%BA%E9%97%B4%E8%B5%B7%E7%82%B9">init：Android 用户空间起点</a></li><li><a href="#zygote%E5%BB%BA%E7%AB%8B-java-%E8%BF%9B%E7%A8%8B%E8%BF%90%E8%A1%8C%E5%9F%BA%E7%A1%80">Zygote：建立 Java 进程运行基础</a></li><li><a href="#%E7%B3%BB%E7%BB%9F%E6%9C%8D%E5%8A%A1%E7%9A%84%E5%90%AF%E5%8A%A8%E7%AE%A1%E7%90%86%E4%B8%8E%E5%8F%91%E7%8E%B0">系统服务的启动、管理与发现</a></li><li class="toc-child"><a href="#systemserverframework-%E6%9C%8D%E5%8A%A1%E8%BF%9B%E7%A8%8B">system_server：Framework 服务进程</a></li><li class="toc-child"><a href="#systemservicemanagersystemserver-%E5%86%85%E9%83%A8%E6%9C%8D%E5%8A%A1%E7%AE%A1%E7%90%86%E5%99%A8">SystemServiceManager：system_server 内部服务管理器</a></li><li class="toc-child"><a href="#servicemanager-%E5%92%8C-binder-%E6%9C%8D%E5%8A%A1%E5%8F%91%E7%8E%B0">ServiceManager 和 Binder 服务发现</a></li><li><a href="#launcher-%E5%90%AF%E5%8A%A8%E4%B8%8E%E9%93%BE%E8%B7%AF%E6%80%BB%E7%BB%93">Launcher 启动与链路总结</a></li><li class="toc-child"><a href="#launcher%E7%B3%BB%E7%BB%9F%E5%8F%AF%E4%BA%A4%E4%BA%92%E5%85%A5%E5%8F%A3">Launcher：系统可交互入口</a></li><li class="toc-child"><a href="#%E5%85%B3%E9%94%AE%E7%BB%93%E8%AE%BA">关键结论</a></li></ol></nav></details><article class="prose" id="content"><p>Android 启动链路可以先抓住一条主线：Linux 内核启动 <code>init</code>，<code>init</code> 拉起 Android 用户空间的基础进程，Zygote fork 出 <code>system_server</code> 和普通 App 进程，<code>system_server</code> 启动 Framework 系统服务，最后启动 Launcher 让系统进入可交互状态。</p>
 <p><img src="/media/93af02df1b3b3479.svg" alt="Android 系统启动流程总览" loading="lazy" decoding="async"></p>
-<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>Bootloader
+<div class="code-block" data-language="text"><div class="code-label"><span>示意</span></div><pre tabindex="0"><code>Bootloader
   -&gt; Linux Kernel
   -&gt; init
   -&gt; native daemons / servicemanager / SurfaceFlinger / Zygote
@@ -14,12 +14,12 @@
 <h3 id="bootloader-和-kernel">Bootloader 和 Kernel</h3>
 <p>Bootloader 负责初始化基础硬件、校验并加载系统镜像，然后把控制权交给 Linux Kernel。Kernel 启动后初始化进程调度、内存管理、文件系统、网络、设备驱动，以及 Android 依赖的 Binder、input、display 等驱动能力。</p>
 <p>Kernel 准备好用户空间后，会启动第一个用户空间进程：</p>
-<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>PID 1: init</code></pre></div>
+<div class="code-block" data-language="text"><div class="code-label"><span>示意</span></div><pre tabindex="0"><code>PID 1: init</code></pre></div>
 <p>所以 <code>init</code> 是 Android 用户空间的起点。</p>
 <h3 id="initandroid-用户空间起点">init：Android 用户空间起点</h3>
 <p><code>init</code> 会解析 <code>init.rc</code>、<code>init.zygote*.rc</code> 和厂商相关 rc 文件，拉起 Android 用户空间的基础 native 进程。</p>
 <p>典型进程包括：</p>
-<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>servicemanager
+<div class="code-block" data-language="text"><div class="code-label"><span>示意</span></div><pre tabindex="0"><code>servicemanager
 hwservicemanager
 vold
 netd
@@ -32,7 +32,7 @@ zygote / zygote64</code></pre></div>
 <p><code>servicemanager</code> 是 Binder 服务目录，负责保存系统全局服务名到 Binder 引用的映射；<code>surfaceflinger</code> 是独立 native 进程，负责图层合成。它们不是 <code>system_server</code> 内部的 Java 服务。</p>
 <h2 id="zygote建立-java-进程运行基础">Zygote：建立 Java 进程运行基础</h2>
 <p><code>init</code> 启动 Zygote 后，Zygote 进入 Java 世界的初始化流程：</p>
-<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>app_process
+<div class="code-block" data-language="text"><div class="code-label"><span>示意</span></div><pre tabindex="0"><code>app_process
   -&gt; ZygoteInit.main
   -&gt; preload classes / resources
   -&gt; startSystemServer
@@ -41,7 +41,7 @@ zygote / zygote64</code></pre></div>
 <p>Zygote 会 fork 两类重要进程：</p>
 <div class="table-wrap" tabindex="0" role="region" aria-label="数据表格"><table><thead><tr><th scope="col">子进程</th><th scope="col">fork 时机</th><th scope="col">入口</th><th scope="col">职责</th></tr></thead><tbody><tr><td><code>system_server</code></td><td>Zygote 启动早期主动 fork</td><td><code>SystemServer.main()</code></td><td>启动和承载 Framework 系统服务</td></tr><tr><td>普通 App 进程</td><td>AMS 请求启动应用时 fork</td><td><code>ActivityThread.main()</code></td><td>运行 App 组件</td></tr></tbody></table></div>
 <p>fork 后不会“连带复制”之前已经 fork 出去的进程。<code>system_server</code> 和普通 App 都是 Zygote 的子进程，但它们彼此是独立进程。</p>
-<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>zygote
+<div class="code-block" data-language="text"><div class="code-label"><span>示意</span></div><pre tabindex="0"><code>zygote
   ├── system_server
   ├── app_process A
   ├── app_process B
@@ -50,11 +50,11 @@ zygote / zygote64</code></pre></div>
 <p>系统服务的承载进程、进程内生命周期管理器和跨进程服务目录承担不同职责。</p>
 <h3 id="systemserverframework-服务进程">system_server：Framework 服务进程</h3>
 <p><code>system_server</code> 是 Zygote fork 出来的 Java/ART 进程，入口是：</p>
-<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>SystemServer.main()
+<div class="code-block" data-language="text"><div class="code-label"><span>示意</span></div><pre tabindex="0"><code>SystemServer.main()
   -&gt; new SystemServer()
   -&gt; SystemServer.run()</code></pre></div>
 <p>它承载大量 Java Framework 系统服务，例如：</p>
-<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>ActivityManagerService / ActivityTaskManagerService
+<div class="code-block" data-language="text"><div class="code-label"><span>示意</span></div><pre tabindex="0"><code>ActivityManagerService / ActivityTaskManagerService
 PackageManagerService
 WindowManagerService
 PowerManagerService
@@ -65,39 +65,39 @@ ConnectivityService
 PermissionManagerService / AppOpsService</code></pre></div>
 <p><code>system_server</code> 维护的是系统全局状态和系统策略，例如进程状态、Activity/Task、安装包信息、窗口层级、焦点窗口、权限、电源和网络状态。App 不能直接访问这些对象，只能通过 Binder 调用对应系统服务。</p>
 <p>典型访问链路是：</p>
-<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>App 进程
+<div class="code-block" data-language="text"><div class="code-label"><span>示意</span></div><pre tabindex="0"><code>App 进程
   -&gt; Framework Manager / API
   -&gt; Binder Proxy
   -&gt; Binder driver
   -&gt; system_server 中的 Framework Service</code></pre></div>
 <h3 id="systemservicemanagersystemserver-内部服务管理器">SystemServiceManager：system_server 内部服务管理器</h3>
 <p><code>SystemServiceManager</code> 不是进程，也不是 Binder 服务。它是 <code>system_server</code> 进程内由 <code>SystemServer.run()</code> 创建的 Java 对象，用来管理继承 <code>SystemService</code> 的服务生命周期。</p>
-<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>SystemServer.run()
+<div class="code-block" data-language="text"><div class="code-label"><span>示意</span></div><pre tabindex="0"><code>SystemServer.run()
   -&gt; new SystemServiceManager(systemContext)
   -&gt; startBootstrapServices()
   -&gt; startCoreServices()
   -&gt; startOtherServices()</code></pre></div>
 <p><code>mSystemServiceManager.startService(...)</code> 的含义是启动并管理一个 Framework Service：创建服务对象、调用 <code>onStart()</code>、后续按启动阶段调用 <code>onBootPhase()</code>。</p>
 <p>服务是否注册 Binder，要看具体服务自己的 <code>onStart()</code>：</p>
-<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>SystemServiceManager.startService(PowerManagerService.class)
+<div class="code-block" data-language="text"><div class="code-label"><span>示意</span></div><pre tabindex="0"><code>SystemServiceManager.startService(PowerManagerService.class)
   -&gt; new PowerManagerService
   -&gt; PowerManagerService.onStart()
   -&gt; publishBinderService(&quot;power&quot;, binder)
   -&gt; ServiceManager.addService(&quot;power&quot;, binder)</code></pre></div>
 <p>所以：</p>
-<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>SystemServiceManager 负责服务生命周期
+<div class="code-block" data-language="text"><div class="code-label"><span>示意</span></div><pre tabindex="0"><code>SystemServiceManager 负责服务生命周期
 ServiceManager / servicemanager 负责 Binder 服务名发现
 具体 Framework Service 负责维护状态和执行策略</code></pre></div>
 <h3 id="servicemanager-和-binder-服务发现">ServiceManager 和 Binder 服务发现</h3>
 <p><code>servicemanager</code> 是 native 进程，是 Binder 世界里的系统服务目录。普通进程通过 Binder driver 的特殊入口找到它，概念上可以理解为：</p>
-<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>handle 0 -&gt; servicemanager</code></pre></div>
+<div class="code-block" data-language="text"><div class="code-label"><span>示意</span></div><pre tabindex="0"><code>handle 0 -&gt; servicemanager</code></pre></div>
 <p>系统服务注册时：</p>
-<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>system_server
+<div class="code-block" data-language="text"><div class="code-label"><span>示意</span></div><pre tabindex="0"><code>system_server
   -&gt; ServiceManager.addService(&quot;activity&quot;, AMS Binder)
   -&gt; Binder 调用 servicemanager
   -&gt; servicemanager 保存 &quot;activity&quot; -&gt; AMS Binder 引用</code></pre></div>
 <p>App 查系统服务时：</p>
-<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>App
+<div class="code-block" data-language="text"><div class="code-label"><span>示意</span></div><pre tabindex="0"><code>App
   -&gt; ServiceManager.getService(&quot;activity&quot;)
   -&gt; Binder handle 0
   -&gt; servicemanager
@@ -107,11 +107,11 @@ ServiceManager / servicemanager 负责 Binder 服务名发现
 <h2 id="launcher-启动与链路总结">Launcher 启动与链路总结</h2>
 <h3 id="launcher系统可交互入口">Launcher：系统可交互入口</h3>
 <p>核心 Framework 服务启动完成后，AMS/ATMS 会启动桌面 Launcher。Launcher 本质也是一个 App，只是它响应 HOME Intent。</p>
-<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>Intent.ACTION_MAIN
+<div class="code-block" data-language="text"><div class="code-label"><span>示意</span></div><pre tabindex="0"><code>Intent.ACTION_MAIN
 CATEGORY_HOME
 CATEGORY_DEFAULT</code></pre></div>
 <p>启动链路可以简化为：</p>
-<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>system_server 启动完成
+<div class="code-block" data-language="text"><div class="code-label"><span>示意</span></div><pre tabindex="0"><code>system_server 启动完成
   -&gt; AMS / ATMS ready
   -&gt; PMS 解析 HOME Intent
   -&gt; 找到 Launcher Activity
@@ -121,4 +121,4 @@ CATEGORY_DEFAULT</code></pre></div>
 <p>所以“看到桌面”说明多条主链路已经跑通：PMS 能解析包和组件，AMS/ATMS 能启动 Activity，Zygote 能 fork App 进程，WMS 能接入窗口，SurfaceFlinger 能完成图层合成。</p>
 <h3 id="关键结论">关键结论</h3>
 <ol start="1"><li><p><code>init</code> 是 PID 1，是 Android 用户空间起点。</p></li><li><p><code>init</code> 拉起 Zygote 和一批 native 服务，例如 <code>servicemanager</code>、<code>surfaceflinger</code>、<code>netd</code>。</p></li><li><p>Zygote 初始化 ART 和预加载资源，随后 fork <code>system_server</code> 和普通 App 进程。</p></li><li><p><code>system_server</code> 运行 AMS、PMS、WMS 等 Java Framework 系统服务，维护系统全局状态。</p></li><li><p><code>SystemServiceManager</code> 是 <code>system_server</code> 内部的服务生命周期管理器。</p></li><li><p><code>servicemanager</code> 是 Binder 服务目录，负责系统服务名到 Binder 引用的发现。</p></li><li><p>Launcher 是系统启动后的 HOME Activity，是 Android 进入可交互状态的标志。</p></li></ol></article><footer class="article-footer"><a href="/#articles">← 返回文章列表</a><a href="#main">回到顶部 ↑</a></footer></main>
-  <aside class="desktop-toc"><p>本篇目录</p><nav aria-label="本篇目录"><ol><li><a href="#%E4%BB%8E%E5%86%85%E6%A0%B8%E8%BF%9B%E5%85%A5-android-%E7%94%A8%E6%88%B7%E7%A9%BA%E9%97%B4">从内核进入 Android 用户空间</a></li><li><a href="#zygote%E5%BB%BA%E7%AB%8B-java-%E8%BF%9B%E7%A8%8B%E8%BF%90%E8%A1%8C%E5%9F%BA%E7%A1%80">Zygote：建立 Java 进程运行基础</a></li><li><a href="#%E7%B3%BB%E7%BB%9F%E6%9C%8D%E5%8A%A1%E7%9A%84%E5%90%AF%E5%8A%A8%E7%AE%A1%E7%90%86%E4%B8%8E%E5%8F%91%E7%8E%B0">系统服务的启动、管理与发现</a></li><li><a href="#launcher-%E5%90%AF%E5%8A%A8%E4%B8%8E%E9%93%BE%E8%B7%AF%E6%80%BB%E7%BB%93">Launcher 启动与链路总结</a></li></ol></nav><a class="toc-return" href="/#articles">← 全部文章</a></aside></div></body></html>
+  <aside class="desktop-toc"><p>本篇目录</p><nav aria-label="本篇目录"><ol><li><a href="#%E4%BB%8E%E5%86%85%E6%A0%B8%E8%BF%9B%E5%85%A5-android-%E7%94%A8%E6%88%B7%E7%A9%BA%E9%97%B4">从内核进入 Android 用户空间</a></li><li class="toc-child"><a href="#bootloader-%E5%92%8C-kernel">Bootloader 和 Kernel</a></li><li class="toc-child"><a href="#initandroid-%E7%94%A8%E6%88%B7%E7%A9%BA%E9%97%B4%E8%B5%B7%E7%82%B9">init：Android 用户空间起点</a></li><li><a href="#zygote%E5%BB%BA%E7%AB%8B-java-%E8%BF%9B%E7%A8%8B%E8%BF%90%E8%A1%8C%E5%9F%BA%E7%A1%80">Zygote：建立 Java 进程运行基础</a></li><li><a href="#%E7%B3%BB%E7%BB%9F%E6%9C%8D%E5%8A%A1%E7%9A%84%E5%90%AF%E5%8A%A8%E7%AE%A1%E7%90%86%E4%B8%8E%E5%8F%91%E7%8E%B0">系统服务的启动、管理与发现</a></li><li class="toc-child"><a href="#systemserverframework-%E6%9C%8D%E5%8A%A1%E8%BF%9B%E7%A8%8B">system_server：Framework 服务进程</a></li><li class="toc-child"><a href="#systemservicemanagersystemserver-%E5%86%85%E9%83%A8%E6%9C%8D%E5%8A%A1%E7%AE%A1%E7%90%86%E5%99%A8">SystemServiceManager：system_server 内部服务管理器</a></li><li class="toc-child"><a href="#servicemanager-%E5%92%8C-binder-%E6%9C%8D%E5%8A%A1%E5%8F%91%E7%8E%B0">ServiceManager 和 Binder 服务发现</a></li><li><a href="#launcher-%E5%90%AF%E5%8A%A8%E4%B8%8E%E9%93%BE%E8%B7%AF%E6%80%BB%E7%BB%93">Launcher 启动与链路总结</a></li><li class="toc-child"><a href="#launcher%E7%B3%BB%E7%BB%9F%E5%8F%AF%E4%BA%A4%E4%BA%92%E5%85%A5%E5%8F%A3">Launcher：系统可交互入口</a></li><li class="toc-child"><a href="#%E5%85%B3%E9%94%AE%E7%BB%93%E8%AE%BA">关键结论</a></li></ol></nav><a class="toc-return" href="/#articles">← 全部文章</a></aside></div></body></html>

@@ -1,19 +1,19 @@
-<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light"><meta name="theme-color" content="#f7f6f2"><title>对象与资源管理</title><meta name="description" content="技术学习与工程实践。"><link rel="icon" href="/favicon.svg?v=14ae5a412d40f95d"><link rel="stylesheet" href="/reader.css?v=14ae5a412d40f95d"><script src="/reader.js?v=14ae5a412d40f95d" defer></script></head><body><div class="reading-progress" aria-hidden="true"></div><a class="skip" href="#main">跳到正文</a><header class="reader-nav"><nav aria-label="站点导航"><a href="/">← 首页</a><a href="/#articles">全部文章 ↗</a></nav></header><div class="reading-layout"><main id="main"><nav class="breadcrumbs" aria-label="当前位置"><a href="/#articles">文章</a><span>/</span><a href="/?category=fundamentals#articles">编程与系统基础</a><span>/</span><span>C++</span></nav>
-  <header class="article-heading"><p class="article-category">编程与系统基础</p><h1>对象与资源管理</h1></header>
-  <details class="mobile-toc"><summary>本篇目录 <span>5 节</span></summary><nav aria-label="本篇目录"><ol><li><a href="#%E5%AF%B9%E8%B1%A1%E6%9E%84%E9%80%A0%E8%B5%84%E6%BA%90%E5%88%86%E9%85%8D%E4%B8%8E%E9%94%80%E6%AF%81">对象构造、资源分配与销毁</a></li><li><a href="#%E7%94%A8-raii-%E4%B8%8E-rule-of-zero-%E7%AE%A1%E7%90%86%E8%B5%84%E6%BA%90">用 RAII 与 Rule of Zero 管理资源</a></li><li><a href="#%E7%A7%BB%E5%8A%A8%E8%AF%AD%E4%B9%89%E4%B8%8E%E5%BC%82%E5%B8%B8%E4%BF%9D%E8%AF%81">移动语义与异常保证</a></li><li><a href="#%E5%A4%9A%E6%80%81%E9%94%80%E6%AF%81%E7%9A%84%E8%BE%B9%E7%95%8C">多态销毁的边界</a></li><li><a href="#%E8%A6%81%E7%82%B9%E5%9B%9E%E9%A1%BE">要点回顾</a></li></ol></nav></details><article class="prose" id="content"><p>资源管理需要同时回答三个问题：资源由谁持有、何时释放，以及对象复制或移动时如何转移这些责任。以下从对象生命周期进入，再讨论 RAII、移动与多态销毁。</p>
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light"><meta name="theme-color" content="#f7f6f2"><title>对象与资源管理</title><meta name="description" content="技术学习与工程实践。"><link rel="icon" href="/favicon.svg?v=7ea8198bf5c60782"><link rel="stylesheet" href="/reader.css?v=7ea8198bf5c60782"><script src="/reader.js?v=7ea8198bf5c60782" defer></script></head><body><div class="reading-progress" aria-hidden="true"></div><a class="skip" href="#main">跳到正文</a><header class="reader-nav"><nav aria-label="站点导航"><a href="/">← 首页</a><a href="/#articles">全部文章 ↗</a></nav></header><div class="reading-layout"><main id="main"><nav class="breadcrumbs" aria-label="当前位置"><a href="/#articles">文章</a><span>/</span><a href="/?category=fundamentals#articles">编程与系统基础</a><span>/</span><span>C++</span></nav>
+  <header class="article-heading"><h1>对象与资源管理</h1></header>
+  <details class="mobile-toc"><summary>本篇目录 <span>5 节</span></summary><nav aria-label="本篇目录"><ol><li><a href="#%E5%AF%B9%E8%B1%A1%E6%9E%84%E9%80%A0%E8%B5%84%E6%BA%90%E5%88%86%E9%85%8D%E4%B8%8E%E9%94%80%E6%AF%81">对象构造、资源分配与销毁</a></li><li class="toc-child"><a href="#%E5%85%88%E6%98%8E%E7%A1%AE%E5%AF%B9%E8%B1%A1%E4%B8%8E%E8%B5%84%E6%BA%90%E7%9A%84%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F">先明确对象与资源的生命周期</a></li><li class="toc-child"><a href="#mallocfree-%E4%B8%8E-newdelete">malloc/free 与 new/delete</a></li><li><a href="#%E7%94%A8-raii-%E4%B8%8E-rule-of-zero-%E7%AE%A1%E7%90%86%E8%B5%84%E6%BA%90">用 RAII 与 Rule of Zero 管理资源</a></li><li class="toc-child"><a href="#raii-%E7%AE%A1%E7%90%86%E6%89%80%E6%9C%89%E6%88%90%E5%AF%B9%E8%B5%84%E6%BA%90">RAII 管理所有成对资源</a></li><li class="toc-child"><a href="#rule-of-zero-%E4%BC%98%E5%85%88%E4%BA%8E%E6%89%8B%E5%8A%A8%E7%AE%A1%E7%90%86">Rule of Zero 优先于手动管理</a></li><li><a href="#%E7%A7%BB%E5%8A%A8%E8%AF%AD%E4%B9%89%E4%B8%8E%E5%BC%82%E5%B8%B8%E4%BF%9D%E8%AF%81">移动语义与异常保证</a></li><li class="toc-child"><a href="#stdmove-%E5%8F%AA%E6%94%B9%E5%8F%98%E5%80%BC%E7%B1%BB%E5%88%AB">std::move 只改变值类别</a></li><li class="toc-child"><a href="#noexcept-%E8%AE%A9%E5%AE%B9%E5%99%A8%E6%95%A2%E4%BA%8E%E7%A7%BB%E5%8A%A8">noexcept 让容器敢于移动</a></li><li><a href="#%E5%A4%9A%E6%80%81%E9%94%80%E6%AF%81%E7%9A%84%E8%BE%B9%E7%95%8C">多态销毁的边界</a></li><li><a href="#%E8%A6%81%E7%82%B9%E5%9B%9E%E9%A1%BE">要点回顾</a></li></ol></nav></details><article class="prose" id="content"><p>资源管理需要同时回答三个问题：资源由谁持有、何时释放，以及对象复制或移动时如何转移这些责任。以下从对象生命周期进入，再讨论 RAII、移动与多态销毁。</p>
 <h2 id="对象构造资源分配与销毁">对象构造、资源分配与销毁</h2>
 <h3 id="先明确对象与资源的生命周期">先明确对象与资源的生命周期</h3>
 <p>C++ 的引用和裸指针只是借用关系，不延长普通对象的生命周期：</p>
-<div class="code-block"><div class="code-label">cpp</div><pre tabindex="0"><code>const User* saved = nullptr;
+<div class="code-block" data-language="cpp"><div class="code-label"><span>C++</span></div><pre tabindex="0"><code><span class="syntax-keyword">const</span> User* saved = <span class="syntax-keyword">nullptr</span>;
 
-void save(const User* user) {
+<span class="syntax-keyword">void</span> save(<span class="syntax-keyword">const</span> User* user) {
     saved = user;
 }
 
-void init() {
+<span class="syntax-keyword">void</span> init() {
     User user;
     save(&amp;user);
-} // user 析构，saved 悬空</code></pre></div>
+} <span class="syntax-comment">// user 析构，saved 悬空</span></code></pre></div>
 <p>悬空引用或指针指向已经销毁的对象，继续访问属于未定义行为。它与内存泄漏不同：泄漏是资源仍未释放但失去了可靠的释放路径。</p>
 <h3 id="mallocfree-与-newdelete"><code>malloc/free</code> 与 <code>new/delete</code></h3>
 <p><code>malloc/free</code> 只管理原始内存，<code>new/delete</code> 同时负责对象生命周期：</p>
@@ -22,72 +22,72 @@ void init() {
 <h2 id="用-raii-与-rule-of-zero-管理资源">用 RAII 与 Rule of Zero 管理资源</h2>
 <h3 id="raii-管理所有成对资源">RAII 管理所有成对资源</h3>
 <p>RAII 将资源的获取与局部对象构造绑定，将释放与析构绑定。正常返回、中途 <code>return</code> 和异常栈展开都会执行局部对象析构。</p>
-<div class="code-block"><div class="code-label">cpp</div><pre tabindex="0"><code>using FilePtr = std::unique_ptr&lt;FILE, decltype(&amp;fclose)&gt;;
+<div class="code-block" data-language="cpp"><div class="code-label"><span>C++</span></div><pre tabindex="0"><code><span class="syntax-keyword">using</span> FilePtr = std::unique_ptr&lt;FILE, decltype(&amp;fclose)&gt;;
 
-void writeLog() {
-    FilePtr file(fopen(&quot;log.txt&quot;, &quot;w&quot;), &amp;fclose);
-    if (!file) {
-        return;
+<span class="syntax-keyword">void</span> writeLog() {
+    FilePtr file(fopen(<span class="syntax-string">&quot;log.txt&quot;</span>, <span class="syntax-string">&quot;w&quot;</span>), &amp;fclose);
+    <span class="syntax-keyword">if</span> (!file) {
+        <span class="syntax-keyword">return</span>;
     }
 
     writeHeader(file.get());
-    if (!writeContent(file.get())) {
-        return;
+    <span class="syntax-keyword">if</span> (!writeContent(file.get())) {
+        <span class="syntax-keyword">return</span>;
     }
 }</code></pre></div>
 <p>RAII 不只用于内存，还适用于文件、锁、socket、JNI 引用和事务等资源：</p>
-<div class="code-block"><div class="code-label">cpp</div><pre tabindex="0"><code>void update() {
+<div class="code-block" data-language="cpp"><div class="code-label"><span>C++</span></div><pre tabindex="0"><code><span class="syntax-keyword">void</span> update() {
     std::lock_guard&lt;std::mutex&gt; lock(mutex);
     modify();
-} // 自动解锁</code></pre></div>
+} <span class="syntax-comment">// 自动解锁</span></code></pre></div>
 <h3 id="rule-of-zero-优先于手动管理">Rule of Zero 优先于手动管理</h3>
 <p>持有裸堆内存的类如果使用编译器生成的拷贝操作，可能发生浅拷贝和重复释放：</p>
-<div class="code-block"><div class="code-label">cpp</div><pre tabindex="0"><code>class Buffer {
-public:
-    explicit Buffer(std::size_t size)
-        : data_(new char[size]) {}
+<div class="code-block" data-language="cpp"><div class="code-label"><span>C++</span></div><pre tabindex="0"><code><span class="syntax-keyword">class</span> Buffer {
+<span class="syntax-keyword">public</span>:
+    <span class="syntax-keyword">explicit</span> Buffer(std::size_t size)
+        : data_(<span class="syntax-keyword">new</span> <span class="syntax-keyword">char</span>[size]) {}
 
     ~Buffer() {
-        delete[] data_;
+        <span class="syntax-keyword">delete</span>[] data_;
     }
 
-private:
-    char* data_;
+<span class="syntax-keyword">private</span>:
+    <span class="syntax-keyword">char</span>* data_;
 };
 
-Buffer first(100);
-Buffer second = first; // 两个 data_ 指向同一块内存</code></pre></div>
+Buffer first(<span class="syntax-number">100</span>);
+Buffer second = first; <span class="syntax-comment">// 两个 data_ 指向同一块内存</span></code></pre></div>
 <p>需要手动管理资源时，应考虑析构、拷贝构造、拷贝赋值、移动构造和移动赋值，即 Rule of Five。更好的选择是让标准库成员管理资源：</p>
-<div class="code-block"><div class="code-label">cpp</div><pre tabindex="0"><code>class Buffer {
-public:
-    explicit Buffer(std::size_t size)
+<div class="code-block" data-language="cpp"><div class="code-label"><span>C++</span></div><pre tabindex="0"><code><span class="syntax-keyword">class</span> Buffer {
+<span class="syntax-keyword">public</span>:
+    <span class="syntax-keyword">explicit</span> Buffer(std::size_t size)
         : data_(size) {}
 
-private:
-    std::vector&lt;char&gt; data_;
+<span class="syntax-keyword">private</span>:
+    std::vector&lt;<span class="syntax-keyword">char</span>&gt; data_;
 };</code></pre></div>
 <p>编译器生成的 <code>Buffer</code> 拷贝和移动操作会继续调用 <code>vector</code> 对应的安全操作，这就是 Rule of Zero。</p>
 <h2 id="移动语义与异常保证">移动语义与异常保证</h2>
 <h3 id="stdmove-只改变值类别"><code>std::move</code> 只改变值类别</h3>
-<div class="code-block"><div class="code-label">cpp</div><pre tabindex="0"><code>Buffer second = first;            // 拷贝构造
-Buffer third = std::move(first);  // 有可用移动构造时调用移动构造</code></pre></div>
+<div class="code-block" data-language="cpp"><div class="code-label"><span>C++</span></div><pre tabindex="0"><code>Buffer second = first;            <span class="syntax-comment">// 拷贝构造</span>
+Buffer third = std::move(first);  <span class="syntax-comment">// 有可用移动构造时调用移动构造</span></code></pre></div>
 <p><code>std::move</code> 本身不移动资源，只将表达式转换为右值类别。移动后的对象仍然有效，可以析构和重新赋值，但其具体内容通常处于未指定状态。</p>
 <p><code>std::move</code> 不会移除 <code>const</code>：</p>
-<div class="code-block"><div class="code-label">cpp</div><pre tabindex="0"><code>const Buffer source(100);
-Buffer target = std::move(source); // 通常调用拷贝构造</code></pre></div>
+<div class="code-block" data-language="cpp"><div class="code-label"><span>C++</span></div><pre tabindex="0"><code><span class="syntax-keyword">const</span> Buffer source(<span class="syntax-number">100</span>);
+Buffer target = std::move(source); <span class="syntax-comment">// 通常调用拷贝构造</span></code></pre></div>
 <p>此时表达式类型是 <code>const Buffer&amp;&amp;</code>，不能绑定到需要修改源对象的 <code>Buffer&amp;&amp;</code>。</p>
 <h3 id="noexcept-让容器敢于移动"><code>noexcept</code> 让容器敢于移动</h3>
-<div class="code-block"><div class="code-label">cpp</div><pre tabindex="0"><code>Buffer(Buffer&amp;&amp; other) noexcept;</code></pre></div>
+<div class="code-block" data-language="cpp"><div class="code-label"><span>C++</span></div><pre tabindex="0"><code>Buffer(Buffer&amp;&amp; other) <span class="syntax-keyword">noexcept</span>;</code></pre></div>
 <p><code>noexcept</code> 承诺异常不会逃出函数；如果异常仍逃出，程序调用 <code>std::terminate()</code>。只有移动过程确实不抛异常时才能作此承诺。</p>
 <p><code>vector</code> 扩容时通常使用接近 <code>std::move_if_noexcept</code> 的策略：</p>
-<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>移动构造不抛异常             → 移动旧元素
+<div class="code-block" data-language="text"><div class="code-label"><span>示意</span></div><pre tabindex="0"><code>移动构造不抛异常             → 移动旧元素
 移动可能抛异常且类型可复制   → 优先复制旧元素
 类型不可复制                 → 只能尝试移动</code></pre></div>
 <p>这样可以在搬迁失败时尽量保持原容器不变。</p>
 <h2 id="多态销毁的边界">多态销毁的边界</h2>
-<div class="code-block"><div class="code-label">cpp</div><pre tabindex="0"><code>class Base {
-public:
-    virtual ~Base() = default;
+<div class="code-block" data-language="cpp"><div class="code-label"><span>C++</span></div><pre tabindex="0"><code><span class="syntax-keyword">class</span> Base {
+<span class="syntax-keyword">public</span>:
+    <span class="syntax-keyword">virtual</span> ~Base() = <span class="syntax-keyword">default</span>;
 };</code></pre></div>
 <p>如果通过 <code>Base*</code> 删除实际的 <code>Derived</code> 对象，而 <code>Base</code> 析构不是虚函数，行为未定义。正确析构顺序是先 <code>Derived</code>，再 <code>Base</code>。</p>
 <p>不参与继承或声明为 <code>final</code> 的类不需要虚析构。基类设计通常选择：</p>
@@ -95,4 +95,4 @@ public:
 <p>构造和析构期间，虚函数只派发到当前正在构造或析构的类。基类构造时派生部分尚未完成，基类析构时派生部分已经销毁。</p>
 <h2 id="要点回顾">要点回顾</h2>
 <p>优先让类型和成员表达所有权；用 RAII 保证成对释放，用 Rule of Zero 减少手写特殊成员函数。移动语义不等于资源自动转移，多态销毁也需要单独检查析构约定。</p></article><footer class="article-footer"><a href="/#articles">← 返回文章列表</a><a href="#main">回到顶部 ↑</a></footer></main>
-  <aside class="desktop-toc"><p>本篇目录</p><nav aria-label="本篇目录"><ol><li><a href="#%E5%AF%B9%E8%B1%A1%E6%9E%84%E9%80%A0%E8%B5%84%E6%BA%90%E5%88%86%E9%85%8D%E4%B8%8E%E9%94%80%E6%AF%81">对象构造、资源分配与销毁</a></li><li><a href="#%E7%94%A8-raii-%E4%B8%8E-rule-of-zero-%E7%AE%A1%E7%90%86%E8%B5%84%E6%BA%90">用 RAII 与 Rule of Zero 管理资源</a></li><li><a href="#%E7%A7%BB%E5%8A%A8%E8%AF%AD%E4%B9%89%E4%B8%8E%E5%BC%82%E5%B8%B8%E4%BF%9D%E8%AF%81">移动语义与异常保证</a></li><li><a href="#%E5%A4%9A%E6%80%81%E9%94%80%E6%AF%81%E7%9A%84%E8%BE%B9%E7%95%8C">多态销毁的边界</a></li><li><a href="#%E8%A6%81%E7%82%B9%E5%9B%9E%E9%A1%BE">要点回顾</a></li></ol></nav><a class="toc-return" href="/#articles">← 全部文章</a></aside></div></body></html>
+  <aside class="desktop-toc"><p>本篇目录</p><nav aria-label="本篇目录"><ol><li><a href="#%E5%AF%B9%E8%B1%A1%E6%9E%84%E9%80%A0%E8%B5%84%E6%BA%90%E5%88%86%E9%85%8D%E4%B8%8E%E9%94%80%E6%AF%81">对象构造、资源分配与销毁</a></li><li class="toc-child"><a href="#%E5%85%88%E6%98%8E%E7%A1%AE%E5%AF%B9%E8%B1%A1%E4%B8%8E%E8%B5%84%E6%BA%90%E7%9A%84%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F">先明确对象与资源的生命周期</a></li><li class="toc-child"><a href="#mallocfree-%E4%B8%8E-newdelete">malloc/free 与 new/delete</a></li><li><a href="#%E7%94%A8-raii-%E4%B8%8E-rule-of-zero-%E7%AE%A1%E7%90%86%E8%B5%84%E6%BA%90">用 RAII 与 Rule of Zero 管理资源</a></li><li class="toc-child"><a href="#raii-%E7%AE%A1%E7%90%86%E6%89%80%E6%9C%89%E6%88%90%E5%AF%B9%E8%B5%84%E6%BA%90">RAII 管理所有成对资源</a></li><li class="toc-child"><a href="#rule-of-zero-%E4%BC%98%E5%85%88%E4%BA%8E%E6%89%8B%E5%8A%A8%E7%AE%A1%E7%90%86">Rule of Zero 优先于手动管理</a></li><li><a href="#%E7%A7%BB%E5%8A%A8%E8%AF%AD%E4%B9%89%E4%B8%8E%E5%BC%82%E5%B8%B8%E4%BF%9D%E8%AF%81">移动语义与异常保证</a></li><li class="toc-child"><a href="#stdmove-%E5%8F%AA%E6%94%B9%E5%8F%98%E5%80%BC%E7%B1%BB%E5%88%AB">std::move 只改变值类别</a></li><li class="toc-child"><a href="#noexcept-%E8%AE%A9%E5%AE%B9%E5%99%A8%E6%95%A2%E4%BA%8E%E7%A7%BB%E5%8A%A8">noexcept 让容器敢于移动</a></li><li><a href="#%E5%A4%9A%E6%80%81%E9%94%80%E6%AF%81%E7%9A%84%E8%BE%B9%E7%95%8C">多态销毁的边界</a></li><li><a href="#%E8%A6%81%E7%82%B9%E5%9B%9E%E9%A1%BE">要点回顾</a></li></ol></nav><a class="toc-return" href="/#articles">← 全部文章</a></aside></div></body></html>

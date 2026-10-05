@@ -1,8 +1,8 @@
-<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light"><meta name="theme-color" content="#f7f6f2"><title>WindowManagerService 窗口管理流程</title><meta name="description" content="技术学习与工程实践。"><link rel="icon" href="/favicon.svg?v=14ae5a412d40f95d"><link rel="stylesheet" href="/reader.css?v=14ae5a412d40f95d"><script src="/reader.js?v=14ae5a412d40f95d" defer></script></head><body><div class="reading-progress" aria-hidden="true"></div><a class="skip" href="#main">跳到正文</a><header class="reader-nav"><nav aria-label="站点导航"><a href="/">← 首页</a><a href="/#articles">全部文章 ↗</a></nav></header><div class="reading-layout"><main id="main"><nav class="breadcrumbs" aria-label="当前位置"><a href="/#articles">文章</a><span>/</span><a href="/?category=client#articles">客户端开发</a><span>/</span><span>Android</span><span>/</span><span>系统原理</span></nav>
-  <header class="article-heading"><p class="article-category">客户端开发</p><h1>WindowManagerService 窗口管理流程</h1></header>
-  <details class="mobile-toc"><summary>本篇目录 <span>4 节</span></summary><nav aria-label="本篇目录"><ol><li><a href="#%E5%85%88%E5%8C%BA%E5%88%86-activitywindow-%E4%B8%8E-layer">先区分 Activity、Window 与 Layer</a></li><li><a href="#%E7%AA%97%E5%8F%A3%E4%BB%8E%E5%88%9B%E5%BB%BA%E5%88%B0%E6%98%BE%E7%A4%BA%E7%9A%84%E6%B5%81%E7%A8%8B">窗口从创建到显示的流程</a></li><li><a href="#%E7%94%A8%E7%8A%B6%E6%80%81%E4%B8%8D%E4%B8%80%E8%87%B4%E5%AE%9A%E4%BD%8D%E6%98%BE%E7%A4%BA%E9%97%AE%E9%A2%98">用状态不一致定位显示问题</a></li><li><a href="#%E7%BB%93%E8%AE%BA">结论</a></li></ol></nav></details><article class="prose" id="content"><p><code>WindowManagerService</code>，简称 WMS，是 <code>system_server</code> 里的窗口管理服务。它决定屏幕上有哪些窗口、谁在上层、谁有焦点、输入事件发给谁，并通过 <code>SurfaceControl</code> 控制对应图层。它不负责执行业务 View 的 <code>draw()</code>，也不负责最终像素合成。</p>
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light"><meta name="theme-color" content="#f7f6f2"><title>WindowManagerService 窗口管理流程</title><meta name="description" content="技术学习与工程实践。"><link rel="icon" href="/favicon.svg?v=7ea8198bf5c60782"><link rel="stylesheet" href="/reader.css?v=7ea8198bf5c60782"><script src="/reader.js?v=7ea8198bf5c60782" defer></script></head><body><div class="reading-progress" aria-hidden="true"></div><a class="skip" href="#main">跳到正文</a><header class="reader-nav"><nav aria-label="站点导航"><a href="/">← 首页</a><a href="/#articles">全部文章 ↗</a></nav></header><div class="reading-layout"><main id="main"><nav class="breadcrumbs" aria-label="当前位置"><a href="/#articles">文章</a><span>/</span><a href="/?category=client#articles">客户端开发</a><span>/</span><span>Android</span><span>/</span><span>系统原理</span></nav>
+  <header class="article-heading"><h1>WindowManagerService 窗口管理流程</h1></header>
+  <details class="mobile-toc"><summary>本篇目录 <span>4 节</span></summary><nav aria-label="本篇目录"><ol><li><a href="#%E5%85%88%E5%8C%BA%E5%88%86-activitywindow-%E4%B8%8E-layer">先区分 Activity、Window 与 Layer</a></li><li class="toc-child"><a href="#wms-%E5%85%B3%E6%B3%A8%E7%9A%84%E6%A0%B8%E5%BF%83%E4%BF%A1%E6%81%AF">WMS 关注的核心信息</a></li><li class="toc-child"><a href="#activity--window--layer-%E4%B8%89%E4%B8%AA%E7%BB%B4%E5%BA%A6">Activity / Window / Layer 三个维度</a></li><li class="toc-child"><a href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E8%A6%81%E5%88%86%E4%B8%89%E4%B8%AA%E7%BB%B4%E5%BA%A6">为什么要分三个维度</a></li><li><a href="#%E7%AA%97%E5%8F%A3%E4%BB%8E%E5%88%9B%E5%BB%BA%E5%88%B0%E6%98%BE%E7%A4%BA%E7%9A%84%E6%B5%81%E7%A8%8B">窗口从创建到显示的流程</a></li><li><a href="#%E7%94%A8%E7%8A%B6%E6%80%81%E4%B8%8D%E4%B8%80%E8%87%B4%E5%AE%9A%E4%BD%8D%E6%98%BE%E7%A4%BA%E9%97%AE%E9%A2%98">用状态不一致定位显示问题</a></li><li class="toc-child"><a href="#dumpsys-%E6%8E%92%E6%9F%A5">dumpsys 排查</a></li><li><a href="#%E7%BB%93%E8%AE%BA">结论</a></li></ol></nav></details><article class="prose" id="content"><p><code>WindowManagerService</code>，简称 WMS，是 <code>system_server</code> 里的窗口管理服务。它决定屏幕上有哪些窗口、谁在上层、谁有焦点、输入事件发给谁，并通过 <code>SurfaceControl</code> 控制对应图层。它不负责执行业务 View 的 <code>draw()</code>，也不负责最终像素合成。</p>
 <p>一句话定位：</p>
-<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>ATMS 决定 Activity 能不能启动、放哪个 Task；
+<div class="code-block" data-language="text"><div class="code-label"><span>示意</span></div><pre tabindex="0"><code>ATMS 决定 Activity 能不能启动、放哪个 Task；
 WMS 决定这个窗口怎么显示、层级、焦点、输入给谁；
 SurfaceFlinger 决定各层 buffer 怎么合成上屏。</code></pre></div>
 <h2 id="先区分-activitywindow-与-layer">先区分 Activity、Window 与 Layer</h2>
@@ -18,7 +18,7 @@ SurfaceFlinger 决定各层 buffer 怎么合成上屏。</code></pre></div>
 <p>三者不是严格一一对应：</p>
 <ul><li><p>一个 Activity 可能有多个窗口：主窗口、Dialog、PopupWindow。</p></li><li><p>很多窗口不属于任何 Activity：状态栏、导航栏、输入法、壁纸、Toast、悬浮窗。</p></li><li><p>一个窗口可能对应一个或多个 SurfaceControl / Layer。</p></li></ul>
 <h4 id="关联方式">关联方式</h4>
-<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>ActivityRecord(ATMS)
+<div class="code-block" data-language="text"><div class="code-label"><span>示意</span></div><pre tabindex="0"><code>ActivityRecord(ATMS)
    │ token: IBinder
    ▼
 WindowToken / WindowState(WMS)
@@ -27,7 +27,7 @@ WindowToken / WindowState(WMS)
 Layer(SurfaceFlinger)</code></pre></div>
 <ul><li><p>ATMS 启动 Activity 时创建 <code>ActivityRecord</code> 并生成 token；<code>addToDisplay</code> 时带上 token，WMS 据此把窗口挂到对应 Activity。</p></li><li><p>WMS 的 <code>WindowState</code> 持有 <code>SurfaceControl</code>，指向 SurfaceFlinger 中唯一的 <code>Layer</code>。</p></li><li><p>用 token 而不是直接传 Activity 对象，是因为跨进程隔离：Activity 在 App 进程，WindowState 在 system_server，只能用 Binder token 作为身份凭证。这也解释了用非 Activity 的 Context addView 会报 token 错误。</p></li></ul>
 <h4 id="通信通道">通信通道</h4>
-<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>App ↔ ATMS：IActivityTaskManager / IApplicationThread
+<div class="code-block" data-language="text"><div class="code-label"><span>示意</span></div><pre tabindex="0"><code>App ↔ ATMS：IActivityTaskManager / IApplicationThread
 App ↔ WMS：IWindowSession（App→WMS）/ IWindow（WMS→App）
 WMS → SurfaceFlinger：SurfaceControl 事务（图层属性）
 App → SurfaceFlinger：Surface / BufferQueue（像素）</code></pre></div>
@@ -37,7 +37,7 @@ App → SurfaceFlinger：Surface / BufferQueue（像素）</code></pre></div>
 <p>因此三个维度只能各自在责任进程里维护权威状态，靠 token 和 SurfaceControl 关联，靠 Binder 和事务同步。代价是可能短暂不一致，换来的是多应用共享、进程隔离、系统窗口统一管理和灵活显示能力（多屏、分屏、画中画等）。</p>
 <h2 id="窗口从创建到显示的流程">窗口从创建到显示的流程</h2>
 <p>Activity resume 后，App 侧发起添加窗口，最终由 WMS 登记并接入图形系统。</p>
-<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>Activity -&gt; PhoneWindow -&gt; DecorView
+<div class="code-block" data-language="text"><div class="code-label"><span>示意</span></div><pre tabindex="0"><code>Activity -&gt; PhoneWindow -&gt; DecorView
   -&gt; WindowManager.addView
   -&gt; WindowManagerGlobal.addView
   -&gt; new ViewRootImpl
@@ -56,13 +56,13 @@ App → SurfaceFlinger：Surface / BufferQueue（像素）</code></pre></div>
 <h2 id="用状态不一致定位显示问题">用状态不一致定位显示问题</h2>
 <p>因为三个维度靠同步保持一致，一旦某个维度状态没更新到，就会出现“看起来矛盾”的现象。</p>
 <p>典型案例：Dialog 残留。</p>
-<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>现象：dialog.hide() 后切后台再回前台，Dialog 窗口又显示在前台</code></pre></div>
+<div class="code-block" data-language="text"><div class="code-label"><span>示意</span></div><pre tabindex="0"><code>现象：dialog.hide() 后切后台再回前台，Dialog 窗口又显示在前台</code></pre></div>
 <p>原因链：</p>
 <ul><li><p><code>hide()</code> 通常只改内容可见性，不一定移除窗口；<code>dismiss()</code> 才会走 <code>removeView -&gt; WMS.removeWindow</code>。</p></li><li><p>从 Window 维度看，窗口（WindowState）还在，可见性记录仍是“可见”。</p></li><li><p>切后台再回前台时，系统按窗口维度的“可见”状态重新显示，于是 Dialog 又出现。</p></li></ul>
 <p>本质：Window 维度和 Activity 前后台没对齐，是状态同步问题，不是分层设计问题。</p>
 <h3 id="dumpsys-排查">dumpsys 排查</h3>
 <p>把三个维度分别 dump 出来对比：</p>
-<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>adb shell dumpsys activity activities   # Activity / Task 前后台
+<div class="code-block" data-language="text"><div class="code-label"><span>示意</span></div><pre tabindex="0"><code>adb shell dumpsys activity activities   # Activity / Task 前后台
 adb shell dumpsys window windows        # 窗口列表、层级、可见性、焦点
 adb shell dumpsys SurfaceFlinger        # Layer 和合成</code></pre></div>
 <p>排查思路：</p>
@@ -70,4 +70,4 @@ adb shell dumpsys SurfaceFlinger        # Layer 和合成</code></pre></div>
 <p>修复方向：该销毁就 <code>dismiss</code>；让依附窗口的生命周期跟随宿主 Activity；避免在错误的生命周期时机操作窗口。</p>
 <h2 id="结论">结论</h2>
 <ol start="1"><li><p>WMS 是系统侧窗口管理者，App 侧窗口客户端是 ViewRootImpl，二者通过 IWindowSession / IWindow 通信。</p></li><li><p><code>addWindow</code> 登记窗口，<code>relayout</code> 才分配 Surface；WMS 管窗口秩序，SurfaceFlinger 管合成。</p></li><li><p>Activity / Window / Layer 是三个独立维度，靠 token 和 SurfaceControl 关联，不是一一对应。</p></li><li><p>分三维度是多进程窗口系统的必然选择：屏幕共享、窗口非 Activity 独有、进程隔离、独立合成。</p></li><li><p>三维度靠同步保持一致，Dialog 残留等问题多是某个维度状态没同步，用 dumpsys 三件套对比排查。</p></li></ol></article><footer class="article-footer"><a href="/#articles">← 返回文章列表</a><a href="#main">回到顶部 ↑</a></footer></main>
-  <aside class="desktop-toc"><p>本篇目录</p><nav aria-label="本篇目录"><ol><li><a href="#%E5%85%88%E5%8C%BA%E5%88%86-activitywindow-%E4%B8%8E-layer">先区分 Activity、Window 与 Layer</a></li><li><a href="#%E7%AA%97%E5%8F%A3%E4%BB%8E%E5%88%9B%E5%BB%BA%E5%88%B0%E6%98%BE%E7%A4%BA%E7%9A%84%E6%B5%81%E7%A8%8B">窗口从创建到显示的流程</a></li><li><a href="#%E7%94%A8%E7%8A%B6%E6%80%81%E4%B8%8D%E4%B8%80%E8%87%B4%E5%AE%9A%E4%BD%8D%E6%98%BE%E7%A4%BA%E9%97%AE%E9%A2%98">用状态不一致定位显示问题</a></li><li><a href="#%E7%BB%93%E8%AE%BA">结论</a></li></ol></nav><a class="toc-return" href="/#articles">← 全部文章</a></aside></div></body></html>
+  <aside class="desktop-toc"><p>本篇目录</p><nav aria-label="本篇目录"><ol><li><a href="#%E5%85%88%E5%8C%BA%E5%88%86-activitywindow-%E4%B8%8E-layer">先区分 Activity、Window 与 Layer</a></li><li class="toc-child"><a href="#wms-%E5%85%B3%E6%B3%A8%E7%9A%84%E6%A0%B8%E5%BF%83%E4%BF%A1%E6%81%AF">WMS 关注的核心信息</a></li><li class="toc-child"><a href="#activity--window--layer-%E4%B8%89%E4%B8%AA%E7%BB%B4%E5%BA%A6">Activity / Window / Layer 三个维度</a></li><li class="toc-child"><a href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E8%A6%81%E5%88%86%E4%B8%89%E4%B8%AA%E7%BB%B4%E5%BA%A6">为什么要分三个维度</a></li><li><a href="#%E7%AA%97%E5%8F%A3%E4%BB%8E%E5%88%9B%E5%BB%BA%E5%88%B0%E6%98%BE%E7%A4%BA%E7%9A%84%E6%B5%81%E7%A8%8B">窗口从创建到显示的流程</a></li><li><a href="#%E7%94%A8%E7%8A%B6%E6%80%81%E4%B8%8D%E4%B8%80%E8%87%B4%E5%AE%9A%E4%BD%8D%E6%98%BE%E7%A4%BA%E9%97%AE%E9%A2%98">用状态不一致定位显示问题</a></li><li class="toc-child"><a href="#dumpsys-%E6%8E%92%E6%9F%A5">dumpsys 排查</a></li><li><a href="#%E7%BB%93%E8%AE%BA">结论</a></li></ol></nav><a class="toc-return" href="/#articles">← 全部文章</a></aside></div></body></html>

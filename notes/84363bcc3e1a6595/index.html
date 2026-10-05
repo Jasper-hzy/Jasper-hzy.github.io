@@ -1,14 +1,14 @@
-<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light"><meta name="theme-color" content="#f7f6f2"><title>ATMS 与 AMS</title><meta name="description" content="技术学习与工程实践。"><link rel="icon" href="/favicon.svg?v=14ae5a412d40f95d"><link rel="stylesheet" href="/reader.css?v=14ae5a412d40f95d"><script src="/reader.js?v=14ae5a412d40f95d" defer></script></head><body><div class="reading-progress" aria-hidden="true"></div><a class="skip" href="#main">跳到正文</a><header class="reader-nav"><nav aria-label="站点导航"><a href="/">← 首页</a><a href="/#articles">全部文章 ↗</a></nav></header><div class="reading-layout"><main id="main"><nav class="breadcrumbs" aria-label="当前位置"><a href="/#articles">文章</a><span>/</span><a href="/?category=client#articles">客户端开发</a><span>/</span><span>Android</span><span>/</span><span>系统原理</span></nav>
-  <header class="article-heading"><p class="article-category">客户端开发</p><h1>ATMS 与 AMS</h1></header>
-  <details class="mobile-toc"><summary>本篇目录 <span>4 节</span></summary><nav aria-label="本篇目录"><ol><li><a href="#%E8%81%8C%E8%B4%A3%E8%BE%B9%E7%95%8C%E4%BB%BB%E5%8A%A1%E7%AE%A1%E7%90%86%E4%B8%8E%E8%BF%9B%E7%A8%8B%E7%AE%A1%E7%90%86">职责边界：任务管理与进程管理</a></li><li><a href="#%E4%B8%80%E6%AC%A1%E5%90%AF%E5%8A%A8%E4%B8%AD%E7%9A%84%E8%B7%A8%E8%BF%9B%E7%A8%8B%E5%8D%8F%E4%BD%9C">一次启动中的跨进程协作</a></li><li><a href="#application-%E4%B8%8E-activity-%E7%9A%84%E5%88%9B%E5%BB%BA%E9%A1%BA%E5%BA%8F">Application 与 Activity 的创建顺序</a></li><li><a href="#%E4%B8%8D%E5%90%8C%E5%90%AF%E5%8A%A8%E7%8A%B6%E6%80%81%E4%B8%8B%E7%9A%84%E9%93%BE%E8%B7%AF%E5%B7%AE%E5%BC%82">不同启动状态下的链路差异</a></li></ol></nav></details><article class="prose" id="content"><p>ATMS 和 AMS 都运行在 <code>system_server</code> 中，但管理对象不同：</p>
-<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>ATMS：管理 Activity 和 Task
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light"><meta name="theme-color" content="#f7f6f2"><title>ATMS 与 AMS</title><meta name="description" content="技术学习与工程实践。"><link rel="icon" href="/favicon.svg?v=7ea8198bf5c60782"><link rel="stylesheet" href="/reader.css?v=7ea8198bf5c60782"><script src="/reader.js?v=7ea8198bf5c60782" defer></script></head><body><div class="reading-progress" aria-hidden="true"></div><a class="skip" href="#main">跳到正文</a><header class="reader-nav"><nav aria-label="站点导航"><a href="/">← 首页</a><a href="/#articles">全部文章 ↗</a></nav></header><div class="reading-layout"><main id="main"><nav class="breadcrumbs" aria-label="当前位置"><a href="/#articles">文章</a><span>/</span><a href="/?category=client#articles">客户端开发</a><span>/</span><span>Android</span><span>/</span><span>系统原理</span></nav>
+  <header class="article-heading"><h1>ATMS 与 AMS</h1></header>
+  <details class="mobile-toc"><summary>本篇目录 <span>4 节</span></summary><nav aria-label="本篇目录"><ol><li><a href="#%E8%81%8C%E8%B4%A3%E8%BE%B9%E7%95%8C%E4%BB%BB%E5%8A%A1%E7%AE%A1%E7%90%86%E4%B8%8E%E8%BF%9B%E7%A8%8B%E7%AE%A1%E7%90%86">职责边界：任务管理与进程管理</a></li><li class="toc-child"><a href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E5%90%8C%E6%97%B6%E6%9C%89-atms-%E5%92%8C-ams">为什么同时有 ATMS 和 AMS</a></li><li class="toc-child"><a href="#atms-%E7%9A%84%E4%B8%BB%E8%A6%81%E4%BD%9C%E7%94%A8">ATMS 的主要作用</a></li><li class="toc-child"><a href="#ams-%E7%9A%84%E4%B8%BB%E8%A6%81%E4%BD%9C%E7%94%A8">AMS 的主要作用</a></li><li><a href="#%E4%B8%80%E6%AC%A1%E5%90%AF%E5%8A%A8%E4%B8%AD%E7%9A%84%E8%B7%A8%E8%BF%9B%E7%A8%8B%E5%8D%8F%E4%BD%9C">一次启动中的跨进程协作</a></li><li class="toc-child"><a href="#applicationthreadsystemserver-%E5%A6%82%E4%BD%95%E5%8F%8D%E5%90%91%E8%B0%83%E7%94%A8-app">ApplicationThread：system_server 如何反向调用 App</a></li><li class="toc-child"><a href="#atms-%E5%92%8C-ams-%E6%80%8E%E4%B9%88%E5%8D%8F%E4%BD%9C">ATMS 和 AMS 怎么协作</a></li><li><a href="#application-%E4%B8%8E-activity-%E7%9A%84%E5%88%9B%E5%BB%BA%E9%A1%BA%E5%BA%8F">Application 与 Activity 的创建顺序</a></li><li><a href="#%E4%B8%8D%E5%90%8C%E5%90%AF%E5%8A%A8%E7%8A%B6%E6%80%81%E4%B8%8B%E7%9A%84%E9%93%BE%E8%B7%AF%E5%B7%AE%E5%BC%82">不同启动状态下的链路差异</a></li></ol></nav></details><article class="prose" id="content"><p>ATMS 和 AMS 都运行在 <code>system_server</code> 中，但管理对象不同：</p>
+<div class="code-block" data-language="text"><div class="code-label"><span>示意</span></div><pre tabindex="0"><code>ATMS：管理 Activity 和 Task
 AMS：管理应用进程以及 Service、Broadcast、Provider 等运行态</code></pre></div>
 <p>一次 Activity 冷启动以 ATMS 为主线。ATMS 会先判断目标进程是否已经完成 attach，并向 system_server 提供了可用的 <code>ApplicationThread</code> Binder；如果还不能通知 App 主线程创建 Activity，就请求 AMS 确保目标进程可用。AMS 再根据真实进程状态决定复用正在启动的进程，还是请求 Zygote fork 新进程。</p>
 <h2 id="职责边界任务管理与进程管理">职责边界：任务管理与进程管理</h2>
 <h3 id="为什么同时有-atms-和-ams">为什么同时有 ATMS 和 AMS</h3>
 <p>早期 Android 的 Activity、Task 和进程调度大量集中在 <code>ActivityManagerService</code> 中。随着窗口和多显示等能力变复杂，Activity 与 Task 相关逻辑逐步拆到 <code>ActivityTaskManagerService</code>。</p>
 <p>因此旧版本资料经常把 Activity 启动统称为 AMS 流程；在较新的 Android 中，需要区分：</p>
-<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>Activity / Task 调度 -&gt; ATMS
+<div class="code-block" data-language="text"><div class="code-label"><span>示意</span></div><pre tabindex="0"><code>Activity / Task 调度 -&gt; ATMS
 进程和其他组件运行态 -&gt; AMS</code></pre></div>
 <h3 id="atms-的主要作用">ATMS 的主要作用</h3>
 <p>ATMS 全称是 <code>ActivityTaskManagerService</code>，主要管理 Activity 和 Task。</p>
@@ -20,12 +20,12 @@ AMS：管理应用进程以及 Service、Broadcast、Provider 等运行态</code
 <p>ATMS 根据以下信息决定 Activity 放入哪个 Task：</p>
 <ul><li><p><code>launchMode</code>。</p></li><li><p>Intent flags，例如 <code>NEW_TASK</code>、<code>CLEAR_TOP</code>。</p></li><li><p><code>taskAffinity</code>。</p></li><li><p>当前已有 Task 和 Activity 状态。</p></li></ul>
 <p>常见管理对象包括：</p>
-<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>ActivityRecord：system_server 中一个 Activity 的运行记录
+<div class="code-block" data-language="text"><div class="code-label"><span>示意</span></div><pre tabindex="0"><code>ActivityRecord：system_server 中一个 Activity 的运行记录
 Task：一组按照返回关系组织的 Activity
 RootWindowContainer：Activity 和 Task 层级的根管理对象</code></pre></div>
 <h4 id="3-activity-生命周期调度">3. Activity 生命周期调度</h4>
 <p>ATMS 维护的不是 App 中真实的 Activity 对象，而是 <code>ActivityRecord</code>。它根据系统全局状态决定：</p>
-<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>哪个 Activity 启动
+<div class="code-block" data-language="text"><div class="code-label"><span>示意</span></div><pre tabindex="0"><code>哪个 Activity 启动
 哪个 Activity pause
 哪个 Activity resume
 哪个 Activity stop 或 destroy</code></pre></div>
@@ -36,16 +36,16 @@ RootWindowContainer：Activity 和 Task 层级的根管理对象</code></pre></d
 <p>AMS 负责：</p>
 <ul><li><p>判断目标进程是否已经存在。</p></li><li><p>目标进程不存在时请求 Zygote fork。</p></li><li><p>保存 pid、uid、进程名和组件状态。</p></li><li><p>维护进程优先级和 OOM 调整值。</p></li><li><p>处理进程死亡以及组件后续恢复。</p></li></ul>
 <p>主要记录对象是：</p>
-<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>ProcessRecord：system_server 中一个 App 进程的运行记录</code></pre></div>
+<div class="code-block" data-language="text"><div class="code-label"><span>示意</span></div><pre tabindex="0"><code>ProcessRecord：system_server 中一个 App 进程的运行记录</code></pre></div>
 <p>进程启动链路可以简化为：</p>
-<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>AMS
+<div class="code-block" data-language="text"><div class="code-label"><span>示意</span></div><pre tabindex="0"><code>AMS
   -&gt; ProcessList
   -&gt; ZygoteProcess
   -&gt; Zygote fork
   -&gt; ActivityThread.main</code></pre></div>
 <h4 id="2-app-进程-attach">2. App 进程 attach</h4>
 <p>Zygote fork 后，子分支已经是目标 App 进程。App 主线程进入：</p>
-<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>ActivityThread.main
+<div class="code-block" data-language="text"><div class="code-label"><span>示意</span></div><pre tabindex="0"><code>ActivityThread.main
   -&gt; new ActivityThread
   -&gt; ActivityThread.attach
   -&gt; AMS.attachApplication</code></pre></div>
@@ -54,13 +54,13 @@ RootWindowContainer：Activity 和 Task 层级的根管理对象</code></pre></d
 <p><code>ActivityThread</code> 不是 Java <code>Thread</code>，而是 App 主线程的组件和事务管理对象。</p>
 <h4 id="3-servicebroadcastprovider">3. Service、Broadcast、Provider</h4>
 <p>除了进程管理，AMS 还负责这些组件的运行态调度：</p>
-<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>Service：启动、绑定、前台服务和生命周期
+<div class="code-block" data-language="text"><div class="code-label"><span>示意</span></div><pre tabindex="0"><code>Service：启动、绑定、前台服务和生命周期
 Broadcast：广播分发、接收顺序和超时
 Provider：发布、查找和进程依赖</code></pre></div>
 <p>PMS 保存这些组件在 Manifest 中的静态声明；AMS 负责它们运行时如何启动、连接和结束。</p>
 <h4 id="4-进程优先级">4. 进程优先级</h4>
 <p>AMS 会根据进程当前承载的组件和用户可感知程度计算进程状态，例如：</p>
-<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>前台进程
+<div class="code-block" data-language="text"><div class="code-label"><span>示意</span></div><pre tabindex="0"><code>前台进程
 可见进程
 服务进程
 缓存进程</code></pre></div>
@@ -69,18 +69,18 @@ Provider：发布、查找和进程依赖</code></pre></div>
 <h3 id="applicationthreadsystemserver-如何反向调用-app">ApplicationThread：system_server 如何反向调用 App</h3>
 <p><code>system_server</code> 和普通 App 都由 Zygote fork，但 fork 后是彼此独立的进程。App 可以通过 <code>IActivityManager</code>、<code>IActivityTaskManager</code> 等 Binder Proxy 调用系统服务；系统服务要反向调度 App，则需要 App 主动提供一个 Binder 回调接口。</p>
 <p>App 进程启动后会创建：</p>
-<div class="code-block"><div class="code-label">java</div><pre tabindex="0"><code>final ApplicationThread mAppThread = new ApplicationThread();</code></pre></div>
+<div class="code-block" data-language="java"><div class="code-label"><span>Java</span></div><pre tabindex="0"><code><span class="syntax-keyword">final</span> ApplicationThread mAppThread = <span class="syntax-keyword">new</span> ApplicationThread();</code></pre></div>
 <p><code>ApplicationThread</code> 继承 <code>IApplicationThread.Stub</code>。它不是 Java 线程，而是 App 进程中的 Binder Stub：</p>
-<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>ActivityThread.attach
+<div class="code-block" data-language="text"><div class="code-label"><span>示意</span></div><pre tabindex="0"><code>ActivityThread.attach
   -&gt; AMS.attachApplication(mAppThread)
   -&gt; App 把 ApplicationThread Binder 交给 AMS
   -&gt; AMS 保存到 ProcessRecord.thread</code></pre></div>
 <p>跨进程后，两端看到的对象不同：</p>
-<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>App 进程：ApplicationThread Stub
+<div class="code-block" data-language="text"><div class="code-label"><span>示意</span></div><pre tabindex="0"><code>App 进程：ApplicationThread Stub
         ↓ Binder driver
 system_server：IApplicationThread Proxy</code></pre></div>
 <p>ATMS/AMS 后续可以通过这个 Proxy 通知 App：</p>
-<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>system_server
+<div class="code-block" data-language="text"><div class="code-label"><span>示意</span></div><pre tabindex="0"><code>system_server
   -&gt; IApplicationThread.scheduleTransaction
   -&gt; Binder driver
   -&gt; App 的 ApplicationThread Stub
@@ -89,7 +89,7 @@ system_server：IApplicationThread Proxy</code></pre></div>
   -&gt; 执行 Activity 生命周期</code></pre></div>
 <p>Binder 事务到达 App 时可能先由 Binder 线程接收，<code>ApplicationThread</code> 会把 Activity 事务投递到主线程 Looper，所以 <code>Activity.onCreate()</code>、<code>onResume()</code> 等生命周期仍然在 App 主线程执行。</p>
 <p>两条调用方向可以对照理解：</p>
-<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>App 请求 system_server：
+<div class="code-block" data-language="text"><div class="code-label"><span>示意</span></div><pre tabindex="0"><code>App 请求 system_server：
 Activity -&gt; IActivityTaskManager Proxy -&gt; Binder -&gt; ATMS
 
 system_server 通知 App：
@@ -98,7 +98,7 @@ ATMS/AMS -&gt; IApplicationThread Proxy -&gt; Binder
 <p>这也是系统服务实现跨进程回调的通用方式：App 注册一个 Binder Callback Stub，系统服务保存对应的远程 Binder 引用，事件发生后再通过它回调 App。例如广播分发使用 <code>IIntentReceiver</code>，<code>bindService</code> 的连接结果使用 <code>IServiceConnection</code>。</p>
 <h3 id="atms-和-ams-怎么协作">ATMS 和 AMS 怎么协作</h3>
 <p>Activity 冷启动的关键交接关系是：</p>
-<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>App 调用 startActivity
+<div class="code-block" data-language="text"><div class="code-label"><span>示意</span></div><pre tabindex="0"><code>App 调用 startActivity
   -&gt; ATMS 接收启动请求
   -&gt; ATMS 使用 PMS 信息确定目标 Activity
   -&gt; ATMS 处理 Task 和 Activity 状态
@@ -112,22 +112,22 @@ ATMS/AMS -&gt; IApplicationThread Proxy -&gt; Binder
   -&gt; 创建 Application
   -&gt; ATMS 通知 App 创建 Activity</code></pre></div>
 <p>这里是两阶段判断，不是 ATMS 取代 AMS 管理进程：</p>
-<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>ATMS 判断：
+<div class="code-block" data-language="text"><div class="code-label"><span>示意</span></div><pre tabindex="0"><code>ATMS 判断：
 当前能否通过 ApplicationThread Binder 通知 App 主线程创建 Activity
 
 AMS 判断：
 进程是否已存在、正在启动、已经死亡，最终是否需要 Zygote fork</code></pre></div>
 <p>ATMS 之所以需要先看一次，是因为 Activity 对象要在目标 App 的主线程中创建。目标进程完成 attach 后，ATMS 才能通过 <code>ApplicationThread</code> Binder 把 <code>LaunchActivityItem</code> 等事务发送给 App。ATMS 关心的是“现在能不能通知 App 创建 Activity”，不是完整的进程生命周期。</p>
 <p>如果进程已经 attach，ATMS 可以直接下发 Activity 事务：</p>
-<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>ATMS 找到现有进程
+<div class="code-block" data-language="text"><div class="code-label"><span>示意</span></div><pre tabindex="0"><code>ATMS 找到现有进程
   -&gt; 跳过 AMS 请求 Zygote fork
   -&gt; 直接通知 App 调度目标 Activity</code></pre></div>
 <p>因此可以记成：</p>
-<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>ATMS 做 Activity 启动决策
+<div class="code-block" data-language="text"><div class="code-label"><span>示意</span></div><pre tabindex="0"><code>ATMS 做 Activity 启动决策
 AMS 对进程状态做权威检查，并保证承载 Activity 的进程可用</code></pre></div>
 <h2 id="application-与-activity-的创建顺序">Application 与 Activity 的创建顺序</h2>
 <p>冷启动时不是 fork 后立刻创建 Activity，而是：</p>
-<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>Zygote fork
+<div class="code-block" data-language="text"><div class="code-label"><span>示意</span></div><pre tabindex="0"><code>Zygote fork
   -&gt; ActivityThread.main
   -&gt; ActivityThread.attach
   -&gt; AMS.attachApplication
@@ -141,7 +141,7 @@ AMS 对进程状态做权威检查，并保证承载 Activity 的进程可用</c
 <ol start="1"><li><p><code>Application</code> 每个进程只创建一次，Activity 可以创建多次。</p></li><li><p>通过 ContentProvider 自动初始化的三方库可能早于 <code>Application.onCreate()</code> 执行。</p></li></ol>
 <p>性能分析需要继续拆分进程初始化、组件创建和首帧显示的耗时，避免仅用总启动耗时判断瓶颈。</p>
 <h2 id="不同启动状态下的链路差异">不同启动状态下的链路差异</h2>
-<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>冷启动：
+<div class="code-block" data-language="text"><div class="code-label"><span>示意</span></div><pre tabindex="0"><code>冷启动：
 进程不存在，需要 Zygote fork、attach、创建 Application 和 Activity
 
 温启动：
@@ -150,4 +150,4 @@ AMS 对进程状态做权威检查，并保证承载 Activity 的进程可用</c
 热启动：
 进程和 Activity 都存在，主要进行 Task 切换和生命周期恢复</code></pre></div>
 <p>进程是否存在由 AMS 管理；Activity 和 Task 是否存在由 ATMS 管理，所以判断冷、温、热启动时需要同时看两边状态。</p></article><footer class="article-footer"><a href="/#articles">← 返回文章列表</a><a href="#main">回到顶部 ↑</a></footer></main>
-  <aside class="desktop-toc"><p>本篇目录</p><nav aria-label="本篇目录"><ol><li><a href="#%E8%81%8C%E8%B4%A3%E8%BE%B9%E7%95%8C%E4%BB%BB%E5%8A%A1%E7%AE%A1%E7%90%86%E4%B8%8E%E8%BF%9B%E7%A8%8B%E7%AE%A1%E7%90%86">职责边界：任务管理与进程管理</a></li><li><a href="#%E4%B8%80%E6%AC%A1%E5%90%AF%E5%8A%A8%E4%B8%AD%E7%9A%84%E8%B7%A8%E8%BF%9B%E7%A8%8B%E5%8D%8F%E4%BD%9C">一次启动中的跨进程协作</a></li><li><a href="#application-%E4%B8%8E-activity-%E7%9A%84%E5%88%9B%E5%BB%BA%E9%A1%BA%E5%BA%8F">Application 与 Activity 的创建顺序</a></li><li><a href="#%E4%B8%8D%E5%90%8C%E5%90%AF%E5%8A%A8%E7%8A%B6%E6%80%81%E4%B8%8B%E7%9A%84%E9%93%BE%E8%B7%AF%E5%B7%AE%E5%BC%82">不同启动状态下的链路差异</a></li></ol></nav><a class="toc-return" href="/#articles">← 全部文章</a></aside></div></body></html>
+  <aside class="desktop-toc"><p>本篇目录</p><nav aria-label="本篇目录"><ol><li><a href="#%E8%81%8C%E8%B4%A3%E8%BE%B9%E7%95%8C%E4%BB%BB%E5%8A%A1%E7%AE%A1%E7%90%86%E4%B8%8E%E8%BF%9B%E7%A8%8B%E7%AE%A1%E7%90%86">职责边界：任务管理与进程管理</a></li><li class="toc-child"><a href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E5%90%8C%E6%97%B6%E6%9C%89-atms-%E5%92%8C-ams">为什么同时有 ATMS 和 AMS</a></li><li class="toc-child"><a href="#atms-%E7%9A%84%E4%B8%BB%E8%A6%81%E4%BD%9C%E7%94%A8">ATMS 的主要作用</a></li><li class="toc-child"><a href="#ams-%E7%9A%84%E4%B8%BB%E8%A6%81%E4%BD%9C%E7%94%A8">AMS 的主要作用</a></li><li><a href="#%E4%B8%80%E6%AC%A1%E5%90%AF%E5%8A%A8%E4%B8%AD%E7%9A%84%E8%B7%A8%E8%BF%9B%E7%A8%8B%E5%8D%8F%E4%BD%9C">一次启动中的跨进程协作</a></li><li class="toc-child"><a href="#applicationthreadsystemserver-%E5%A6%82%E4%BD%95%E5%8F%8D%E5%90%91%E8%B0%83%E7%94%A8-app">ApplicationThread：system_server 如何反向调用 App</a></li><li class="toc-child"><a href="#atms-%E5%92%8C-ams-%E6%80%8E%E4%B9%88%E5%8D%8F%E4%BD%9C">ATMS 和 AMS 怎么协作</a></li><li><a href="#application-%E4%B8%8E-activity-%E7%9A%84%E5%88%9B%E5%BB%BA%E9%A1%BA%E5%BA%8F">Application 与 Activity 的创建顺序</a></li><li><a href="#%E4%B8%8D%E5%90%8C%E5%90%AF%E5%8A%A8%E7%8A%B6%E6%80%81%E4%B8%8B%E7%9A%84%E9%93%BE%E8%B7%AF%E5%B7%AE%E5%BC%82">不同启动状态下的链路差异</a></li></ol></nav><a class="toc-return" href="/#articles">← 全部文章</a></aside></div></body></html>

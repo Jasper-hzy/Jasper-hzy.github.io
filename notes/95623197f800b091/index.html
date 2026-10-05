@@ -1,8 +1,8 @@
-<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light"><meta name="theme-color" content="#f7f6f2"><title>Android 云游戏免安装启动机制</title><meta name="description" content="技术学习与工程实践。"><link rel="icon" href="/favicon.svg?v=14ae5a412d40f95d"><link rel="stylesheet" href="/reader.css?v=14ae5a412d40f95d"><script src="/reader.js?v=14ae5a412d40f95d" defer></script></head><body><div class="reading-progress" aria-hidden="true"></div><a class="skip" href="#main">跳到正文</a><header class="reader-nav"><nav aria-label="站点导航"><a href="/">← 首页</a><a href="/#articles">全部文章 ↗</a></nav></header><div class="reading-layout"><main id="main"><nav class="breadcrumbs" aria-label="当前位置"><a href="/#articles">文章</a><span>/</span><a href="/?category=cloud-gaming#articles">云游戏</a><span>/</span><span>技术实现</span></nav>
-  <header class="article-heading"><p class="article-category">云游戏</p><h1>Android 云游戏免安装启动机制</h1></header>
-  <details class="mobile-toc"><summary>本篇目录 <span>4 节</span></summary><nav aria-label="本篇目录"><ol><li><a href="#%E5%85%8D%E5%AE%89%E8%A3%85%E5%90%AF%E5%8A%A8%E7%9A%84%E7%9B%AE%E6%A0%87%E4%B8%8E%E5%88%86%E5%B1%82">免安装启动的目标与分层</a></li><li><a href="#%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F%E5%A6%82%E4%BD%95%E6%8F%90%E4%BE%9B%E6%B8%B8%E6%88%8F%E8%A7%86%E5%9B%BE">文件系统如何提供游戏视图</a></li><li><a href="#%E5%8C%85%E7%AE%A1%E7%90%86%E7%8A%B6%E6%80%81%E4%B8%8E%E5%90%AF%E5%8A%A8%E6%B5%81%E7%A8%8B%E7%9A%84%E9%85%8D%E5%90%88">包管理状态与启动流程的配合</a></li><li><a href="#%E5%AE%9E%E9%99%85%E9%93%BE%E8%B7%AF%E9%AA%8C%E8%AF%81%E4%B8%8E%E7%BB%93%E8%AE%BA">实际链路验证与结论</a></li></ol></nav></details><article class="prose" id="content"><p>云游戏里的“免安装”通常不是绕过 Android 的包管理和进程模型，而是把游戏文件集中存储，在游戏启动前动态映射到云端 Android 实例，并复用或快速补齐 PMS 所需的包状态。用户不需要在本地下载安装，云端实例也不需要长期保存所有游戏。</p>
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light"><meta name="theme-color" content="#f7f6f2"><title>Android 云游戏免安装启动机制</title><meta name="description" content="技术学习与工程实践。"><link rel="icon" href="/favicon.svg?v=7ea8198bf5c60782"><link rel="stylesheet" href="/reader.css?v=7ea8198bf5c60782"><script src="/reader.js?v=7ea8198bf5c60782" defer></script></head><body><div class="reading-progress" aria-hidden="true"></div><a class="skip" href="#main">跳到正文</a><header class="reader-nav"><nav aria-label="站点导航"><a href="/">← 首页</a><a href="/#articles">全部文章 ↗</a></nav></header><div class="reading-layout"><main id="main"><nav class="breadcrumbs" aria-label="当前位置"><a href="/#articles">文章</a><span>/</span><a href="/?category=cloud-gaming#articles">云游戏</a><span>/</span><span>技术实现</span></nav>
+  <header class="article-heading"><h1>Android 云游戏免安装启动机制</h1></header>
+  <details class="mobile-toc"><summary>本篇目录 <span>4 节</span></summary><nav aria-label="本篇目录"><ol><li><a href="#%E5%85%8D%E5%AE%89%E8%A3%85%E5%90%AF%E5%8A%A8%E7%9A%84%E7%9B%AE%E6%A0%87%E4%B8%8E%E5%88%86%E5%B1%82">免安装启动的目标与分层</a></li><li class="toc-child"><a href="#%E4%BC%A0%E7%BB%9F%E5%AE%89%E8%A3%85%E5%92%8C%E4%BA%91%E6%B8%B8%E6%88%8F%E5%90%AF%E5%8A%A8%E7%9A%84%E5%8C%BA%E5%88%AB">传统安装和云游戏启动的区别</a></li><li class="toc-child"><a href="#%E6%95%B4%E4%BD%93%E5%88%86%E5%B1%82">整体分层</a></li><li><a href="#%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F%E5%A6%82%E4%BD%95%E6%8F%90%E4%BE%9B%E6%B8%B8%E6%88%8F%E8%A7%86%E5%9B%BE">文件系统如何提供游戏视图</a></li><li class="toc-child"><a href="#vfs%E4%B8%BA%E4%BB%80%E4%B9%88%E6%B8%B8%E6%88%8F%E4%B8%8D%E9%9C%80%E8%A6%81%E9%80%82%E9%85%8D%E5%AD%98%E5%82%A8%E6%96%B9%E6%A1%88">VFS：为什么游戏不需要适配存储方案</a></li><li class="toc-child"><a href="#nfs%E6%8A%8A%E8%BF%9C%E7%AB%AF%E7%9B%AE%E5%BD%95%E6%98%A0%E5%B0%84%E5%88%B0%E6%9C%AC%E5%9C%B0">NFS：把远端目录映射到本地</a></li><li class="toc-child"><a href="#fuse%E7%94%B1%E7%94%A8%E6%88%B7%E6%80%81%E7%A8%8B%E5%BA%8F%E6%8F%90%E4%BE%9B%E6%B8%B8%E6%88%8F%E6%96%87%E4%BB%B6">FUSE：由用户态程序提供游戏文件</a></li><li class="toc-child"><a href="#overlayfs%E5%85%B1%E4%BA%AB%E6%B8%B8%E6%88%8F%E5%B1%82%E5%92%8C%E5%AE%9E%E4%BE%8B%E5%86%99%E5%85%A5%E5%B1%82">OverlayFS：共享游戏层和实例写入层</a></li><li><a href="#%E5%8C%85%E7%AE%A1%E7%90%86%E7%8A%B6%E6%80%81%E4%B8%8E%E5%90%AF%E5%8A%A8%E6%B5%81%E7%A8%8B%E7%9A%84%E9%85%8D%E5%90%88">包管理状态与启动流程的配合</a></li><li class="toc-child"><a href="#pms-%E5%9C%A8%E5%8A%A8%E6%80%81%E8%A6%86%E7%9B%96%E4%B8%AD%E7%9A%84%E8%BE%B9%E7%95%8C">PMS 在动态覆盖中的边界</a></li><li class="toc-child"><a href="#%E5%90%AF%E5%8A%A8%E8%84%9A%E6%9C%AC%E5%8F%AF%E8%83%BD%E6%89%A7%E8%A1%8C%E7%9A%84%E6%B5%81%E7%A8%8B">启动脚本可能执行的流程</a></li><li><a href="#%E5%AE%9E%E9%99%85%E9%93%BE%E8%B7%AF%E9%AA%8C%E8%AF%81%E4%B8%8E%E7%BB%93%E8%AE%BA">实际链路验证与结论</a></li><li class="toc-child"><a href="#%E6%80%8E%E4%B9%88%E9%AA%8C%E8%AF%81%E5%AE%9E%E9%99%85%E5%B9%B3%E5%8F%B0%E8%B5%B0%E7%9A%84%E8%B7%AF%E7%BA%BF">怎么验证实际平台走的路线</a></li><li class="toc-child"><a href="#%E5%85%B3%E9%94%AE%E7%BB%93%E8%AE%BA">关键结论</a></li></ol></nav></details><article class="prose" id="content"><p>云游戏里的“免安装”通常不是绕过 Android 的包管理和进程模型，而是把游戏文件集中存储，在游戏启动前动态映射到云端 Android 实例，并复用或快速补齐 PMS 所需的包状态。用户不需要在本地下载安装，云端实例也不需要长期保存所有游戏。</p>
 <p>这套能力可以先概括为：</p>
-<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>中心游戏存储
+<div class="code-block" data-language="text"><div class="code-label"><span>示意</span></div><pre tabindex="0"><code>中心游戏存储
   -&gt; NFS 或 FUSE 将游戏文件暴露为本地目录
   -&gt; OverlayFS 为当前实例生成合并视图
   -&gt; 映射到 PMS 记录的 /data/app 路径
@@ -13,7 +13,7 @@
 <h2 id="免安装启动的目标与分层">免安装启动的目标与分层</h2>
 <h3 id="传统安装和云游戏启动的区别">传统安装和云游戏启动的区别</h3>
 <p>传统安装一般包含：</p>
-<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>下载完整 APK
+<div class="code-block" data-language="text"><div class="code-label"><span>示意</span></div><pre tabindex="0"><code>下载完整 APK
   -&gt; PackageInstaller 创建安装会话
   -&gt; 复制 APK 到 /data/app
   -&gt; PMS 解析 Manifest、校验签名和版本
@@ -21,7 +21,7 @@
   -&gt; 准备应用数据和 dex/oat
   -&gt; 启动应用</code></pre></div>
 <p>云游戏要避免的是每个实例都重复下载和复制整个游戏：</p>
-<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>系统已经运行
+<div class="code-block" data-language="text"><div class="code-label"><span>示意</span></div><pre tabindex="0"><code>系统已经运行
   -&gt; 启动脚本选择游戏版本
   -&gt; 动态挂载游戏目录
   -&gt; 映射到 /data/app 的固定 codePath
@@ -30,7 +30,7 @@
 <p>因此，“免安装”更准确的含义是：</p>
 <blockquote><p>游戏安装文件集中保存，实例启动时通过文件系统挂载快速获得可访问的游戏目录，并复用或快速建立 Android 包状态，从而省略重复的完整下载、复制和编译过程。</p></blockquote>
 <h3 id="整体分层">整体分层</h3>
-<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>PMS / ART / linker / 游戏进程
+<div class="code-block" data-language="text"><div class="code-label"><span>示意</span></div><pre tabindex="0"><code>PMS / ART / linker / 游戏进程
               ↓
      open / read / mmap / stat
               ↓
@@ -48,21 +48,21 @@
 <h2 id="文件系统如何提供游戏视图">文件系统如何提供游戏视图</h2>
 <h3 id="vfs为什么游戏不需要适配存储方案">VFS：为什么游戏不需要适配存储方案</h3>
 <p>VFS 全称是 Virtual File System，是 Linux 内核提供的统一文件系统抽象。游戏、PMS 和 ART 只调用普通文件接口：</p>
-<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>open()
+<div class="code-block" data-language="text"><div class="code-label"><span>示意</span></div><pre tabindex="0"><code>open()
 read()
 write()
 mmap()
 stat()</code></pre></div>
 <p>VFS 根据挂载表把请求交给 ext4、NFS、FUSE 或 OverlayFS。游戏访问：</p>
-<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>/data/app/&lt;game-dir&gt;/base.apk</code></pre></div>
+<div class="code-block" data-language="text"><div class="code-label"><span>示意</span></div><pre tabindex="0"><code>/data/app/&lt;game-dir&gt;/base.apk</code></pre></div>
 <p>底层可能经过：</p>
-<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>游戏 / PMS / ART
+<div class="code-block" data-language="text"><div class="code-label"><span>示意</span></div><pre tabindex="0"><code>游戏 / PMS / ART
   -&gt; VFS
   -&gt; OverlayFS
   -&gt; NFS
   -&gt; 网络存储</code></pre></div>
 <p>或者：</p>
-<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>游戏 / PMS / ART
+<div class="code-block" data-language="text"><div class="code-label"><span>示意</span></div><pre tabindex="0"><code>游戏 / PMS / ART
   -&gt; VFS
   -&gt; OverlayFS
   -&gt; FUSE
@@ -71,7 +71,7 @@ stat()</code></pre></div>
 <p>只要挂载到游戏原本使用的路径，并完整支持 <code>read</code>、<code>mmap</code>、随机读取等语义，游戏侧通常不需要修改代码。</p>
 <h3 id="nfs把远端目录映射到本地">NFS：把远端目录映射到本地</h3>
 <p>NFS 是标准网络文件系统协议。服务端集中保存游戏，例如：</p>
-<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>NFS Server：10.0.0.10
+<div class="code-block" data-language="text"><div class="code-label"><span>示意</span></div><pre tabindex="0"><code>NFS Server：10.0.0.10
 
 /srv/games/
   ├─ game-a/
@@ -81,15 +81,15 @@ stat()</code></pre></div>
   │   └─ oat/
   └─ game-b/</code></pre></div>
 <p>宿主机或有挂载权限的容器管理服务执行：</p>
-<div class="code-block"><div class="code-label">bash</div><pre tabindex="0"><code>mount -t nfs -o ro,vers=4.1 \
+<div class="code-block" data-language="bash"><div class="code-label"><span>bash</span></div><pre tabindex="0"><code>mount -t nfs -o ro,vers=4.1 \
   10.0.0.10:/srv/games/game-a \
   /mnt/current-game</code></pre></div>
 <p>挂载完成后：</p>
-<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>/mnt/current-game/base.apk</code></pre></div>
+<div class="code-block" data-language="text"><div class="code-label"><span>示意</span></div><pre tabindex="0"><code>/mnt/current-game/base.apk</code></pre></div>
 <p>实际对应 NFS 服务器上的：</p>
-<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>10.0.0.10:/srv/games/game-a/base.apk</code></pre></div>
+<div class="code-block" data-language="text"><div class="code-label"><span>示意</span></div><pre tabindex="0"><code>10.0.0.10:/srv/games/game-a/base.apk</code></pre></div>
 <p><code>mount</code> 不会默认把完整游戏复制到容器。第一次读取且缓存未命中时，才发生远端 I/O：</p>
-<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>open / read / mmap
+<div class="code-block" data-language="text"><div class="code-label"><span>示意</span></div><pre tabindex="0"><code>open / read / mmap
   -&gt; VFS
   -&gt; 内核 NFS 客户端
   -&gt; NFS RPC
@@ -99,11 +99,11 @@ stat()</code></pre></div>
 <h3 id="fuse由用户态程序提供游戏文件">FUSE：由用户态程序提供游戏文件</h3>
 <p>FUSE 全称是 Filesystem in Userspace。它不是一种固定的远端存储协议，而是让用户态程序实现文件系统的机制。</p>
 <p>使用上同样先得到一个挂载目录：</p>
-<div class="code-block"><div class="code-label">bash</div><pre tabindex="0"><code>game-fuse \
+<div class="code-block" data-language="bash"><div class="code-label"><span>bash</span></div><pre tabindex="0"><code>game-fuse \
   --game-id game-a \
   --mount-point /mnt/current-game</code></pre></div>
 <p>游戏读取文件时：</p>
-<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>游戏 / PMS / ART
+<div class="code-block" data-language="text"><div class="code-label"><span>示意</span></div><pre tabindex="0"><code>游戏 / PMS / ART
   -&gt; VFS
   -&gt; FUSE 内核模块
   -&gt; game-fuse 用户态进程
@@ -116,31 +116,31 @@ stat()</code></pre></div>
 <p>NFS 和 FUSE 都是访问驱动：PMS、ART、linker 或游戏第一次访问某段数据且缓存未命中时，才触发实际远端读取。但内核 read-ahead、FUSE 主动预取或平台预热可能提前读取后续数据。</p>
 <h3 id="overlayfs共享游戏层和实例写入层">OverlayFS：共享游戏层和实例写入层</h3>
 <p>OverlayFS 将多个目录合并成一个视图：</p>
-<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>lowerdir：NFS/FUSE 提供的共享只读游戏层
+<div class="code-block" data-language="text"><div class="code-label"><span>示意</span></div><pre tabindex="0"><code>lowerdir：NFS/FUSE 提供的共享只读游戏层
 upperdir：当前实例的可写修改层
 workdir：OverlayFS 内部工作目录
 merged：最终对 Android 暴露的目录</code></pre></div>
 <p>示例：</p>
-<div class="code-block"><div class="code-label">bash</div><pre tabindex="0"><code>mount -t overlay overlay \
+<div class="code-block" data-language="bash"><div class="code-label"><span>bash</span></div><pre tabindex="0"><code>mount -t overlay overlay \
   -o lowerdir=/mnt/current-game,upperdir=/local/game-a/upper,workdir=/local/game-a/work \
   /local/game-a/merged</code></pre></div>
 <p>再将合并目录映射到 PMS 记录的固定路径：</p>
-<div class="code-block"><div class="code-label">bash</div><pre tabindex="0"><code>mount --bind \
+<div class="code-block" data-language="bash"><div class="code-label"><span>bash</span></div><pre tabindex="0"><code>mount --bind \
   /local/game-a/merged \
   /data/app/&lt;game-dir&gt;</code></pre></div>
 <p>OverlayFS 的查找规则是：</p>
-<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>访问文件
+<div class="code-block" data-language="text"><div class="code-label"><span>示意</span></div><pre tabindex="0"><code>访问文件
   -&gt; 先查 upperdir
   -&gt; upperdir 没有，再查 lowerdir</code></pre></div>
 <p>读取 lowerdir 文件时不会自动复制完整文件；第一次修改 lowerdir 文件时才执行 Copy-up，将文件复制到 upperdir 后再修改。删除 lowerdir 文件时，upperdir 使用 whiteout 标记在 merged 视图中隐藏它。</p>
 <p>对于 <code>/data/app</code> 中通常保持只读的 APK、split 和 so，upperdir 可以是一次性的。游戏结束后先卸载 merged，再删除 upperdir 和 workdir：</p>
-<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>停止游戏
+<div class="code-block" data-language="text"><div class="code-label"><span>示意</span></div><pre tabindex="0"><code>停止游戏
   -&gt; 卸载 /data/app 的 bind mount
   -&gt; 卸载 OverlayFS merged
   -&gt; 删除 upperdir / workdir
   -&gt; 卸载 NFS 或停止 FUSE 服务</code></pre></div>
 <p>玩家存档不能默认跟这个临时层一起删除。需要持久化的数据应独立保存：</p>
-<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>游戏程序：共享只读层 + 临时 upperdir
+<div class="code-block" data-language="text"><div class="code-label"><span>示意</span></div><pre tabindex="0"><code>游戏程序：共享只读层 + 临时 upperdir
 玩家数据：独立持久卷或云端同步
 热点数据：Page Cache 或容量受控的节点 SSD 缓存</code></pre></div>
 <p>OverlayFS 能否直接使用某个 NFS/FUSE 挂载作为 lowerdir，取决于内核版本、文件系统能力和厂商实现，实际平台可能修改内核或由自定义文件系统直接实现合并和 Copy-on-Write。</p>
@@ -149,13 +149,13 @@ merged：最终对 Android 暴露的目录</code></pre></div>
 <p>已知场景是 Android 系统已经运行，游戏启动前脚本动态覆盖 App 目录。此时必须区分两种情况。</p>
 <h4 id="1-pms-已经认识这个包">1. PMS 已经认识这个包</h4>
 <p>PMS 内存中已经有：</p>
-<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>packageName
+<div class="code-block" data-language="text"><div class="code-label"><span>示意</span></div><pre tabindex="0"><code>packageName
 uid / appId
 ActivityInfo 等组件索引
 签名和权限状态
 sourceDir=/data/app/&lt;game-dir&gt;/base.apk</code></pre></div>
 <p>脚本把真实游戏文件挂载到同一个 <code>codePath</code>：</p>
-<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>挂载前：/data/app/&lt;game-dir&gt;/base.apk
+<div class="code-block" data-language="text"><div class="code-label"><span>示意</span></div><pre tabindex="0"><code>挂载前：/data/app/&lt;game-dir&gt;/base.apk
 挂载后：/data/app/&lt;game-dir&gt;/base.apk</code></pre></div>
 <p>路径没有变化，变化的只是该路径背后的文件系统。此时脚本可能不需要触发 PMS 扫描，完成挂载后直接启动游戏。</p>
 <p>覆盖内容仍应保持包名、签名、组件、split 结构和 native library 路径兼容。如果 Manifest 已变化但 PMS 没有重新扫描，就会出现 PMS 内存状态与磁盘 APK 不一致的问题。</p>
@@ -168,7 +168,7 @@ sourceDir=/data/app/&lt;game-dir&gt;/base.apk</code></pre></div>
 <p>目前没有启动脚本和对应 Android 版本，不能确定实际平台属于“预注册后只覆盖文件”还是“挂载后调用私有热扫描”。</p>
 <h3 id="启动脚本可能执行的流程">启动脚本可能执行的流程</h3>
 <p>下面是概念流程，不代表具体平台命令：</p>
-<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>1. 获取 packageName、游戏版本和远端存储位置
+<div class="code-block" data-language="text"><div class="code-label"><span>示意</span></div><pre tabindex="0"><code>1. 获取 packageName、游戏版本和远端存储位置
 2. 查询 PMS 中是否已有目标包
 3. 停止旧游戏进程，释放 APK、so 和资源文件句柄
 4. 挂载 NFS，或启动 FUSE 服务
@@ -183,13 +183,13 @@ sourceDir=/data/app/&lt;game-dir&gt;/base.apk</code></pre></div>
 <h2 id="实际链路验证与结论">实际链路验证与结论</h2>
 <h3 id="怎么验证实际平台走的路线">怎么验证实际平台走的路线</h3>
 <p>在执行启动脚本前后分别检查：</p>
-<div class="code-block"><div class="code-label">bash</div><pre tabindex="0"><code>pm path &lt;packageName&gt;
+<div class="code-block" data-language="bash"><div class="code-label"><span>bash</span></div><pre tabindex="0"><code>pm path &lt;packageName&gt;
 dumpsys package &lt;packageName&gt;
 pm list packages -u | grep &lt;packageName&gt;
 mount
 cat /proc/mounts</code></pre></div>
 <p>判断方式：</p>
-<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>脚本前 pm path 已成功
+<div class="code-block" data-language="text"><div class="code-label"><span>示意</span></div><pre tabindex="0"><code>脚本前 pm path 已成功
   -&gt; PMS 已经注册，脚本大概率只覆盖实体文件
 
 脚本前不存在，执行后出现
@@ -198,7 +198,7 @@ cat /proc/mounts</code></pre></div>
 脚本前 list packages -u 可见，但普通列表不可见
   -&gt; 包状态仍在，脚本可能为当前用户执行 install-existing/enable</code></pre></div>
 <p>脚本中重点查找：</p>
-<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>mount -t nfs
+<div class="code-block" data-language="text"><div class="code-label"><span>示意</span></div><pre tabindex="0"><code>mount -t nfs
 mount -t overlay
 mount --bind
 fusermount / 自定义 FUSE 进程
@@ -210,4 +210,4 @@ am force-stop / am start</code></pre></div>
 <p>还应观察系统日志中的 <code>PackageManager</code>、<code>PackageInstallerSession</code>、<code>installd</code> 和 <code>ActivityTaskManager</code>，确认是否发生了包扫描、安装提交或仅有 Activity 启动。</p>
 <h3 id="关键结论">关键结论</h3>
 <ol start="1"><li><p>NFS 是把远端游戏目录映射为本地目录；读取时由内核 NFS 客户端访问服务器。</p></li><li><p>FUSE 是由用户态服务提供虚拟目录，可以自行实现分块拉取、预取、去重、解密和缓存。</p></li><li><p>NFS 和 FUSE 默认都按访问触发远端 I/O，Page Cache、read-ahead 和平台预热会改变实际读取时机。</p></li><li><p>VFS 屏蔽了底层文件系统差异，所以游戏侧通常不需要改造。</p></li><li><p>OverlayFS 将远端只读游戏层和实例可写层合并；临时 upperdir 可以在游戏退出后删除。</p></li><li><p><code>/data/app</code> 程序层可以临时挂载，玩家存档和账号数据应独立持久化。</p></li><li><p>PMS 已经注册包时，保持相同 <code>codePath</code> 可以只动态覆盖文件；PMS 未注册时，脚本必须额外触发安装、启用或平台定制的热扫描。</p></li><li><p>最终实现应以实际启动脚本、Android 版本、PMS 改动和挂载表为准。</p></li></ol></article><footer class="article-footer"><a href="/#articles">← 返回文章列表</a><a href="#main">回到顶部 ↑</a></footer></main>
-  <aside class="desktop-toc"><p>本篇目录</p><nav aria-label="本篇目录"><ol><li><a href="#%E5%85%8D%E5%AE%89%E8%A3%85%E5%90%AF%E5%8A%A8%E7%9A%84%E7%9B%AE%E6%A0%87%E4%B8%8E%E5%88%86%E5%B1%82">免安装启动的目标与分层</a></li><li><a href="#%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F%E5%A6%82%E4%BD%95%E6%8F%90%E4%BE%9B%E6%B8%B8%E6%88%8F%E8%A7%86%E5%9B%BE">文件系统如何提供游戏视图</a></li><li><a href="#%E5%8C%85%E7%AE%A1%E7%90%86%E7%8A%B6%E6%80%81%E4%B8%8E%E5%90%AF%E5%8A%A8%E6%B5%81%E7%A8%8B%E7%9A%84%E9%85%8D%E5%90%88">包管理状态与启动流程的配合</a></li><li><a href="#%E5%AE%9E%E9%99%85%E9%93%BE%E8%B7%AF%E9%AA%8C%E8%AF%81%E4%B8%8E%E7%BB%93%E8%AE%BA">实际链路验证与结论</a></li></ol></nav><a class="toc-return" href="/#articles">← 全部文章</a></aside></div></body></html>
+  <aside class="desktop-toc"><p>本篇目录</p><nav aria-label="本篇目录"><ol><li><a href="#%E5%85%8D%E5%AE%89%E8%A3%85%E5%90%AF%E5%8A%A8%E7%9A%84%E7%9B%AE%E6%A0%87%E4%B8%8E%E5%88%86%E5%B1%82">免安装启动的目标与分层</a></li><li class="toc-child"><a href="#%E4%BC%A0%E7%BB%9F%E5%AE%89%E8%A3%85%E5%92%8C%E4%BA%91%E6%B8%B8%E6%88%8F%E5%90%AF%E5%8A%A8%E7%9A%84%E5%8C%BA%E5%88%AB">传统安装和云游戏启动的区别</a></li><li class="toc-child"><a href="#%E6%95%B4%E4%BD%93%E5%88%86%E5%B1%82">整体分层</a></li><li><a href="#%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F%E5%A6%82%E4%BD%95%E6%8F%90%E4%BE%9B%E6%B8%B8%E6%88%8F%E8%A7%86%E5%9B%BE">文件系统如何提供游戏视图</a></li><li class="toc-child"><a href="#vfs%E4%B8%BA%E4%BB%80%E4%B9%88%E6%B8%B8%E6%88%8F%E4%B8%8D%E9%9C%80%E8%A6%81%E9%80%82%E9%85%8D%E5%AD%98%E5%82%A8%E6%96%B9%E6%A1%88">VFS：为什么游戏不需要适配存储方案</a></li><li class="toc-child"><a href="#nfs%E6%8A%8A%E8%BF%9C%E7%AB%AF%E7%9B%AE%E5%BD%95%E6%98%A0%E5%B0%84%E5%88%B0%E6%9C%AC%E5%9C%B0">NFS：把远端目录映射到本地</a></li><li class="toc-child"><a href="#fuse%E7%94%B1%E7%94%A8%E6%88%B7%E6%80%81%E7%A8%8B%E5%BA%8F%E6%8F%90%E4%BE%9B%E6%B8%B8%E6%88%8F%E6%96%87%E4%BB%B6">FUSE：由用户态程序提供游戏文件</a></li><li class="toc-child"><a href="#overlayfs%E5%85%B1%E4%BA%AB%E6%B8%B8%E6%88%8F%E5%B1%82%E5%92%8C%E5%AE%9E%E4%BE%8B%E5%86%99%E5%85%A5%E5%B1%82">OverlayFS：共享游戏层和实例写入层</a></li><li><a href="#%E5%8C%85%E7%AE%A1%E7%90%86%E7%8A%B6%E6%80%81%E4%B8%8E%E5%90%AF%E5%8A%A8%E6%B5%81%E7%A8%8B%E7%9A%84%E9%85%8D%E5%90%88">包管理状态与启动流程的配合</a></li><li class="toc-child"><a href="#pms-%E5%9C%A8%E5%8A%A8%E6%80%81%E8%A6%86%E7%9B%96%E4%B8%AD%E7%9A%84%E8%BE%B9%E7%95%8C">PMS 在动态覆盖中的边界</a></li><li class="toc-child"><a href="#%E5%90%AF%E5%8A%A8%E8%84%9A%E6%9C%AC%E5%8F%AF%E8%83%BD%E6%89%A7%E8%A1%8C%E7%9A%84%E6%B5%81%E7%A8%8B">启动脚本可能执行的流程</a></li><li><a href="#%E5%AE%9E%E9%99%85%E9%93%BE%E8%B7%AF%E9%AA%8C%E8%AF%81%E4%B8%8E%E7%BB%93%E8%AE%BA">实际链路验证与结论</a></li><li class="toc-child"><a href="#%E6%80%8E%E4%B9%88%E9%AA%8C%E8%AF%81%E5%AE%9E%E9%99%85%E5%B9%B3%E5%8F%B0%E8%B5%B0%E7%9A%84%E8%B7%AF%E7%BA%BF">怎么验证实际平台走的路线</a></li><li class="toc-child"><a href="#%E5%85%B3%E9%94%AE%E7%BB%93%E8%AE%BA">关键结论</a></li></ol></nav><a class="toc-return" href="/#articles">← 全部文章</a></aside></div></body></html>

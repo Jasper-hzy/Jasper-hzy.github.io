@@ -1,9 +1,9 @@
-<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light"><meta name="theme-color" content="#f7f6f2"><title>编译与链接</title><meta name="description" content="技术学习与工程实践。"><link rel="icon" href="/favicon.svg?v=14ae5a412d40f95d"><link rel="stylesheet" href="/reader.css?v=14ae5a412d40f95d"><script src="/reader.js?v=14ae5a412d40f95d" defer></script></head><body><div class="reading-progress" aria-hidden="true"></div><a class="skip" href="#main">跳到正文</a><header class="reader-nav"><nav aria-label="站点导航"><a href="/">← 首页</a><a href="/#articles">全部文章 ↗</a></nav></header><div class="reading-layout"><main id="main"><nav class="breadcrumbs" aria-label="当前位置"><a href="/#articles">文章</a><span>/</span><a href="/?category=fundamentals#articles">编程与系统基础</a><span>/</span><span>C++</span></nav>
-  <header class="article-heading"><p class="article-category">编程与系统基础</p><h1>编译与链接</h1><p class="article-description">沿着源文件、目标文件到运行进程，厘清 ODR、链接错误与 C ABI 的边界。</p></header>
-  <details class="mobile-toc"><summary>本篇目录 <span>4 节</span></summary><nav aria-label="本篇目录"><ol><li><a href="#%E6%9E%84%E5%BB%BA%E9%93%BE%E8%B7%AF%E7%BC%96%E8%AF%91%E9%93%BE%E6%8E%A5%E4%B8%8E%E5%8A%A0%E8%BD%BD">构建链路：编译、链接与加载</a></li><li><a href="#%E5%AE%9A%E4%B9%89%E5%A6%82%E4%BD%95%E8%B7%A8%E7%BF%BB%E8%AF%91%E5%8D%95%E5%85%83%E7%BB%84%E7%BB%87">定义如何跨翻译单元组织</a></li><li><a href="#%E6%A0%B9%E6%8D%AE%E9%94%99%E8%AF%AF%E9%98%B6%E6%AE%B5%E6%A3%80%E6%9F%A5%E7%AC%A6%E5%8F%B7%E4%B8%8E%E8%AF%AD%E8%A8%80%E9%93%BE%E6%8E%A5">根据错误阶段检查符号与语言链接</a></li><li><a href="#%E8%A6%81%E7%82%B9%E5%9B%9E%E9%A1%BE">要点回顾</a></li></ol></nav></details><article class="prose" id="content"><p>处理 C++ 构建错误时，先确定问题发生在编译还是链接阶段，再检查声明、定义和最终符号是否一致。以下围绕重复定义、缺失定义和 C/C++ 入口名称展开。</p>
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light"><meta name="theme-color" content="#f7f6f2"><title>编译与链接</title><meta name="description" content="技术学习与工程实践。"><link rel="icon" href="/favicon.svg?v=7ea8198bf5c60782"><link rel="stylesheet" href="/reader.css?v=7ea8198bf5c60782"><script src="/reader.js?v=7ea8198bf5c60782" defer></script></head><body><div class="reading-progress" aria-hidden="true"></div><a class="skip" href="#main">跳到正文</a><header class="reader-nav"><nav aria-label="站点导航"><a href="/">← 首页</a><a href="/#articles">全部文章 ↗</a></nav></header><div class="reading-layout"><main id="main"><nav class="breadcrumbs" aria-label="当前位置"><a href="/#articles">文章</a><span>/</span><a href="/?category=fundamentals#articles">编程与系统基础</a><span>/</span><span>C++</span></nav>
+  <header class="article-heading"><h1>编译与链接</h1><p class="article-description">沿着源文件、目标文件到运行进程，厘清 ODR、链接错误与 C ABI 的边界。</p></header>
+  <details class="mobile-toc"><summary>本篇目录 <span>4 节</span></summary><nav aria-label="本篇目录"><ol><li><a href="#%E6%9E%84%E5%BB%BA%E9%93%BE%E8%B7%AF%E7%BC%96%E8%AF%91%E9%93%BE%E6%8E%A5%E4%B8%8E%E5%8A%A0%E8%BD%BD">构建链路：编译、链接与加载</a></li><li><a href="#%E5%AE%9A%E4%B9%89%E5%A6%82%E4%BD%95%E8%B7%A8%E7%BF%BB%E8%AF%91%E5%8D%95%E5%85%83%E7%BB%84%E7%BB%87">定义如何跨翻译单元组织</a></li><li><a href="#%E6%A0%B9%E6%8D%AE%E9%94%99%E8%AF%AF%E9%98%B6%E6%AE%B5%E6%A3%80%E6%9F%A5%E7%AC%A6%E5%8F%B7%E4%B8%8E%E8%AF%AD%E8%A8%80%E9%93%BE%E6%8E%A5">根据错误阶段检查符号与语言链接</a></li><li class="toc-child"><a href="#%E7%BC%96%E8%AF%91%E9%94%99%E8%AF%AF%E4%B8%8E%E9%93%BE%E6%8E%A5%E9%94%99%E8%AF%AF">编译错误与链接错误</a></li><li class="toc-child"><a href="#%E5%90%8D%E7%A7%B0%E4%BF%AE%E9%A5%B0%E4%B8%8E-extern-c">名称修饰与 extern &quot;C&quot;</a></li><li><a href="#%E8%A6%81%E7%82%B9%E5%9B%9E%E9%A1%BE">要点回顾</a></li></ol></nav></details><article class="prose" id="content"><p>处理 C++ 构建错误时，先确定问题发生在编译还是链接阶段，再检查声明、定义和最终符号是否一致。以下围绕重复定义、缺失定义和 C/C++ 入口名称展开。</p>
 <h2 id="构建链路编译链接与加载">构建链路：编译、链接与加载</h2>
 <p>常规 C++ 构建流程：</p>
-<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>a.cpp、b.cpp
+<div class="code-block" data-language="text"><div class="code-label"><span>示意</span></div><pre tabindex="0"><code>a.cpp、b.cpp
       │ 编译
       ▼
   a.o、b.o
@@ -16,37 +16,37 @@
 <p>编译器分别处理每个翻译单元，链接器再解析符号并组合目标文件与库。运行时加载器将可执行文件和需要的动态库映射进进程。</p>
 <h2 id="定义如何跨翻译单元组织">定义如何跨翻译单元组织</h2>
 <p>头文件中的普通函数定义会被每个包含者展开：</p>
-<div class="code-block"><div class="code-label">cpp</div><pre tabindex="0"><code>// math.h
-int add(int a, int b) {
-    return a + b;
+<div class="code-block" data-language="cpp"><div class="code-label"><span>C++</span></div><pre tabindex="0"><code><span class="syntax-comment">// math.h</span>
+<span class="syntax-keyword">int</span> add(<span class="syntax-keyword">int</span> a, <span class="syntax-keyword">int</span> b) {
+    <span class="syntax-keyword">return</span> a + b;
 }</code></pre></div>
 <p>若多个 <code>.cpp</code> 包含它，链接时可能出现重复符号。这违反 One Definition Rule。</p>
 <p>常规方案是头文件只放声明，实现放在一个 <code>.cpp</code>：</p>
-<div class="code-block"><div class="code-label">cpp</div><pre tabindex="0"><code>// math.h
-int add(int a, int b);</code></pre></div>
-<div class="code-block"><div class="code-label">cpp</div><pre tabindex="0"><code>// math.cpp
-int add(int a, int b) {
-    return a + b;
+<div class="code-block" data-language="cpp"><div class="code-label"><span>C++</span></div><pre tabindex="0"><code><span class="syntax-comment">// math.h</span>
+<span class="syntax-keyword">int</span> add(<span class="syntax-keyword">int</span> a, <span class="syntax-keyword">int</span> b);</code></pre></div>
+<div class="code-block" data-language="cpp"><div class="code-label"><span>C++</span></div><pre tabindex="0"><code><span class="syntax-comment">// math.cpp</span>
+<span class="syntax-keyword">int</span> add(<span class="syntax-keyword">int</span> a, <span class="syntax-keyword">int</span> b) {
+    <span class="syntax-keyword">return</span> a + b;
 }</code></pre></div>
 <p>或者将需要在头文件定义的函数声明为 <code>inline</code>：</p>
-<div class="code-block"><div class="code-label">cpp</div><pre tabindex="0"><code>inline int add(int a, int b) {
-    return a + b;
+<div class="code-block" data-language="cpp"><div class="code-label"><span>C++</span></div><pre tabindex="0"><code>inline <span class="syntax-keyword">int</span> add(<span class="syntax-keyword">int</span> a, <span class="syntax-keyword">int</span> b) {
+    <span class="syntax-keyword">return</span> a + b;
 }</code></pre></div>
 <p><code>inline</code> 允许多个翻译单元中存在相同定义，并由工具链实现统一实体语义。它不保证编译器一定把函数调用展开。</p>
 <h2 id="根据错误阶段检查符号与语言链接">根据错误阶段检查符号与语言链接</h2>
 <h3 id="编译错误与链接错误">编译错误与链接错误</h3>
-<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>use of undeclared identifier &#39;add&#39;</code></pre></div>
+<div class="code-block" data-language="text"><div class="code-label"><span>示意</span></div><pre tabindex="0"><code>use of undeclared identifier &#39;add&#39;</code></pre></div>
 <p>表示当前翻译单元没有看到有效声明，属于编译阶段问题。</p>
-<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>undefined reference to &#39;add&#39;</code></pre></div>
+<div class="code-block" data-language="text"><div class="code-label"><span>示意</span></div><pre tabindex="0"><code>undefined reference to &#39;add&#39;</code></pre></div>
 <p>表示编译器看到了声明，但链接器找不到匹配定义。常见原因包括：</p>
 <ul><li><p>实现文件没有加入构建。</p></li><li><p>缺少需要链接的静态库或动态库。</p></li><li><p>声明与定义签名不一致。</p></li><li><p>C 与 C++ 链接名称不一致。</p></li><li><p>符号可见性或链接顺序错误。</p></li></ul>
 <h3 id="名称修饰与-extern-c">名称修饰与 <code>extern &quot;C&quot;</code></h3>
 <p>C++ 为支持重载、命名空间和成员函数，会将名称与类型信息编码进链接符号，称为 name mangling：</p>
-<div class="code-block"><div class="code-label">cpp</div><pre tabindex="0"><code>int add(int, int);       // 类似 _Z3addii
-double add(double, double);</code></pre></div>
+<div class="code-block" data-language="cpp"><div class="code-label"><span>C++</span></div><pre tabindex="0"><code><span class="syntax-keyword">int</span> add(<span class="syntax-keyword">int</span>, <span class="syntax-keyword">int</span>);       <span class="syntax-comment">// 类似 _Z3addii</span>
+<span class="syntax-keyword">double</span> add(<span class="syntax-keyword">double</span>, <span class="syntax-keyword">double</span>);</code></pre></div>
 <p>跨 C ABI、JNI 或 <code>dlsym</code> 导出稳定入口时，经常使用：</p>
-<div class="code-block"><div class="code-label">cpp</div><pre tabindex="0"><code>extern &quot;C&quot; int add(int a, int b);</code></pre></div>
+<div class="code-block" data-language="cpp"><div class="code-label"><span>C++</span></div><pre tabindex="0"><code>extern <span class="syntax-string">&quot;C&quot;</span> <span class="syntax-keyword">int</span> add(<span class="syntax-keyword">int</span> a, <span class="syntax-keyword">int</span> b);</code></pre></div>
 <p>它要求使用 C 语言链接规则，避免 C++ 名称修饰。C 链接入口不能依赖参数类型重载同名函数。</p>
 <h2 id="要点回顾">要点回顾</h2>
 <p>头文件可见不等于实现已参与链接。排查时先确认翻译单元能看到声明，再确认目标文件或库提供匹配定义，最后检查语言链接与符号可见性。</p></article><footer class="article-footer"><a href="/#articles">← 返回文章列表</a><a href="#main">回到顶部 ↑</a></footer></main>
-  <aside class="desktop-toc"><p>本篇目录</p><nav aria-label="本篇目录"><ol><li><a href="#%E6%9E%84%E5%BB%BA%E9%93%BE%E8%B7%AF%E7%BC%96%E8%AF%91%E9%93%BE%E6%8E%A5%E4%B8%8E%E5%8A%A0%E8%BD%BD">构建链路：编译、链接与加载</a></li><li><a href="#%E5%AE%9A%E4%B9%89%E5%A6%82%E4%BD%95%E8%B7%A8%E7%BF%BB%E8%AF%91%E5%8D%95%E5%85%83%E7%BB%84%E7%BB%87">定义如何跨翻译单元组织</a></li><li><a href="#%E6%A0%B9%E6%8D%AE%E9%94%99%E8%AF%AF%E9%98%B6%E6%AE%B5%E6%A3%80%E6%9F%A5%E7%AC%A6%E5%8F%B7%E4%B8%8E%E8%AF%AD%E8%A8%80%E9%93%BE%E6%8E%A5">根据错误阶段检查符号与语言链接</a></li><li><a href="#%E8%A6%81%E7%82%B9%E5%9B%9E%E9%A1%BE">要点回顾</a></li></ol></nav><a class="toc-return" href="/#articles">← 全部文章</a></aside></div></body></html>
+  <aside class="desktop-toc"><p>本篇目录</p><nav aria-label="本篇目录"><ol><li><a href="#%E6%9E%84%E5%BB%BA%E9%93%BE%E8%B7%AF%E7%BC%96%E8%AF%91%E9%93%BE%E6%8E%A5%E4%B8%8E%E5%8A%A0%E8%BD%BD">构建链路：编译、链接与加载</a></li><li><a href="#%E5%AE%9A%E4%B9%89%E5%A6%82%E4%BD%95%E8%B7%A8%E7%BF%BB%E8%AF%91%E5%8D%95%E5%85%83%E7%BB%84%E7%BB%87">定义如何跨翻译单元组织</a></li><li><a href="#%E6%A0%B9%E6%8D%AE%E9%94%99%E8%AF%AF%E9%98%B6%E6%AE%B5%E6%A3%80%E6%9F%A5%E7%AC%A6%E5%8F%B7%E4%B8%8E%E8%AF%AD%E8%A8%80%E9%93%BE%E6%8E%A5">根据错误阶段检查符号与语言链接</a></li><li class="toc-child"><a href="#%E7%BC%96%E8%AF%91%E9%94%99%E8%AF%AF%E4%B8%8E%E9%93%BE%E6%8E%A5%E9%94%99%E8%AF%AF">编译错误与链接错误</a></li><li class="toc-child"><a href="#%E5%90%8D%E7%A7%B0%E4%BF%AE%E9%A5%B0%E4%B8%8E-extern-c">名称修饰与 extern &quot;C&quot;</a></li><li><a href="#%E8%A6%81%E7%82%B9%E5%9B%9E%E9%A1%BE">要点回顾</a></li></ol></nav><a class="toc-return" href="/#articles">← 全部文章</a></aside></div></body></html>

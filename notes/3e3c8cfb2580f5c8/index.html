@@ -1,10 +1,10 @@
-<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light"><meta name="theme-color" content="#f7f6f2"><title>Android 容器触摸输入原理</title><meta name="description" content="技术学习与工程实践。"><link rel="icon" href="/favicon.svg?v=14ae5a412d40f95d"><link rel="stylesheet" href="/reader.css?v=14ae5a412d40f95d"><script src="/reader.js?v=14ae5a412d40f95d" defer></script></head><body><div class="reading-progress" aria-hidden="true"></div><a class="skip" href="#main">跳到正文</a><header class="reader-nav"><nav aria-label="站点导航"><a href="/">← 首页</a><a href="/#articles">全部文章 ↗</a></nav></header><div class="reading-layout"><main id="main"><nav class="breadcrumbs" aria-label="当前位置"><a href="/#articles">文章</a><span>/</span><a href="/?category=cloud-gaming#articles">云游戏</a><span>/</span><span>技术实现</span></nav>
-  <header class="article-heading"><p class="article-category">云游戏</p><h1>Android 容器触摸输入原理</h1></header>
-  <details class="mobile-toc"><summary>本篇目录 <span>4 节</span></summary><nav aria-label="本篇目录"><ol><li><a href="#%E9%93%BE%E8%B7%AF%E7%9B%AE%E6%A0%87%E4%B8%8E-android-%E5%A4%9A%E6%8C%87%E6%A8%A1%E5%9E%8B">链路目标与 Android 多指模型</a></li><li><a href="#%E8%BE%93%E5%85%A5%E6%B6%88%E6%81%AF%E8%AE%BE%E8%AE%A1%E4%B8%8E%E4%BA%91%E7%AB%AF%E7%8A%B6%E6%80%81%E9%87%8D%E5%BB%BA">输入消息设计与云端状态重建</a></li><li><a href="#%E5%9D%90%E6%A0%87%E6%97%B6%E9%97%B4%E4%B8%8E%E6%84%9F%E7%9F%A5%E7%B2%BE%E5%BA%A6">坐标、时间与感知精度</a></li><li><a href="#%E7%BB%93%E8%AE%BA">结论</a></li></ol></nav></details><article class="prose" id="content"><p>云游戏触摸的本质是：客户端采集本地触摸事件，转换为与设备分辨率无关的输入数据，通过网络发往云端，再由云端重建触摸事件并注入 Android 输入系统。</p>
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light"><meta name="theme-color" content="#f7f6f2"><title>Android 容器触摸输入原理</title><meta name="description" content="技术学习与工程实践。"><link rel="icon" href="/favicon.svg?v=7ea8198bf5c60782"><link rel="stylesheet" href="/reader.css?v=7ea8198bf5c60782"><script src="/reader.js?v=7ea8198bf5c60782" defer></script></head><body><div class="reading-progress" aria-hidden="true"></div><a class="skip" href="#main">跳到正文</a><header class="reader-nav"><nav aria-label="站点导航"><a href="/">← 首页</a><a href="/#articles">全部文章 ↗</a></nav></header><div class="reading-layout"><main id="main"><nav class="breadcrumbs" aria-label="当前位置"><a href="/#articles">文章</a><span>/</span><a href="/?category=cloud-gaming#articles">云游戏</a><span>/</span><span>技术实现</span></nav>
+  <header class="article-heading"><h1>Android 容器触摸输入原理</h1></header>
+  <details class="mobile-toc"><summary>本篇目录 <span>4 节</span></summary><nav aria-label="本篇目录"><ol><li><a href="#%E9%93%BE%E8%B7%AF%E7%9B%AE%E6%A0%87%E4%B8%8E-android-%E5%A4%9A%E6%8C%87%E6%A8%A1%E5%9E%8B">链路目标与 Android 多指模型</a></li><li class="toc-child"><a href="#%E6%95%B4%E4%BD%93%E9%93%BE%E8%B7%AF">整体链路</a></li><li class="toc-child"><a href="#android-%E7%9A%84%E5%A4%9A%E6%8C%87%E6%A8%A1%E5%9E%8B">Android 的多指模型</a></li><li><a href="#%E8%BE%93%E5%85%A5%E6%B6%88%E6%81%AF%E8%AE%BE%E8%AE%A1%E4%B8%8E%E4%BA%91%E7%AB%AF%E7%8A%B6%E6%80%81%E9%87%8D%E5%BB%BA">输入消息设计与云端状态重建</a></li><li class="toc-child"><a href="#%E5%A4%9A%E6%8C%87%E4%BA%8B%E4%BB%B6%E5%A6%82%E4%BD%95%E4%BC%A0%E8%BE%93">多指事件如何传输</a></li><li class="toc-child"><a href="#%E4%BA%91%E7%AB%AF%E5%A6%82%E4%BD%95%E9%87%8D%E5%BB%BA%E4%BA%8B%E4%BB%B6">云端如何重建事件</a></li><li><a href="#%E5%9D%90%E6%A0%87%E6%97%B6%E9%97%B4%E4%B8%8E%E6%84%9F%E7%9F%A5%E7%B2%BE%E5%BA%A6">坐标、时间与感知精度</a></li><li class="toc-child"><a href="#1-%E5%9D%90%E6%A0%87%E7%B3%BB%E7%B2%BE%E5%BA%A6">1. 坐标系精度</a></li><li class="toc-child"><a href="#2-%E6%95%B0%E5%80%BC%E7%B2%BE%E5%BA%A6">2. 数值精度</a></li><li class="toc-child"><a href="#3-%E6%97%B6%E9%97%B4%E4%B8%8E%E9%87%87%E6%A0%B7%E7%B2%BE%E5%BA%A6">3. 时间与采样精度</a></li><li class="toc-child"><a href="#4-%E9%99%8D%E4%BD%8E%E6%9C%AC%E5%9C%B0%E8%A7%A6%E6%91%B8%E9%87%87%E9%9B%86%E5%BB%B6%E8%BF%9F">4. 降低本地触摸采集延迟</a></li><li class="toc-child"><a href="#5-%E6%84%9F%E7%9F%A5%E7%B2%BE%E5%BA%A6">5. 感知精度</a></li><li><a href="#%E7%BB%93%E8%AE%BA">结论</a></li></ol></nav></details><article class="prose" id="content"><p>云游戏触摸的本质是：客户端采集本地触摸事件，转换为与设备分辨率无关的输入数据，通过网络发往云端，再由云端重建触摸事件并注入 Android 输入系统。</p>
 <p><img src="/media/856df6bceca3befe.svg" alt="云游戏多指触摸链路" loading="lazy" decoding="async"></p>
 <h2 id="链路目标与-android-多指模型">链路目标与 Android 多指模型</h2>
 <h3 id="整体链路">整体链路</h3>
-<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>本地触摸采集
+<div class="code-block" data-language="text"><div class="code-label"><span>示意</span></div><pre tabindex="0"><code>本地触摸采集
   -&gt; 坐标转换与多指快照
   -&gt; 事件编码
   -&gt; 网络传输
@@ -18,7 +18,7 @@
 <p><code>MotionEvent</code> 中有两个容易混淆的概念：</p>
 <ul><li><p><code>pointerIndex</code>：手指在当前事件数组中的下标，可能随事件变化。</p></li><li><p><code>pointerId</code>：一根手指从按下到抬起期间保持稳定的身份。</p></li></ul>
 <p><code>ACTION_POINTER_DOWN</code> 和 <code>ACTION_POINTER_UP</code> 的完整 <code>action</code> 不只包含动作类型，高位还编码了本次变化的 <code>pointerIndex</code>：</p>
-<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>action = actionMasked | (actionIndex &lt;&lt; ACTION_POINTER_INDEX_SHIFT)</code></pre></div>
+<div class="code-block" data-language="text"><div class="code-label"><span>示意</span></div><pre tabindex="0"><code>action = actionMasked | (actionIndex &lt;&lt; ACTION_POINTER_INDEX_SHIFT)</code></pre></div>
 <p>以双指操作为例：</p>
 <div class="table-wrap" tabindex="0" role="region" aria-label="数据表格"><table><thead><tr><th scope="col">阶段</th><th scope="col">action</th><th scope="col">事件中的指针</th></tr></thead><tbody><tr><td>第一指按下</td><td><code>ACTION_DOWN</code></td><td><code>p0</code></td></tr><tr><td>第二指按下</td><td><code>ACTION_POINTER_DOWN + index</code></td><td><code>p0, p1</code></td></tr><tr><td>双指移动</td><td><code>ACTION_MOVE</code></td><td><code>p0, p1</code></td></tr><tr><td>第二指抬起</td><td><code>ACTION_POINTER_UP + index</code></td><td><code>p0, p1</code></td></tr><tr><td>最后一指抬起</td><td><code>ACTION_UP</code></td><td><code>p0</code></td></tr></tbody></table></div>
 <p>因此，多指传输不能只传「发生变化的手指」。在移动、新增手指和抬起手指时，应把当前事件中的所有指针当作一个完整快照，并保留指针顺序。</p>
@@ -26,7 +26,7 @@
 <h2 id="输入消息设计与云端状态重建">输入消息设计与云端状态重建</h2>
 <h3 id="多指事件如何传输">多指事件如何传输</h3>
 <p>一个触摸消息应表示一个完整的多指事件，基本信息包括：</p>
-<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>action
+<div class="code-block" data-language="text"><div class="code-label"><span>示意</span></div><pre tabindex="0"><code>action
 actionIndex
 pointerCount
 points[] = { pointerId, normalizedX, normalizedY }
@@ -42,7 +42,7 @@ gestureSequence</code></pre></div>
 <h2 id="坐标时间与感知精度">坐标、时间与感知精度</h2>
 <h3 id="1-坐标系精度">1. 坐标系精度</h3>
 <p>客户端与云端分辨率通常不同，因此应传输画面内的归一化坐标：</p>
-<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>normalizedX = (touchX - contentLeft) / contentWidth
+<div class="code-block" data-language="text"><div class="code-label"><span>示意</span></div><pre tabindex="0"><code>normalizedX = (touchX - contentLeft) / contentWidth
 normalizedY = (touchY - contentTop) / contentHeight
 
 remoteX = normalizedX * remoteWidth
@@ -59,7 +59,7 @@ remoteY = normalizedY * remoteHeight</code></pre></div>
 <h3 id="4-降低本地触摸采集延迟">4. 降低本地触摸采集延迟</h3>
 <p>Android 默认可以将连续的 <code>MOVE</code> 事件暂存起来，在下一次 VSYNC 的输入阶段批量交给应用。云游戏收到触摸回调后还要把事件发送到云端，这段等待会直接增加端到端操作延迟。</p>
 <p>云游戏画面 View 可以在手势开始时调用 <a href="https://developer.android.com/reference/android/view/View#requestUnbufferedDispatch(android.view.MotionEvent"><code>requestUnbufferedDispatch(event)</code></a>)：</p>
-<div class="code-block"><div class="code-label">kotlin</div><pre tabindex="0"><code>override fun onTouchEvent(event: MotionEvent): Boolean {
+<div class="code-block" data-language="kotlin"><div class="code-label"><span>kotlin</span></div><pre tabindex="0"><code>override fun onTouchEvent(event: MotionEvent): Boolean {
     if (event.actionMasked == MotionEvent.ACTION_DOWN) {
         requestUnbufferedDispatch(event)
     }
@@ -82,4 +82,4 @@ remoteY = normalizedY * remoteHeight</code></pre></div>
 <h2 id="结论">结论</h2>
 <p>云游戏多指的核心不是「同时发送多个坐标」，而是在客户端和云端之间维持同一个多指状态机。</p>
 <p>完整设计需要同时保证：<code>pointerId</code> 稳定、指针快照完整、关键动作有序、画面与触摸共用同一套坐标变换，以及移动事件在轨迹保真和低延迟之间取得平衡。</p></article><footer class="article-footer"><a href="/#articles">← 返回文章列表</a><a href="#main">回到顶部 ↑</a></footer></main>
-  <aside class="desktop-toc"><p>本篇目录</p><nav aria-label="本篇目录"><ol><li><a href="#%E9%93%BE%E8%B7%AF%E7%9B%AE%E6%A0%87%E4%B8%8E-android-%E5%A4%9A%E6%8C%87%E6%A8%A1%E5%9E%8B">链路目标与 Android 多指模型</a></li><li><a href="#%E8%BE%93%E5%85%A5%E6%B6%88%E6%81%AF%E8%AE%BE%E8%AE%A1%E4%B8%8E%E4%BA%91%E7%AB%AF%E7%8A%B6%E6%80%81%E9%87%8D%E5%BB%BA">输入消息设计与云端状态重建</a></li><li><a href="#%E5%9D%90%E6%A0%87%E6%97%B6%E9%97%B4%E4%B8%8E%E6%84%9F%E7%9F%A5%E7%B2%BE%E5%BA%A6">坐标、时间与感知精度</a></li><li><a href="#%E7%BB%93%E8%AE%BA">结论</a></li></ol></nav><a class="toc-return" href="/#articles">← 全部文章</a></aside></div></body></html>
+  <aside class="desktop-toc"><p>本篇目录</p><nav aria-label="本篇目录"><ol><li><a href="#%E9%93%BE%E8%B7%AF%E7%9B%AE%E6%A0%87%E4%B8%8E-android-%E5%A4%9A%E6%8C%87%E6%A8%A1%E5%9E%8B">链路目标与 Android 多指模型</a></li><li class="toc-child"><a href="#%E6%95%B4%E4%BD%93%E9%93%BE%E8%B7%AF">整体链路</a></li><li class="toc-child"><a href="#android-%E7%9A%84%E5%A4%9A%E6%8C%87%E6%A8%A1%E5%9E%8B">Android 的多指模型</a></li><li><a href="#%E8%BE%93%E5%85%A5%E6%B6%88%E6%81%AF%E8%AE%BE%E8%AE%A1%E4%B8%8E%E4%BA%91%E7%AB%AF%E7%8A%B6%E6%80%81%E9%87%8D%E5%BB%BA">输入消息设计与云端状态重建</a></li><li class="toc-child"><a href="#%E5%A4%9A%E6%8C%87%E4%BA%8B%E4%BB%B6%E5%A6%82%E4%BD%95%E4%BC%A0%E8%BE%93">多指事件如何传输</a></li><li class="toc-child"><a href="#%E4%BA%91%E7%AB%AF%E5%A6%82%E4%BD%95%E9%87%8D%E5%BB%BA%E4%BA%8B%E4%BB%B6">云端如何重建事件</a></li><li><a href="#%E5%9D%90%E6%A0%87%E6%97%B6%E9%97%B4%E4%B8%8E%E6%84%9F%E7%9F%A5%E7%B2%BE%E5%BA%A6">坐标、时间与感知精度</a></li><li class="toc-child"><a href="#1-%E5%9D%90%E6%A0%87%E7%B3%BB%E7%B2%BE%E5%BA%A6">1. 坐标系精度</a></li><li class="toc-child"><a href="#2-%E6%95%B0%E5%80%BC%E7%B2%BE%E5%BA%A6">2. 数值精度</a></li><li class="toc-child"><a href="#3-%E6%97%B6%E9%97%B4%E4%B8%8E%E9%87%87%E6%A0%B7%E7%B2%BE%E5%BA%A6">3. 时间与采样精度</a></li><li class="toc-child"><a href="#4-%E9%99%8D%E4%BD%8E%E6%9C%AC%E5%9C%B0%E8%A7%A6%E6%91%B8%E9%87%87%E9%9B%86%E5%BB%B6%E8%BF%9F">4. 降低本地触摸采集延迟</a></li><li class="toc-child"><a href="#5-%E6%84%9F%E7%9F%A5%E7%B2%BE%E5%BA%A6">5. 感知精度</a></li><li><a href="#%E7%BB%93%E8%AE%BA">结论</a></li></ol></nav><a class="toc-return" href="/#articles">← 全部文章</a></aside></div></body></html>

@@ -1,10 +1,10 @@
-<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light"><meta name="theme-color" content="#f7f6f2"><title>Android 容器抓屏实现</title><meta name="description" content="技术学习与工程实践。"><link rel="icon" href="/favicon.svg?v=14ae5a412d40f95d"><link rel="stylesheet" href="/reader.css?v=14ae5a412d40f95d"><script src="/reader.js?v=14ae5a412d40f95d" defer></script></head><body><div class="reading-progress" aria-hidden="true"></div><a class="skip" href="#main">跳到正文</a><header class="reader-nav"><nav aria-label="站点导航"><a href="/">← 首页</a><a href="/#articles">全部文章 ↗</a></nav></header><div class="reading-layout"><main id="main"><nav class="breadcrumbs" aria-label="当前位置"><a href="/#articles">文章</a><span>/</span><a href="/?category=cloud-gaming#articles">云游戏</a><span>/</span><span>技术实现</span></nav>
-  <header class="article-heading"><p class="article-category">云游戏</p><h1>Android 容器抓屏实现</h1></header>
-  <details class="mobile-toc"><summary>本篇目录 <span>5 节</span></summary><nav aria-label="本篇目录"><ol><li><a href="#%E9%97%AE%E9%A2%98%E8%8C%83%E5%9B%B4%E4%B8%8E%E6%8A%93%E5%B1%8F%E6%96%B9%E6%A1%88%E9%80%89%E6%8B%A9">问题范围与抓屏方案选择</a></li><li><a href="#virtualdisplay-%E4%B8%8E%E7%BC%96%E7%A0%81%E5%89%8D%E7%9A%84%E6%95%B0%E6%8D%AE%E8%B7%AF%E5%BE%84">VirtualDisplay 与编码前的数据路径</a></li><li><a href="#%E7%9B%B4%E9%80%9A%E7%BC%96%E7%A0%81%E7%9A%84%E6%94%B6%E7%9B%8A%E6%96%B9%E5%90%91%E4%B8%8E%E5%B7%A5%E7%A8%8B%E7%BA%A6%E6%9D%9F">直通编码的收益方向与工程约束</a></li><li><a href="#%E5%A6%82%E4%BD%95%E8%A7%82%E6%B5%8B%E5%92%8C%E6%AF%94%E8%BE%83%E6%8A%93%E5%B1%8F%E9%93%BE%E8%B7%AF">如何观测和比较抓屏链路</a></li><li><a href="#%E8%A6%81%E7%82%B9%E5%9B%9E%E9%A1%BE">要点回顾</a></li></ol></nav></details><article class="prose" id="content"><p>云游戏里的抓屏不是简单截图，而是把远端 Android 容器中游戏渲染出来的连续画面，稳定、低延迟地送入编码链路。它连接了 Android 图形系统、<code>VirtualDisplay</code>、<code>SurfaceFlinger</code>、OpenGL 纹理和 <code>MediaCodec</code>。</p>
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light"><meta name="theme-color" content="#f7f6f2"><title>Android 容器抓屏实现</title><meta name="description" content="技术学习与工程实践。"><link rel="icon" href="/favicon.svg?v=7ea8198bf5c60782"><link rel="stylesheet" href="/reader.css?v=7ea8198bf5c60782"><script src="/reader.js?v=7ea8198bf5c60782" defer></script></head><body><div class="reading-progress" aria-hidden="true"></div><a class="skip" href="#main">跳到正文</a><header class="reader-nav"><nav aria-label="站点导航"><a href="/">← 首页</a><a href="/#articles">全部文章 ↗</a></nav></header><div class="reading-layout"><main id="main"><nav class="breadcrumbs" aria-label="当前位置"><a href="/#articles">文章</a><span>/</span><a href="/?category=cloud-gaming#articles">云游戏</a><span>/</span><span>技术实现</span></nav>
+  <header class="article-heading"><h1>Android 容器抓屏实现</h1></header>
+  <details class="mobile-toc"><summary>本篇目录 <span>5 节</span></summary><nav aria-label="本篇目录"><ol><li><a href="#%E9%97%AE%E9%A2%98%E8%8C%83%E5%9B%B4%E4%B8%8E%E6%8A%93%E5%B1%8F%E6%96%B9%E6%A1%88%E9%80%89%E6%8B%A9">问题范围与抓屏方案选择</a></li><li class="toc-child"><a href="#%E4%BA%91%E6%B8%B8%E6%88%8F%E6%8A%93%E5%B1%8F%E5%9C%A8%E5%85%A8%E9%93%BE%E8%B7%AF%E4%B8%AD%E7%9A%84%E4%BD%8D%E7%BD%AE">云游戏抓屏在全链路中的位置</a></li><li class="toc-child"><a href="#%E5%B8%B8%E8%A7%81%E6%8A%93%E5%B1%8F%E6%96%B9%E6%A1%88">常见抓屏方案</a></li><li><a href="#virtualdisplay-%E4%B8%8E%E7%BC%96%E7%A0%81%E5%89%8D%E7%9A%84%E6%95%B0%E6%8D%AE%E8%B7%AF%E5%BE%84">VirtualDisplay 与编码前的数据路径</a></li><li class="toc-child"><a href="#virtualdisplay-%E6%8A%93%E5%B1%8F%E7%9A%84%E6%A0%B8%E5%BF%83%E9%93%BE%E8%B7%AF">VirtualDisplay 抓屏的核心链路</a></li><li class="toc-child"><a href="#%E9%80%81%E7%BC%96%E7%A0%81%E5%89%8D%E7%9A%84%E4%B8%89%E7%A7%8D%E6%95%B0%E6%8D%AE%E8%B7%AF%E5%BE%84">送编码前的三种数据路径</a></li><li><a href="#%E7%9B%B4%E9%80%9A%E7%BC%96%E7%A0%81%E7%9A%84%E6%94%B6%E7%9B%8A%E6%96%B9%E5%90%91%E4%B8%8E%E5%B7%A5%E7%A8%8B%E7%BA%A6%E6%9D%9F">直通编码的收益方向与工程约束</a></li><li><a href="#%E5%A6%82%E4%BD%95%E8%A7%82%E6%B5%8B%E5%92%8C%E6%AF%94%E8%BE%83%E6%8A%93%E5%B1%8F%E9%93%BE%E8%B7%AF">如何观测和比较抓屏链路</a></li><li><a href="#%E8%A6%81%E7%82%B9%E5%9B%9E%E9%A1%BE">要点回顾</a></li></ol></nav></details><article class="prose" id="content"><p>云游戏里的抓屏不是简单截图，而是把远端 Android 容器中游戏渲染出来的连续画面，稳定、低延迟地送入编码链路。它连接了 Android 图形系统、<code>VirtualDisplay</code>、<code>SurfaceFlinger</code>、OpenGL 纹理和 <code>MediaCodec</code>。</p>
 <p><img src="/media/64a4c1a6786bb3e6.svg" alt="Android 容器抓屏路径对比" loading="lazy" decoding="async"></p>
 <h2 id="问题范围与抓屏方案选择">问题范围与抓屏方案选择</h2>
 <h3 id="云游戏抓屏在全链路中的位置">云游戏抓屏在全链路中的位置</h3>
-<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>远端游戏 App 渲染
+<div class="code-block" data-language="text"><div class="code-label"><span>示意</span></div><pre tabindex="0"><code>远端游戏 App 渲染
   -&gt; 游戏 Surface / Layer
   -&gt; SurfaceFlinger 合成
   -&gt; 抓屏输出到 VirtualDisplay / HWC / 截屏接口
@@ -20,7 +20,7 @@
 <h2 id="virtualdisplay-与编码前的数据路径">VirtualDisplay 与编码前的数据路径</h2>
 <h3 id="virtualdisplay-抓屏的核心链路">VirtualDisplay 抓屏的核心链路</h3>
 <p><code>VirtualDisplay</code> 的本质是给系统一个目标 <code>Surface</code>，让系统把显示内容渲染到这个虚拟显示上。云游戏可以把这个目标接到后续编码或纹理处理链路。</p>
-<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>DisplayManager / SurfaceControl 创建虚拟显示
+<div class="code-block" data-language="text"><div class="code-label"><span>示意</span></div><pre tabindex="0"><code>DisplayManager / SurfaceControl 创建虚拟显示
   -&gt; 配置目标 Surface
   -&gt; SurfaceFlinger 将目标 Layer 合成到 VirtualDisplay
   -&gt; 抓屏服务拿到 OES 纹理或图像 buffer
@@ -29,7 +29,7 @@
 <h3 id="送编码前的三种数据路径">送编码前的三种数据路径</h3>
 <p>编码前处理可以拆成三种路径，按“是否发生 GPU/CPU 往返、是否多一次 OpenGL 绘制”来理解。</p>
 <h4 id="1-oes---yuv--nv12老方案">1. OES -&gt; YUV / NV12：老方案</h4>
-<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>VirtualDisplay 输出 OES 纹理
+<div class="code-block" data-language="text"><div class="code-label"><span>示意</span></div><pre tabindex="0"><code>VirtualDisplay 输出 OES 纹理
   -&gt; OpenGL 采样转 YUV / NV12
   -&gt; GPU 拷贝到 CPU 内存
   -&gt; CPU Buffer 送入编码器
@@ -37,14 +37,14 @@
 <p>优点是兼容性相对好，容易做图像前处理；缺点是链路重，有纹理采样、格式转换和 CPU/GPU 数据流转。</p>
 <p>在部分 Android 板卡上，CPU 和 GPU 共享内存，实际拷贝成本没有从架构图上看起来那么夸张，所以这个方案能长期在线上使用。但在 GPU/CPU 分离更明显的 ArmServer 或独显架构上，这条路径的带宽和拷贝成本会更敏感。</p>
 <h4 id="2-oes-纹理-gpu-路径少一次-yuv-转换">2. OES 纹理 GPU 路径：少一次 YUV 转换</h4>
-<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>VirtualDisplay 输出 OES 纹理
+<div class="code-block" data-language="text"><div class="code-label"><span>示意</span></div><pre tabindex="0"><code>VirtualDisplay 输出 OES 纹理
   -&gt; SurfaceTexture 接收纹理
   -&gt; OpenGL draw 到编码器输入 Surface
   -&gt; MediaCodec 硬编</code></pre></div>
 <p>这个方案减少了 <code>OES -&gt; YUV</code> 和 CPU 传输，主要让数据留在 GPU/图形 buffer 链路里。具体耗时收益需要在相同设备、分辨率和编码配置下对照测量。</p>
 <p>它的限制是：<code>SurfaceTexture</code> 或离屏缓冲管理不好时，下游编码阻塞会反向影响上游送帧，所以需要纹理池、buffer 管理和背压策略配合。</p>
 <h4 id="3-编码直通目标最短路径">3. 编码直通：目标最短路径</h4>
-<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>游戏画面 / VirtualDisplay
+<div class="code-block" data-language="text"><div class="code-label"><span>示意</span></div><pre tabindex="0"><code>游戏画面 / VirtualDisplay
   -&gt; 直接写入编码器输入 Surface
   -&gt; MediaCodec 硬编</code></pre></div>
 <p>编码直通的目标是让 <code>VirtualDisplay</code> 或游戏画面直接进入编码器输入 Surface，减少 <code>SurfaceTexture</code> 绑定和 OpenGL 再绘制。理论上它是抓屏编码的最短路径。</p>
@@ -52,7 +52,7 @@
 <ol start="1"><li><p>要在正确时机拿到或替换目标 Surface。</p></li><li><p>要保证分辨率、旋转、裁剪、色彩空间等前处理能力仍然可用。</p></li><li><p>要处理编码器背压，避免编码吐帧慢时阻塞游戏渲染或抓屏线程。</p></li><li><p>如果通过 hook 游戏获取 Surface，需要处理不同游戏、不同系统版本、不同图形路径的兼容性。</p></li></ol>
 <h2 id="直通编码的收益方向与工程约束">直通编码的收益方向与工程约束</h2>
 <p>更进一步的思路是：不等游戏画面先进入普通显示合成链路，而是在游戏获取 Surface 时注入代理 Surface，动态替换为编码器输入 Surface，让游戏画面直接写入编码 Surface。</p>
-<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>游戏请求 Surface
+<div class="code-block" data-language="text"><div class="code-label"><span>示意</span></div><pre tabindex="0"><code>游戏请求 Surface
   -&gt; hook / 代理 Surface
   -&gt; 动态切到编码器输入 Surface
   -&gt; 游戏绘制结果直接进入编码链路</code></pre></div>
@@ -63,4 +63,4 @@
 <p>当某个方案收益不明显时，要区分是“少了一次处理但增加了排队”，还是“理论链路更短但被兼容逻辑抵消”。</p>
 <h2 id="要点回顾">要点回顾</h2>
 <p>方案比较应落到格式转换、缓冲流转、排队和背压，而不是仅比较抓屏接口。减少中间环节后，仍需在相同负载下检查编码阻塞、分辨率变化和兼容性。</p></article><footer class="article-footer"><a href="/#articles">← 返回文章列表</a><a href="#main">回到顶部 ↑</a></footer></main>
-  <aside class="desktop-toc"><p>本篇目录</p><nav aria-label="本篇目录"><ol><li><a href="#%E9%97%AE%E9%A2%98%E8%8C%83%E5%9B%B4%E4%B8%8E%E6%8A%93%E5%B1%8F%E6%96%B9%E6%A1%88%E9%80%89%E6%8B%A9">问题范围与抓屏方案选择</a></li><li><a href="#virtualdisplay-%E4%B8%8E%E7%BC%96%E7%A0%81%E5%89%8D%E7%9A%84%E6%95%B0%E6%8D%AE%E8%B7%AF%E5%BE%84">VirtualDisplay 与编码前的数据路径</a></li><li><a href="#%E7%9B%B4%E9%80%9A%E7%BC%96%E7%A0%81%E7%9A%84%E6%94%B6%E7%9B%8A%E6%96%B9%E5%90%91%E4%B8%8E%E5%B7%A5%E7%A8%8B%E7%BA%A6%E6%9D%9F">直通编码的收益方向与工程约束</a></li><li><a href="#%E5%A6%82%E4%BD%95%E8%A7%82%E6%B5%8B%E5%92%8C%E6%AF%94%E8%BE%83%E6%8A%93%E5%B1%8F%E9%93%BE%E8%B7%AF">如何观测和比较抓屏链路</a></li><li><a href="#%E8%A6%81%E7%82%B9%E5%9B%9E%E9%A1%BE">要点回顾</a></li></ol></nav><a class="toc-return" href="/#articles">← 全部文章</a></aside></div></body></html>
+  <aside class="desktop-toc"><p>本篇目录</p><nav aria-label="本篇目录"><ol><li><a href="#%E9%97%AE%E9%A2%98%E8%8C%83%E5%9B%B4%E4%B8%8E%E6%8A%93%E5%B1%8F%E6%96%B9%E6%A1%88%E9%80%89%E6%8B%A9">问题范围与抓屏方案选择</a></li><li class="toc-child"><a href="#%E4%BA%91%E6%B8%B8%E6%88%8F%E6%8A%93%E5%B1%8F%E5%9C%A8%E5%85%A8%E9%93%BE%E8%B7%AF%E4%B8%AD%E7%9A%84%E4%BD%8D%E7%BD%AE">云游戏抓屏在全链路中的位置</a></li><li class="toc-child"><a href="#%E5%B8%B8%E8%A7%81%E6%8A%93%E5%B1%8F%E6%96%B9%E6%A1%88">常见抓屏方案</a></li><li><a href="#virtualdisplay-%E4%B8%8E%E7%BC%96%E7%A0%81%E5%89%8D%E7%9A%84%E6%95%B0%E6%8D%AE%E8%B7%AF%E5%BE%84">VirtualDisplay 与编码前的数据路径</a></li><li class="toc-child"><a href="#virtualdisplay-%E6%8A%93%E5%B1%8F%E7%9A%84%E6%A0%B8%E5%BF%83%E9%93%BE%E8%B7%AF">VirtualDisplay 抓屏的核心链路</a></li><li class="toc-child"><a href="#%E9%80%81%E7%BC%96%E7%A0%81%E5%89%8D%E7%9A%84%E4%B8%89%E7%A7%8D%E6%95%B0%E6%8D%AE%E8%B7%AF%E5%BE%84">送编码前的三种数据路径</a></li><li><a href="#%E7%9B%B4%E9%80%9A%E7%BC%96%E7%A0%81%E7%9A%84%E6%94%B6%E7%9B%8A%E6%96%B9%E5%90%91%E4%B8%8E%E5%B7%A5%E7%A8%8B%E7%BA%A6%E6%9D%9F">直通编码的收益方向与工程约束</a></li><li><a href="#%E5%A6%82%E4%BD%95%E8%A7%82%E6%B5%8B%E5%92%8C%E6%AF%94%E8%BE%83%E6%8A%93%E5%B1%8F%E9%93%BE%E8%B7%AF">如何观测和比较抓屏链路</a></li><li><a href="#%E8%A6%81%E7%82%B9%E5%9B%9E%E9%A1%BE">要点回顾</a></li></ol></nav><a class="toc-return" href="/#articles">← 全部文章</a></aside></div></body></html>

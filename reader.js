@@ -8,7 +8,7 @@
     const button=document.createElement('button');button.type='button';button.className='copy-code';button.textContent='复制';button.setAttribute('aria-label','复制代码');button.setAttribute('aria-live','polite');label.append(button);
     button.addEventListener('click',async()=>{try{await copyText(code.textContent);button.textContent='已复制';}catch{button.textContent='复制失败';}setTimeout(()=>{button.textContent='复制';},1800);});
   }
-  const headings=[...document.querySelectorAll('.prose h2')],links=[...document.querySelectorAll('.desktop-toc nav a,.mobile-toc nav a')];
+  const headings=[...document.querySelectorAll('.prose h2,.prose h3')],links=[...document.querySelectorAll('.desktop-toc nav a,.mobile-toc nav a')];
   let pending=false;
   function update(){pending=false;const distance=document.documentElement.scrollHeight-innerHeight;document.documentElement.style.setProperty('--progress',distance>0?String(Math.min(1,Math.max(0,scrollY/distance))):'0');
     let current=headings[0]?.id;for(const heading of headings){if(heading.getBoundingClientRect().top<=145)current=heading.id;else break;}

@@ -1,7 +1,7 @@
-<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light"><meta name="theme-color" content="#f7f6f2"><title>mmap 原理</title><meta name="description" content="技术学习与工程实践。"><link rel="icon" href="/favicon.svg?v=14ae5a412d40f95d"><link rel="stylesheet" href="/reader.css?v=14ae5a412d40f95d"><script src="/reader.js?v=14ae5a412d40f95d" defer></script></head><body><div class="reading-progress" aria-hidden="true"></div><a class="skip" href="#main">跳到正文</a><header class="reader-nav"><nav aria-label="站点导航"><a href="/">← 首页</a><a href="/#articles">全部文章 ↗</a></nav></header><div class="reading-layout"><main id="main"><nav class="breadcrumbs" aria-label="当前位置"><a href="/#articles">文章</a><span>/</span><a href="/?category=fundamentals#articles">编程与系统基础</a><span>/</span><span>操作系统</span></nav>
-  <header class="article-heading"><p class="article-category">编程与系统基础</p><h1>mmap 原理</h1></header>
-  <details class="mobile-toc"><summary>本篇目录 <span>5 节</span></summary><nav aria-label="本篇目录"><ol><li><a href="#%E5%9C%B0%E5%9D%80%E7%A9%BA%E9%97%B4%E4%B8%8E%E6%98%A0%E5%B0%84%E7%9A%84%E5%9F%BA%E6%9C%AC%E6%A6%82%E5%BF%B5">地址空间与映射的基本概念</a></li><li><a href="#%E6%96%87%E4%BB%B6%E6%98%A0%E5%B0%84%E7%A7%81%E6%9C%89%E6%98%A0%E5%B0%84%E4%B8%8E%E5%8C%BF%E5%90%8D%E6%98%A0%E5%B0%84">文件映射、私有映射与匿名映射</a></li><li><a href="#%E8%B7%A8%E8%BF%9B%E7%A8%8B%E5%85%B1%E4%BA%AB%E5%BB%BA%E5%9B%BE%E4%BA%A4%E6%8D%A2%E6%95%B0%E6%8D%AE%E4%B8%8E%E5%90%8C%E6%AD%A5%E5%8D%8F%E8%AE%AE">跨进程共享：建图、交换数据与同步协议</a></li><li><a href="#%E5%8F%AF%E8%A7%81%E6%80%A7%E6%8C%81%E4%B9%85%E5%8C%96%E4%B8%8E-binder-%E7%9A%84%E8%BE%B9%E7%95%8C">可见性、持久化与 Binder 的边界</a></li><li><a href="#%E5%8F%82%E8%80%83%E8%B5%84%E6%96%99">参考资料</a></li></ol></nav></details><article class="prose" id="content"><p><code>mmap()</code> 的核心不是“复制一块内存”，而是在进程虚拟地址空间中创建一段 VMA，规定这段虚拟地址背后由文件页、匿名页或共享内存对象提供物理页。</p>
-<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>虚拟地址
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light"><meta name="theme-color" content="#f7f6f2"><title>mmap 原理</title><meta name="description" content="技术学习与工程实践。"><link rel="icon" href="/favicon.svg?v=7ea8198bf5c60782"><link rel="stylesheet" href="/reader.css?v=7ea8198bf5c60782"><script src="/reader.js?v=7ea8198bf5c60782" defer></script></head><body><div class="reading-progress" aria-hidden="true"></div><a class="skip" href="#main">跳到正文</a><header class="reader-nav"><nav aria-label="站点导航"><a href="/">← 首页</a><a href="/#articles">全部文章 ↗</a></nav></header><div class="reading-layout"><main id="main"><nav class="breadcrumbs" aria-label="当前位置"><a href="/#articles">文章</a><span>/</span><a href="/?category=fundamentals#articles">编程与系统基础</a><span>/</span><span>操作系统</span></nav>
+  <header class="article-heading"><h1>mmap 原理</h1></header>
+  <details class="mobile-toc"><summary>本篇目录 <span>5 节</span></summary><nav aria-label="本篇目录"><ol><li><a href="#%E5%9C%B0%E5%9D%80%E7%A9%BA%E9%97%B4%E4%B8%8E%E6%98%A0%E5%B0%84%E7%9A%84%E5%9F%BA%E6%9C%AC%E6%A6%82%E5%BF%B5">地址空间与映射的基本概念</a></li><li class="toc-child"><a href="#%E7%89%A9%E7%90%86%E9%A1%B5">物理页</a></li><li class="toc-child"><a href="#vma">VMA</a></li><li class="toc-child"><a href="#%E9%A1%B5%E8%A1%A8%E4%B8%8E-pte">页表与 PTE</a></li><li class="toc-child"><a href="#page-cache">Page Cache</a></li><li><a href="#%E6%96%87%E4%BB%B6%E6%98%A0%E5%B0%84%E7%A7%81%E6%9C%89%E6%98%A0%E5%B0%84%E4%B8%8E%E5%8C%BF%E5%90%8D%E6%98%A0%E5%B0%84">文件映射、私有映射与匿名映射</a></li><li class="toc-child"><a href="#%E6%99%AE%E9%80%9A-readwrite-%E4%B8%8E%E6%96%87%E4%BB%B6-mmap">普通 read/write 与文件 mmap</a></li><li class="toc-child"><a href="#mapshared-%E4%B8%8E-mapprivate">MAP_SHARED 与 MAP_PRIVATE</a></li><li class="toc-child"><a href="#%E5%8C%BF%E5%90%8D-mmap-%E4%B8%8D%E7%BB%8F%E8%BF%87%E6%99%AE%E9%80%9A%E6%96%87%E4%BB%B6-page-cache">匿名 mmap 不经过普通文件 Page Cache</a></li><li><a href="#%E8%B7%A8%E8%BF%9B%E7%A8%8B%E5%85%B1%E4%BA%AB%E5%BB%BA%E5%9B%BE%E4%BA%A4%E6%8D%A2%E6%95%B0%E6%8D%AE%E4%B8%8E%E5%90%8C%E6%AD%A5%E5%8D%8F%E8%AE%AE">跨进程共享：建图、交换数据与同步协议</a></li><li class="toc-child"><a href="#%E4%B8%A4%E4%B8%AA%E7%8B%AC%E7%AB%8B%E8%BF%9B%E7%A8%8B%E5%A6%82%E4%BD%95%E5%BB%BA%E7%AB%8B%E5%85%B1%E4%BA%AB-mmap">两个独立进程如何建立共享 mmap</a></li><li class="toc-child"><a href="#%E8%BF%9B%E7%A8%8B%E9%97%B4%E4%BA%A4%E6%8D%A2%E6%95%B0%E6%8D%AE%E7%9A%84%E4%B8%A4%E7%A7%8D%E6%96%B9%E5%BC%8F">进程间交换数据的两种方式</a></li><li class="toc-child"><a href="#%E5%85%B1%E4%BA%AB%E5%86%85%E5%AD%98%E4%B8%8D%E7%AD%89%E4%BA%8E%E5%AE%8C%E6%95%B4-ipc-%E5%8D%8F%E8%AE%AE">共享内存不等于完整 IPC 协议</a></li><li><a href="#%E5%8F%AF%E8%A7%81%E6%80%A7%E6%8C%81%E4%B9%85%E5%8C%96%E4%B8%8E-binder-%E7%9A%84%E8%BE%B9%E7%95%8C">可见性、持久化与 Binder 的边界</a></li><li class="toc-child"><a href="#%E5%8F%AF%E8%A7%81%E6%80%A7%E4%B8%8E%E6%8C%81%E4%B9%85%E5%8C%96%E6%98%AF%E4%B8%A4%E5%9B%9E%E4%BA%8B">可见性与持久化是两回事</a></li><li class="toc-child"><a href="#%E4%B8%8E-binder-mmap-%E7%9A%84%E8%BE%B9%E7%95%8C">与 Binder mmap 的边界</a></li><li><a href="#%E5%8F%82%E8%80%83%E8%B5%84%E6%96%99">参考资料</a></li></ol></nav></details><article class="prose" id="content"><p><code>mmap()</code> 的核心不是“复制一块内存”，而是在进程虚拟地址空间中创建一段 VMA，规定这段虚拟地址背后由文件页、匿名页或共享内存对象提供物理页。</p>
+<div class="code-block" data-language="text"><div class="code-label"><span>示意</span></div><pre tabindex="0"><code>虚拟地址
    ↓ 查当前进程页表
 PTE
    ↓
@@ -13,7 +13,7 @@ RAM 物理页</code></pre></div>
 <p>物理页是 RAM 的固定大小分块，常见大小为 4 KB。堆、栈、匿名内存和文件缓存最终占用的都是 RAM 物理页。</p>
 <h3 id="vma">VMA</h3>
 <p>VMA（Virtual Memory Area）属于某个进程的虚拟地址空间，描述一段连续虚拟地址的来源和权限：</p>
-<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>虚拟地址起止范围
+<div class="code-block" data-language="text"><div class="code-label"><span>示意</span></div><pre tabindex="0"><code>虚拟地址起止范围
 读 / 写 / 执行权限
 MAP_SHARED / MAP_PRIVATE
 关联的文件或匿名内存对象
@@ -22,13 +22,13 @@ MAP_SHARED / MAP_PRIVATE
 <h3 id="页表与-pte">页表与 PTE</h3>
 <p>页表属于进程地址空间。PTE 记录某个虚拟页映射到哪个物理页，以及该页是否可读、可写、可执行、可由用户态访问。</p>
 <p>不同进程的页表彼此独立，但内核可以让它们的 PTE 指向同一个物理页：</p>
-<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>进程 A：VA 0x1000 → PTE A ─┐
+<div class="code-block" data-language="text"><div class="code-label"><span>示意</span></div><pre tabindex="0"><code>进程 A：VA 0x1000 → PTE A ─┐
                              ├→ RAM 物理页 100
 进程 B：VA 0x8000 → PTE B ─┘</code></pre></div>
 <p>共享的是物理页，不是页表，也不要求两边虚拟地址相同。</p>
 <h3 id="page-cache">Page Cache</h3>
 <p>Page Cache 不是 CPU 的 L1/L2/L3 Cache，也不是一块独立硬件内存。它是 Linux 用 RAM 物理页缓存文件内容的全局机制：</p>
-<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>(文件 inode, 文件页索引)
+<div class="code-block" data-language="text"><div class="code-label"><span>示意</span></div><pre tabindex="0"><code>(文件 inode, 文件页索引)
           ↓
 Page Cache 文件页：RAM 物理页
           ↓
@@ -39,21 +39,21 @@ Clean / Dirty / Writeback / 回收状态</code></pre></div>
 <p><img src="/media/99ab796297f1ea8c.svg" alt="普通文件 I/O 与文件 mmap" loading="lazy" decoding="async"></p>
 <h4 id="普通-readwrite">普通 read/write</h4>
 <p>假设进程 A、B 读取同一个文件页面：</p>
-<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>SSD 文件
+<div class="code-block" data-language="text"><div class="code-label"><span>示意</span></div><pre tabindex="0"><code>SSD 文件
    ↓ 首次读取
 Page Cache 文件页 F
    ├── copy_to_user() → A 的私有 Buffer 页
    └── copy_to_user() → B 的私有 Buffer 页</code></pre></div>
 <p>Page Cache 是全局共享的，但 A、B 的用户 Buffer 属于各自进程。A 修改自己的 Buffer 不会自动修改 Page Cache；只有调用 <code>write()</code> 时，内核才复制指定范围：</p>
-<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>A 私有 Buffer
+<div class="code-block" data-language="text"><div class="code-label"><span>示意</span></div><pre tabindex="0"><code>A 私有 Buffer
    ↓ write() / copy_from_user()
 Page Cache 文件页，标记 Dirty
    ↓ 内核回写或 fsync()
 SSD 文件</code></pre></div>
 <p>B 已经读取出来的旧 Buffer 也不会自动更新。B 再次调用 <code>read()</code>，才会从当前 Page Cache 复制新内容。</p>
 <h4 id="文件-mmap">文件 mmap</h4>
-<div class="code-block"><div class="code-label">cpp</div><pre tabindex="0"><code>void* address = mmap(
-    nullptr,
+<div class="code-block" data-language="cpp"><div class="code-label"><span>C++</span></div><pre tabindex="0"><code><span class="syntax-keyword">void</span>* address = mmap(
+    <span class="syntax-keyword">nullptr</span>,
     length,
     PROT_READ | PROT_WRITE,
     MAP_SHARED,
@@ -61,7 +61,7 @@ SSD 文件</code></pre></div>
     offset
 );</code></pre></div>
 <p>调用成功后，进程获得一段虚拟地址。首次访问的主线是：</p>
-<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>访问映射虚拟地址
+<div class="code-block" data-language="text"><div class="code-label"><span>示意</span></div><pre tabindex="0"><code>访问映射虚拟地址
    ↓ PTE 尚未建立
 文件映射缺页异常
    ↓
@@ -75,7 +75,7 @@ SSD 文件</code></pre></div>
    ↓
 重新执行内存访问</code></pre></div>
 <p>文件 <code>mmap</code> 省掉的是 Page Cache 到进程私有 Buffer 的复制：</p>
-<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>read：Page Cache → 复制 → 进程 Buffer
+<div class="code-block" data-language="text"><div class="code-label"><span>示意</span></div><pre tabindex="0"><code>read：Page Cache → 复制 → 进程 Buffer
 mmap：进程 PTE   → 直接指向 Page Cache</code></pre></div>
 <p>它不是绝对零开销：首次访问仍可能产生缺页处理、磁盘 I/O、页表建立和 TLB 开销。</p>
 <p>以上描述针对普通 buffered I/O。<code>O_DIRECT</code>、DAX 和设备内存映射等特殊路径可能绕过普通 Page Cache，不直接套用这条主线。</p>
@@ -83,7 +83,7 @@ mmap：进程 PTE   → 直接指向 Page Cache</code></pre></div>
 <p><code>prot</code> 决定当前进程能否读写，<code>flags</code> 决定写入后修改共享对象还是生成私有副本。</p>
 <div class="table-wrap" tabindex="0" role="region" aria-label="数据表格"><table><thead><tr><th scope="col">映射方式</th><th scope="col">读取时</th><th scope="col">写入时</th><th scope="col">是否修改文件</th></tr></thead><tbody><tr><td>文件 <code>MAP_SHARED</code></td><td>映射 Page Cache</td><td>修改 Page Cache 并形成脏页</td><td>会，具体落盘时机需控制</td></tr><tr><td>文件 <code>MAP_PRIVATE</code></td><td>可复用 Page Cache</td><td>首次写入触发 COW，生成匿名私有页</td><td>不会</td></tr><tr><td>匿名 <code>MAP_PRIVATE</code></td><td>匿名页</td><td>修改当前进程匿名页</td><td>无文件</td></tr><tr><td>匿名 <code>MAP_SHARED</code></td><td>共享匿名页</td><td>修改共享匿名页</td><td>无普通磁盘文件</td></tr></tbody></table></div>
 <p>文件 <code>MAP_PRIVATE</code> 的写时复制：</p>
-<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>写入前：进程 PTE → Page Cache 文件页
+<div class="code-block" data-language="text"><div class="code-label"><span>示意</span></div><pre tabindex="0"><code>写入前：进程 PTE → Page Cache 文件页
 
 首次写入：
   写保护缺页
@@ -93,16 +93,16 @@ mmap：进程 PTE   → 直接指向 Page Cache</code></pre></div>
   当前进程 PTE → 匿名私有页</code></pre></div>
 <p>它在只读阶段复用文件页，只有进程需要私有修改时才付出复制成本。</p>
 <h3 id="匿名-mmap-不经过普通文件-page-cache">匿名 mmap 不经过普通文件 Page Cache</h3>
-<div class="code-block"><div class="code-label">cpp</div><pre tabindex="0"><code>void* address = mmap(
-    nullptr,
+<div class="code-block" data-language="cpp"><div class="code-label"><span>C++</span></div><pre tabindex="0"><code><span class="syntax-keyword">void</span>* address = mmap(
+    <span class="syntax-keyword">nullptr</span>,
     length,
     PROT_READ | PROT_WRITE,
     MAP_PRIVATE | MAP_ANONYMOUS,
-    -1,
-    0
+    -<span class="syntax-number">1</span>,
+    <span class="syntax-number">0</span>
 );</code></pre></div>
 <p>匿名映射没有普通文件、inode 和文件 offset：</p>
-<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>mmap(MAP_ANONYMOUS)
+<div class="code-block" data-language="text"><div class="code-label"><span>示意</span></div><pre tabindex="0"><code>mmap(MAP_ANONYMOUS)
    ↓
 创建匿名 VMA
    ↓ 首次写入触发缺页异常
@@ -118,7 +118,7 @@ mmap：进程 PTE   → 直接指向 Page Cache</code></pre></div>
 <h2 id="跨进程共享建图交换数据与同步协议">跨进程共享：建图、交换数据与同步协议</h2>
 <h3 id="两个独立进程如何建立共享-mmap">两个独立进程如何建立共享 mmap</h3>
 <p>两个无关进程需要先引用同一个共享内存对象，常用 <code>memfd_create()</code> 或 <code>shm_open()</code>：</p>
-<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>进程 A memfd_create()
+<div class="code-block" data-language="text"><div class="code-label"><span>示意</span></div><pre tabindex="0"><code>进程 A memfd_create()
    ↓
 内核创建共享内存对象，返回 fdA
    ↓ Unix Domain Socket / Binder 传递 fd
@@ -127,7 +127,7 @@ mmap：进程 PTE   → 直接指向 Page Cache</code></pre></div>
 A、B 分别 mmap(MAP_SHARED)</code></pre></div>
 <p>fd 数字只在所属进程内有效，<code>fdA</code> 和 <code>fdB</code> 可以不同，但它们引用同一个内核对象。</p>
 <p>物理页通常在首次访问时按需生成：</p>
-<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>A 首次访问共享对象第 0 页
+<div class="code-block" data-language="text"><div class="code-label"><span>示意</span></div><pre tabindex="0"><code>A 首次访问共享对象第 0 页
    ↓ 缺页异常
 查询（共享对象，第 0 页）
    ↓ 尚不存在
@@ -141,7 +141,7 @@ B 首次访问共享对象第 0 页
    ↓ 已存在物理页 100
 B 的 PTE → 物理页 100</code></pre></div>
 <p>最终关系：</p>
-<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>A 的 VMA / PTE ─┐
+<div class="code-block" data-language="text"><div class="code-label"><span>示意</span></div><pre tabindex="0"><code>A 的 VMA / PTE ─┐
                   ├→ 共享物理页 100
 B 的 VMA / PTE ─┘</code></pre></div>
 <p>“物理页 100”只是便于理解的示意。更严谨地说，双方引用同一个共享 backing page/folio；具体 PFN 不是用户态可依赖的稳定身份。</p>
@@ -149,25 +149,25 @@ B 的 VMA / PTE ─┘</code></pre></div>
 <p><img src="/media/d99a14539fda42fe.svg" alt="read/write 与共享 mmap 的进程间数据路径" loading="lazy" decoding="async"></p>
 <h4 id="方式一不-mmap通过共享-fd-读写">方式一：不 mmap，通过共享 fd 读写</h4>
 <p><code>memfd</code> 等共享对象也可以像文件一样调用 <code>read/write</code>：</p>
-<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>A 私有物理页
+<div class="code-block" data-language="text"><div class="code-label"><span>示意</span></div><pre tabindex="0"><code>A 私有物理页
    ↓ write() / copy_from_user()
 共享对象物理页
    ↓ read() / copy_to_user()
 B 私有物理页</code></pre></div>
 <p>这种方式能够交换数据，但每次传输仍需要系统调用，并可能同时存在 A 私有副本、共享对象副本和 B 私有副本。</p>
 <h4 id="方式二双方-mmap-同一个共享对象">方式二：双方 mmap 同一个共享对象</h4>
-<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>A 虚拟地址 ─┐
+<div class="code-block" data-language="text"><div class="code-label"><span>示意</span></div><pre tabindex="0"><code>A 虚拟地址 ─┐
               ├→ 同一个共享物理页
 B 虚拟地址 ─┘</code></pre></div>
 <p>A 的 CPU Store 和 B 的 CPU Load 直接作用于同一个物理页，不再需要内核把数据从 A 复制到共享对象，再复制给 B。</p>
 <h4 id="零拷贝的边界">“零拷贝”的边界</h4>
 <p>如果数据已经在 A 的私有堆中生成：</p>
-<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>A 私有对象
+<div class="code-block" data-language="text"><div class="code-label"><span>示意</span></div><pre tabindex="0"><code>A 私有对象
    ↓ memcpy()
 共享映射页
    ← B 原地读取</code></pre></div>
 <p>仍然存在一次应用层复制。只有从一开始就在共享映射区域中构造数据，才能消除 IPC Payload 的内存副本：</p>
-<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>A 直接在共享页生成数据
+<div class="code-block" data-language="text"><div class="code-label"><span>示意</span></div><pre tabindex="0"><code>A 直接在共享页生成数据
    ↓
 B 直接在共享页读取</code></pre></div>
 <p>因此应区分：</p>
@@ -175,11 +175,11 @@ B 直接在共享页读取</code></pre></div>
 <p>这里的“零拷贝”只描述进程间 Payload 不再搬家，CPU 写数据、缺页、页表和缓存一致性仍然有成本。</p>
 <h3 id="共享内存不等于完整-ipc-协议">共享内存不等于完整 IPC 协议</h3>
 <p><code>mmap</code> 只解决双方访问同一物理页，不负责通知、消息边界和并发控制。实际结构通常是：</p>
-<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>共享内存：承载大块数据
+<div class="code-block" data-language="text"><div class="code-label"><span>示意</span></div><pre tabindex="0"><code>共享内存：承载大块数据
 eventfd / futex / Unix Socket：通知状态变化
 原子变量 / 进程共享锁：保证读写顺序</code></pre></div>
 <p>共享区可设计为：</p>
-<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>┌──────────────┐
+<div class="code-block" data-language="text"><div class="code-label"><span>示意</span></div><pre tabindex="0"><code>┌──────────────┐
 │ state        │ EMPTY / WRITING / READY
 ├──────────────┤
 │ length       │
@@ -191,7 +191,7 @@ eventfd / futex / Unix Socket：通知状态变化
 <h2 id="可见性持久化与-binder-的边界">可见性、持久化与 Binder 的边界</h2>
 <h3 id="可见性与持久化是两回事">可见性与持久化是两回事</h3>
 <p>文件 <code>MAP_SHARED</code> 的写入会修改 Page Cache 并形成脏页，其他共享映射可以观察到内存修改；但“另一个进程可见”不代表“已经写入 SSD”。</p>
-<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>进程间可见
+<div class="code-block" data-language="text"><div class="code-label"><span>示意</span></div><pre tabindex="0"><code>进程间可见
    ↓
 Page Cache 已更新
    ≠
@@ -203,4 +203,4 @@ Page Cache 已更新
 <p>详见 <a href="/notes/03953a247cdb3327/">Binder 跨进程通信机制</a>。</p>
 <h2 id="参考资料">参考资料</h2>
 <ul><li><p><a href="https://man7.org/linux/man-pages/man2/mmap.2.html">Linux mmap(2)</a></p></li><li><p><a href="https://man7.org/linux/man-pages/man2/memfd_create.2.html">Linux memfd_create(2)</a></p></li><li><p><a href="https://man7.org/linux/man-pages/man2/msync.2.html">Linux msync(2)</a></p></li><li><p><a href="https://man7.org/linux/man-pages/man2/fsync.2.html">Linux fsync(2)</a></p></li><li><p><a href="https://docs.kernel.org/filesystems/vfs.html">Linux VFS address_space</a></p></li><li><p><a href="https://man7.org/linux/man-pages/man7/unix.7.html">Linux Unix Domain Socket 与 SCM_RIGHTS</a></p></li><li><p><a href="https://man7.org/linux/man-pages/man2/futex.2.html">Linux futex(2)</a></p></li><li><p><a href="https://man7.org/linux/man-pages/man7/shm_overview.7.html">POSIX shared memory overview</a></p></li></ul></article><footer class="article-footer"><a href="/#articles">← 返回文章列表</a><a href="#main">回到顶部 ↑</a></footer></main>
-  <aside class="desktop-toc"><p>本篇目录</p><nav aria-label="本篇目录"><ol><li><a href="#%E5%9C%B0%E5%9D%80%E7%A9%BA%E9%97%B4%E4%B8%8E%E6%98%A0%E5%B0%84%E7%9A%84%E5%9F%BA%E6%9C%AC%E6%A6%82%E5%BF%B5">地址空间与映射的基本概念</a></li><li><a href="#%E6%96%87%E4%BB%B6%E6%98%A0%E5%B0%84%E7%A7%81%E6%9C%89%E6%98%A0%E5%B0%84%E4%B8%8E%E5%8C%BF%E5%90%8D%E6%98%A0%E5%B0%84">文件映射、私有映射与匿名映射</a></li><li><a href="#%E8%B7%A8%E8%BF%9B%E7%A8%8B%E5%85%B1%E4%BA%AB%E5%BB%BA%E5%9B%BE%E4%BA%A4%E6%8D%A2%E6%95%B0%E6%8D%AE%E4%B8%8E%E5%90%8C%E6%AD%A5%E5%8D%8F%E8%AE%AE">跨进程共享：建图、交换数据与同步协议</a></li><li><a href="#%E5%8F%AF%E8%A7%81%E6%80%A7%E6%8C%81%E4%B9%85%E5%8C%96%E4%B8%8E-binder-%E7%9A%84%E8%BE%B9%E7%95%8C">可见性、持久化与 Binder 的边界</a></li><li><a href="#%E5%8F%82%E8%80%83%E8%B5%84%E6%96%99">参考资料</a></li></ol></nav><a class="toc-return" href="/#articles">← 全部文章</a></aside></div></body></html>
+  <aside class="desktop-toc"><p>本篇目录</p><nav aria-label="本篇目录"><ol><li><a href="#%E5%9C%B0%E5%9D%80%E7%A9%BA%E9%97%B4%E4%B8%8E%E6%98%A0%E5%B0%84%E7%9A%84%E5%9F%BA%E6%9C%AC%E6%A6%82%E5%BF%B5">地址空间与映射的基本概念</a></li><li class="toc-child"><a href="#%E7%89%A9%E7%90%86%E9%A1%B5">物理页</a></li><li class="toc-child"><a href="#vma">VMA</a></li><li class="toc-child"><a href="#%E9%A1%B5%E8%A1%A8%E4%B8%8E-pte">页表与 PTE</a></li><li class="toc-child"><a href="#page-cache">Page Cache</a></li><li><a href="#%E6%96%87%E4%BB%B6%E6%98%A0%E5%B0%84%E7%A7%81%E6%9C%89%E6%98%A0%E5%B0%84%E4%B8%8E%E5%8C%BF%E5%90%8D%E6%98%A0%E5%B0%84">文件映射、私有映射与匿名映射</a></li><li class="toc-child"><a href="#%E6%99%AE%E9%80%9A-readwrite-%E4%B8%8E%E6%96%87%E4%BB%B6-mmap">普通 read/write 与文件 mmap</a></li><li class="toc-child"><a href="#mapshared-%E4%B8%8E-mapprivate">MAP_SHARED 与 MAP_PRIVATE</a></li><li class="toc-child"><a href="#%E5%8C%BF%E5%90%8D-mmap-%E4%B8%8D%E7%BB%8F%E8%BF%87%E6%99%AE%E9%80%9A%E6%96%87%E4%BB%B6-page-cache">匿名 mmap 不经过普通文件 Page Cache</a></li><li><a href="#%E8%B7%A8%E8%BF%9B%E7%A8%8B%E5%85%B1%E4%BA%AB%E5%BB%BA%E5%9B%BE%E4%BA%A4%E6%8D%A2%E6%95%B0%E6%8D%AE%E4%B8%8E%E5%90%8C%E6%AD%A5%E5%8D%8F%E8%AE%AE">跨进程共享：建图、交换数据与同步协议</a></li><li class="toc-child"><a href="#%E4%B8%A4%E4%B8%AA%E7%8B%AC%E7%AB%8B%E8%BF%9B%E7%A8%8B%E5%A6%82%E4%BD%95%E5%BB%BA%E7%AB%8B%E5%85%B1%E4%BA%AB-mmap">两个独立进程如何建立共享 mmap</a></li><li class="toc-child"><a href="#%E8%BF%9B%E7%A8%8B%E9%97%B4%E4%BA%A4%E6%8D%A2%E6%95%B0%E6%8D%AE%E7%9A%84%E4%B8%A4%E7%A7%8D%E6%96%B9%E5%BC%8F">进程间交换数据的两种方式</a></li><li class="toc-child"><a href="#%E5%85%B1%E4%BA%AB%E5%86%85%E5%AD%98%E4%B8%8D%E7%AD%89%E4%BA%8E%E5%AE%8C%E6%95%B4-ipc-%E5%8D%8F%E8%AE%AE">共享内存不等于完整 IPC 协议</a></li><li><a href="#%E5%8F%AF%E8%A7%81%E6%80%A7%E6%8C%81%E4%B9%85%E5%8C%96%E4%B8%8E-binder-%E7%9A%84%E8%BE%B9%E7%95%8C">可见性、持久化与 Binder 的边界</a></li><li class="toc-child"><a href="#%E5%8F%AF%E8%A7%81%E6%80%A7%E4%B8%8E%E6%8C%81%E4%B9%85%E5%8C%96%E6%98%AF%E4%B8%A4%E5%9B%9E%E4%BA%8B">可见性与持久化是两回事</a></li><li class="toc-child"><a href="#%E4%B8%8E-binder-mmap-%E7%9A%84%E8%BE%B9%E7%95%8C">与 Binder mmap 的边界</a></li><li><a href="#%E5%8F%82%E8%80%83%E8%B5%84%E6%96%99">参考资料</a></li></ol></nav><a class="toc-return" href="/#articles">← 全部文章</a></aside></div></body></html>

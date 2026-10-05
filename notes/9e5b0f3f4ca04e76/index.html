@@ -1,9 +1,9 @@
-<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light"><meta name="theme-color" content="#f7f6f2"><title>Input 输入系统流程</title><meta name="description" content="技术学习与工程实践。"><link rel="icon" href="/favicon.svg?v=14ae5a412d40f95d"><link rel="stylesheet" href="/reader.css?v=14ae5a412d40f95d"><script src="/reader.js?v=14ae5a412d40f95d" defer></script></head><body><div class="reading-progress" aria-hidden="true"></div><a class="skip" href="#main">跳到正文</a><header class="reader-nav"><nav aria-label="站点导航"><a href="/">← 首页</a><a href="/#articles">全部文章 ↗</a></nav></header><div class="reading-layout"><main id="main"><nav class="breadcrumbs" aria-label="当前位置"><a href="/#articles">文章</a><span>/</span><a href="/?category=client#articles">客户端开发</a><span>/</span><span>Android</span><span>/</span><span>系统原理</span></nav>
-  <header class="article-heading"><p class="article-category">客户端开发</p><h1>Input 输入系统流程</h1></header>
-  <details class="mobile-toc"><summary>本篇目录 <span>5 节</span></summary><nav aria-label="本篇目录"><ol><li><a href="#%E8%BE%93%E5%85%A5%E9%93%BE%E8%B7%AF%E6%80%BB%E8%A7%88">输入链路总览</a></li><li><a href="#%E4%BA%8B%E4%BB%B6%E5%88%B0%E6%9D%A5%E5%89%8D%E5%BB%BA%E7%AB%8B%E7%AA%97%E5%8F%A3%E4%B8%8E%E8%BE%93%E5%85%A5%E9%80%9A%E9%81%93">事件到来前：建立窗口与输入通道</a></li><li><a href="#%E4%BA%8B%E4%BB%B6%E5%88%B0%E6%9D%A5%E5%90%8E%E5%88%86%E5%8F%91%E5%A4%84%E7%90%86%E4%B8%8E%E5%9B%9E%E6%89%A7">事件到来后：分发、处理与回执</a></li><li><a href="#%E6%8C%89%E8%A7%A6%E5%8F%91%E9%A2%91%E7%8E%87%E7%90%86%E8%A7%A3%E5%90%84%E9%98%B6%E6%AE%B5">按触发频率理解各阶段</a></li><li><a href="#%E6%8E%92%E6%9F%A5%E6%96%B9%E6%B3%95%E4%B8%8E%E5%85%B3%E9%94%AE%E7%BB%93%E8%AE%BA">排查方法与关键结论</a></li></ol></nav></details><article class="prose" id="content"><p>输入系统负责把硬件输入事件送到正确的窗口，再由 App 分发到 View。它的核心组件跑在 <code>system_server</code> 的 native inputflinger 里，并依赖 WMS 提供窗口信息。本文按“时间线”组织：从初始化，到窗口通道建立、窗口秩序同步、事件派发、App 接收、对齐帧处理，最后到 finish 回执。</p>
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light"><meta name="theme-color" content="#f7f6f2"><title>Input 输入系统流程</title><meta name="description" content="技术学习与工程实践。"><link rel="icon" href="/favicon.svg?v=7ea8198bf5c60782"><link rel="stylesheet" href="/reader.css?v=7ea8198bf5c60782"><script src="/reader.js?v=7ea8198bf5c60782" defer></script></head><body><div class="reading-progress" aria-hidden="true"></div><a class="skip" href="#main">跳到正文</a><header class="reader-nav"><nav aria-label="站点导航"><a href="/">← 首页</a><a href="/#articles">全部文章 ↗</a></nav></header><div class="reading-layout"><main id="main"><nav class="breadcrumbs" aria-label="当前位置"><a href="/#articles">文章</a><span>/</span><a href="/?category=client#articles">客户端开发</a><span>/</span><span>Android</span><span>/</span><span>系统原理</span></nav>
+  <header class="article-heading"><h1>Input 输入系统流程</h1></header>
+  <details class="mobile-toc"><summary>本篇目录 <span>5 节</span></summary><nav aria-label="本篇目录"><ol><li><a href="#%E8%BE%93%E5%85%A5%E9%93%BE%E8%B7%AF%E6%80%BB%E8%A7%88">输入链路总览</a></li><li><a href="#%E4%BA%8B%E4%BB%B6%E5%88%B0%E6%9D%A5%E5%89%8D%E5%BB%BA%E7%AB%8B%E7%AA%97%E5%8F%A3%E4%B8%8E%E8%BE%93%E5%85%A5%E9%80%9A%E9%81%93">事件到来前：建立窗口与输入通道</a></li><li class="toc-child"><a href="#%E9%98%B6%E6%AE%B5-0%E5%88%9D%E5%A7%8B%E5%8C%96%E5%BC%80%E6%9C%BA%E4%B8%80%E6%AC%A1">阶段 0：初始化（开机一次）</a></li><li class="toc-child"><a href="#%E9%98%B6%E6%AE%B5-1ims-%E4%B8%8E-wms-%E5%BB%BA%E7%AB%8B%E8%81%94%E7%B3%BB">阶段 1：IMS 与 WMS 建立联系</a></li><li class="toc-child"><a href="#%E9%98%B6%E6%AE%B5-2%E7%AA%97%E5%8F%A3%E5%88%9B%E5%BB%BA%E6%97%B6%E5%BB%BA%E7%AB%8B-inputchannel%E6%AF%8F%E6%AC%A1-addwindow">阶段 2：窗口创建时建立 InputChannel（每次 addWindow）</a></li><li class="toc-child"><a href="#%E9%98%B6%E6%AE%B5-3%E7%AA%97%E5%8F%A3%E7%A7%A9%E5%BA%8F%E5%90%8C%E6%AD%A5%E7%AA%97%E5%8F%A3%E5%8F%98%E5%8C%96%E6%97%B6%E4%BD%8E%E9%A2%91">阶段 3：窗口秩序同步（窗口变化时，低频）</a></li><li><a href="#%E4%BA%8B%E4%BB%B6%E5%88%B0%E6%9D%A5%E5%90%8E%E5%88%86%E5%8F%91%E5%A4%84%E7%90%86%E4%B8%8E%E5%9B%9E%E6%89%A7">事件到来后：分发、处理与回执</a></li><li class="toc-child"><a href="#%E9%98%B6%E6%AE%B5-4%E4%BA%8B%E4%BB%B6%E4%BA%A7%E7%94%9F%E4%B8%8E%E6%B4%BE%E5%8F%91%E6%AF%8F%E4%B8%AA%E4%BA%8B%E4%BB%B6%E9%AB%98%E9%A2%91">阶段 4：事件产生与派发（每个事件，高频）</a></li><li class="toc-child"><a href="#%E9%98%B6%E6%AE%B5-5app-%E6%8E%A5%E6%94%B6%E6%AF%8F%E4%B8%AA%E4%BA%8B%E4%BB%B6%E7%BB%8F-inputchannel">阶段 5：App 接收（每个事件，经 InputChannel）</a></li><li class="toc-child"><a href="#%E9%98%B6%E6%AE%B5-6%E5%AF%B9%E9%BD%90%E5%B8%A7%E5%A4%84%E7%90%86%E5%85%B3%E9%94%AE%E4%BA%8B%E4%BB%B6%E5%B0%BD%E5%BF%AB%E9%AB%98%E9%A2%91%E4%BA%8B%E4%BB%B6%E5%AF%B9%E9%BD%90-vsync">阶段 6：对齐帧处理（关键事件尽快，高频事件对齐 VSYNC）</a></li><li class="toc-child"><a href="#%E9%98%B6%E6%AE%B5-7%E5%9B%9E%E6%89%A7%E4%B8%8E-anr%E5%A4%84%E7%90%86%E5%AE%8C">阶段 7：回执与 ANR（处理完）</a></li><li><a href="#%E6%8C%89%E8%A7%A6%E5%8F%91%E9%A2%91%E7%8E%87%E7%90%86%E8%A7%A3%E5%90%84%E9%98%B6%E6%AE%B5">按触发频率理解各阶段</a></li><li><a href="#%E6%8E%92%E6%9F%A5%E6%96%B9%E6%B3%95%E4%B8%8E%E5%85%B3%E9%94%AE%E7%BB%93%E8%AE%BA">排查方法与关键结论</a></li><li class="toc-child"><a href="#%E6%8E%92%E6%9F%A5%E5%B7%A5%E5%85%B7">排查工具</a></li><li class="toc-child"><a href="#%E5%85%B3%E9%94%AE%E7%BB%93%E8%AE%BA">关键结论</a></li></ol></nav></details><article class="prose" id="content"><p>输入系统负责把硬件输入事件送到正确的窗口，再由 App 分发到 View。它的核心组件跑在 <code>system_server</code> 的 native inputflinger 里，并依赖 WMS 提供窗口信息。本文按“时间线”组织：从初始化，到窗口通道建立、窗口秩序同步、事件派发、App 接收、对齐帧处理，最后到 finish 回执。</p>
 <p><img src="/media/88055bd0c77ce998.svg" alt="Android 输入系统时间线" loading="lazy" decoding="async"></p>
 <h2 id="输入链路总览">输入链路总览</h2>
-<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>硬件中断 -&gt; 触摸驱动 -&gt; 内核 input 子系统 -&gt; /dev/input/eventX
+<div class="code-block" data-language="text"><div class="code-label"><span>示意</span></div><pre tabindex="0"><code>硬件中断 -&gt; 触摸驱动 -&gt; 内核 input 子系统 -&gt; /dev/input/eventX
   -&gt; EventHub(读原始事件)
   -&gt; InputReader(加工成规范事件)
   -&gt; InputDispatcher(按窗口/焦点选目标)
@@ -14,7 +14,7 @@
 <p>两个进程边界：读事件、加工、派发在 <code>system_server</code>（native）；View 分发在 App 进程。WMS 也在 <code>system_server</code>，所以窗口信息是同进程同步给 InputDispatcher。</p>
 <h2 id="事件到来前建立窗口与输入通道">事件到来前：建立窗口与输入通道</h2>
 <h3 id="阶段-0初始化开机一次">阶段 0：初始化（开机一次）</h3>
-<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>SystemServer.startOtherServices()
+<div class="code-block" data-language="text"><div class="code-label"><span>示意</span></div><pre tabindex="0"><code>SystemServer.startOtherServices()
   -&gt; new InputManagerService(context)     // Java 门面
   -&gt; JNI 进入 native NativeInputManager
   -&gt; 创建 EventHub / InputReader / InputDispatcher
@@ -25,7 +25,7 @@
 <h3 id="阶段-1ims-与-wms-建立联系">阶段 1：IMS 与 WMS 建立联系</h3>
 <p>WMS 启动后持有 IMS 引用，负责把窗口信息喂给 InputDispatcher。此时还没有应用窗口，窗口快照为空或只含系统窗口。</p>
 <h3 id="阶段-2窗口创建时建立-inputchannel每次-addwindow">阶段 2：窗口创建时建立 InputChannel（每次 addWindow）</h3>
-<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>App: ViewRootImpl.setView
+<div class="code-block" data-language="text"><div class="code-label"><span>示意</span></div><pre tabindex="0"><code>App: ViewRootImpl.setView
   -&gt; IWindowSession.addToDisplay(...)
 WMS:
   -&gt; 创建一对 InputChannel(socketpair)，带 token
@@ -35,14 +35,14 @@ App:
   -&gt; ViewRootImpl 用 client InputChannel 构造 WindowInputEventReceiver
   -&gt; native 把 channel fd 注册进主线程 Looper 的 epoll，创建 InputConsumer</code></pre></div>
 <p>关联关系（用 token 对齐，不互相持有对象）：</p>
-<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>WindowState(WMS)          持有 InputChannel(token = T)
+<div class="code-block" data-language="text"><div class="code-label"><span>示意</span></div><pre tabindex="0"><code>WindowState(WMS)          持有 InputChannel(token = T)
 InputDispatcher           连接表 token T -&gt; Connection(socket)
 InputWindowHandle         描述窗口，内含 token T
 App ViewRootImpl          持有 client 端 InputChannel</code></pre></div>
 <p>一个可接收输入的窗口对应一对 InputChannel；窗口销毁时注销通道、关闭 socket、释放 fd。</p>
 <h3 id="阶段-3窗口秩序同步窗口变化时低频">阶段 3：窗口秩序同步（窗口变化时，低频）</h3>
 <p>InputDispatcher 不自己算窗口秩序，它读 WMS 推送的窗口快照。触发同步的变化包括：</p>
-<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>addWindow / removeWindow
+<div class="code-block" data-language="text"><div class="code-label"><span>示意</span></div><pre tabindex="0"><code>addWindow / removeWindow
 窗口层级 z-order 变化
 焦点窗口变化
 可见性变化
@@ -53,7 +53,7 @@ display 变化(旋转/分屏/多屏)</code></pre></div>
 <p>为什么这样设计：输入事件高频、窗口变化低频，所以由 WMS 在变化时推送快照，派发时 InputDispatcher 只读本地快照，保证低延迟。</p>
 <h2 id="事件到来后分发处理与回执">事件到来后：分发、处理与回执</h2>
 <h3 id="阶段-4事件产生与派发每个事件高频">阶段 4：事件产生与派发（每个事件，高频）</h3>
-<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>硬件中断 -&gt; 触摸驱动 input_report_* / input_sync
+<div class="code-block" data-language="text"><div class="code-label"><span>示意</span></div><pre tabindex="0"><code>硬件中断 -&gt; 触摸驱动 input_report_* / input_sync
   -&gt; 内核 input 子系统 -&gt; evdev -&gt; /dev/input/eventX
 EventHub 读原始 input_event
 InputReader 加工成规范事件(处理多点触控、坐标转换、按键映射)
@@ -65,14 +65,14 @@ InputDispatcher:
   -&gt; 直接写事件</code></pre></div>
 <p>触摸手势有序列绑定：DOWN 命中的窗口决定后续 MOVE/UP 都发给它，所以一个手势不会中途换窗口。</p>
 <h3 id="阶段-5app-接收每个事件经-inputchannel">阶段 5：App 接收（每个事件，经 InputChannel）</h3>
-<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>socket 可读 -&gt; 主线程 Looper 的 epoll 唤醒
+<div class="code-block" data-language="text"><div class="code-label"><span>示意</span></div><pre tabindex="0"><code>socket 可读 -&gt; 主线程 Looper 的 epoll 唤醒
   -&gt; native InputConsumer.consume 从 InputChannel 读事件
   -&gt; NativeInputEventReceiver
   -&gt; InputEventReceiver.onInputEvent(绑定该窗口 InputChannel)
   -&gt; ViewRootImpl.enqueueInputEvent(入 pending 队列)</code></pre></div>
 <p>这里不能省略 InputChannel：<code>onInputEvent</code> 的事件正是从该窗口 InputChannel 的 socket 读出来的，InputEventReceiver 是绑定在这个通道上的。</p>
 <h3 id="阶段-6对齐帧处理关键事件尽快高频事件对齐-vsync">阶段 6：对齐帧处理（关键事件尽快，高频事件对齐 VSYNC）</h3>
-<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>DOWN / UP：通常尽快 doProcessInputEvents 处理，保证响应
+<div class="code-block" data-language="text"><div class="code-label"><span>示意</span></div><pre tabindex="0"><code>DOWN / UP：通常尽快 doProcessInputEvents 处理，保证响应
 MOVE(batched)：
   -&gt; Choreographer.postCallback(CALLBACK_INPUT, consumeBatchedInput)
   -&gt; VSYNC 到来 -&gt; Choreographer.doFrame
@@ -83,7 +83,7 @@ MOVE(batched)：
 <p>关联点：socket 决定事件“何时到达”，Choreographer 决定事件“在哪一帧处理”。ViewRootImpl 的 pending 队列 + <code>CALLBACK_INPUT</code> 回调把两者串起来，让输入、动画、绘制对齐到同一帧，保证输入→状态→动画→绘制自洽。</p>
 <p>主线程只有一个 Looper，同时承载普通 Message、Choreographer 帧回调、InputChannel 的 fd 唤醒。主线程被耗时任务卡住会同时导致输入延迟（ANR）和掉帧。</p>
 <h3 id="阶段-7回执与-anr处理完">阶段 7：回执与 ANR（处理完）</h3>
-<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>处理完 -&gt; finishInputEvent
+<div class="code-block" data-language="text"><div class="code-label"><span>示意</span></div><pre tabindex="0"><code>处理完 -&gt; finishInputEvent
   -&gt; 通过同一 InputChannel 回执给 InputDispatcher
   -&gt; Dispatcher 从 wait queue 移除该事件
 未在超时内 finish -&gt; input dispatching timeout ANR</code></pre></div>
@@ -92,10 +92,10 @@ MOVE(batched)：
 <div class="table-wrap" tabindex="0" role="region" aria-label="数据表格"><table><thead><tr><th scope="col">时机</th><th scope="col">频率</th><th scope="col">做了什么</th></tr></thead><tbody><tr><td>初始化</td><td>开机一次</td><td>启动 EventHub / InputReader / InputDispatcher，EventHub epoll 监听设备</td></tr><tr><td>addWindow</td><td>每次建窗口</td><td>建 InputChannel+token，注册 Connection，App 侧 fd 入 Looper</td></tr><tr><td>窗口变化</td><td>低频</td><td>WMS 推送 InputWindowHandle 快照(token/region/层级/焦点)</td></tr><tr><td>事件派发</td><td>高频</td><td>Reader 加工，Dispatcher 命中窗口，token 找 socket 写事件</td></tr><tr><td>App 接收</td><td>高频</td><td>InputChannel -&gt; InputConsumer -&gt; onInputEvent -&gt; 入队</td></tr><tr><td>对齐帧</td><td>高频</td><td>DOWN/UP 尽快，MOVE 走 Choreographer INPUT 回调对齐 VSYNC</td></tr><tr><td>回执</td><td>每个事件</td><td>finishInputEvent 回执，超时则 ANR</td></tr></tbody></table></div>
 <h2 id="排查方法与关键结论">排查方法与关键结论</h2>
 <h3 id="排查工具">排查工具</h3>
-<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>adb shell getevent -lt /dev/input/eventX  # 驱动/evdev 层原始事件
+<div class="code-block" data-language="text"><div class="code-label"><span>示意</span></div><pre tabindex="0"><code>adb shell getevent -lt /dev/input/eventX  # 驱动/evdev 层原始事件
 adb shell dumpsys input                   # 设备、InputReader、Dispatcher、窗口/焦点、pending
 adb shell dumpsys window                  # WMS 窗口层级/焦点/可触摸区域
 /data/anr/traces.txt                      # input dispatching timeout 时主线程堆栈</code></pre></div>
 <h3 id="关键结论">关键结论</h3>
 <ol start="1"><li><p>InputReader / InputDispatcher 都在 <code>system_server</code> 的 native inputflinger，由 Java 层 IMS 通过 JNI 启动。</p></li><li><p>一个可接收输入的窗口对应一对 InputChannel，addWindow 时建立并以 token 注册到 InputDispatcher。</p></li><li><p>窗口秩序按“状态变化”由 WMS 推送快照，派发时 Dispatcher 只读本地快照，保证低延迟。</p></li><li><p>派发目标：touch 按坐标+层级命中窗口，key/IME 按焦点窗口；用 token 找 socket 直接写事件。</p></li><li><p>App 侧经 InputChannel -&gt; InputConsumer -&gt; InputEventReceiver -&gt; ViewRootImpl 入队，不能省略 InputChannel。</p></li><li><p>socket 决定“何时到达”，Choreographer 决定“哪一帧处理”，两者用 pending 队列和 CALLBACK_INPUT 串联。</p></li><li><p>finish 回执是背压和 input dispatching timeout ANR 判定的基础。</p></li></ol></article><footer class="article-footer"><a href="/#articles">← 返回文章列表</a><a href="#main">回到顶部 ↑</a></footer></main>
-  <aside class="desktop-toc"><p>本篇目录</p><nav aria-label="本篇目录"><ol><li><a href="#%E8%BE%93%E5%85%A5%E9%93%BE%E8%B7%AF%E6%80%BB%E8%A7%88">输入链路总览</a></li><li><a href="#%E4%BA%8B%E4%BB%B6%E5%88%B0%E6%9D%A5%E5%89%8D%E5%BB%BA%E7%AB%8B%E7%AA%97%E5%8F%A3%E4%B8%8E%E8%BE%93%E5%85%A5%E9%80%9A%E9%81%93">事件到来前：建立窗口与输入通道</a></li><li><a href="#%E4%BA%8B%E4%BB%B6%E5%88%B0%E6%9D%A5%E5%90%8E%E5%88%86%E5%8F%91%E5%A4%84%E7%90%86%E4%B8%8E%E5%9B%9E%E6%89%A7">事件到来后：分发、处理与回执</a></li><li><a href="#%E6%8C%89%E8%A7%A6%E5%8F%91%E9%A2%91%E7%8E%87%E7%90%86%E8%A7%A3%E5%90%84%E9%98%B6%E6%AE%B5">按触发频率理解各阶段</a></li><li><a href="#%E6%8E%92%E6%9F%A5%E6%96%B9%E6%B3%95%E4%B8%8E%E5%85%B3%E9%94%AE%E7%BB%93%E8%AE%BA">排查方法与关键结论</a></li></ol></nav><a class="toc-return" href="/#articles">← 全部文章</a></aside></div></body></html>
+  <aside class="desktop-toc"><p>本篇目录</p><nav aria-label="本篇目录"><ol><li><a href="#%E8%BE%93%E5%85%A5%E9%93%BE%E8%B7%AF%E6%80%BB%E8%A7%88">输入链路总览</a></li><li><a href="#%E4%BA%8B%E4%BB%B6%E5%88%B0%E6%9D%A5%E5%89%8D%E5%BB%BA%E7%AB%8B%E7%AA%97%E5%8F%A3%E4%B8%8E%E8%BE%93%E5%85%A5%E9%80%9A%E9%81%93">事件到来前：建立窗口与输入通道</a></li><li class="toc-child"><a href="#%E9%98%B6%E6%AE%B5-0%E5%88%9D%E5%A7%8B%E5%8C%96%E5%BC%80%E6%9C%BA%E4%B8%80%E6%AC%A1">阶段 0：初始化（开机一次）</a></li><li class="toc-child"><a href="#%E9%98%B6%E6%AE%B5-1ims-%E4%B8%8E-wms-%E5%BB%BA%E7%AB%8B%E8%81%94%E7%B3%BB">阶段 1：IMS 与 WMS 建立联系</a></li><li class="toc-child"><a href="#%E9%98%B6%E6%AE%B5-2%E7%AA%97%E5%8F%A3%E5%88%9B%E5%BB%BA%E6%97%B6%E5%BB%BA%E7%AB%8B-inputchannel%E6%AF%8F%E6%AC%A1-addwindow">阶段 2：窗口创建时建立 InputChannel（每次 addWindow）</a></li><li class="toc-child"><a href="#%E9%98%B6%E6%AE%B5-3%E7%AA%97%E5%8F%A3%E7%A7%A9%E5%BA%8F%E5%90%8C%E6%AD%A5%E7%AA%97%E5%8F%A3%E5%8F%98%E5%8C%96%E6%97%B6%E4%BD%8E%E9%A2%91">阶段 3：窗口秩序同步（窗口变化时，低频）</a></li><li><a href="#%E4%BA%8B%E4%BB%B6%E5%88%B0%E6%9D%A5%E5%90%8E%E5%88%86%E5%8F%91%E5%A4%84%E7%90%86%E4%B8%8E%E5%9B%9E%E6%89%A7">事件到来后：分发、处理与回执</a></li><li class="toc-child"><a href="#%E9%98%B6%E6%AE%B5-4%E4%BA%8B%E4%BB%B6%E4%BA%A7%E7%94%9F%E4%B8%8E%E6%B4%BE%E5%8F%91%E6%AF%8F%E4%B8%AA%E4%BA%8B%E4%BB%B6%E9%AB%98%E9%A2%91">阶段 4：事件产生与派发（每个事件，高频）</a></li><li class="toc-child"><a href="#%E9%98%B6%E6%AE%B5-5app-%E6%8E%A5%E6%94%B6%E6%AF%8F%E4%B8%AA%E4%BA%8B%E4%BB%B6%E7%BB%8F-inputchannel">阶段 5：App 接收（每个事件，经 InputChannel）</a></li><li class="toc-child"><a href="#%E9%98%B6%E6%AE%B5-6%E5%AF%B9%E9%BD%90%E5%B8%A7%E5%A4%84%E7%90%86%E5%85%B3%E9%94%AE%E4%BA%8B%E4%BB%B6%E5%B0%BD%E5%BF%AB%E9%AB%98%E9%A2%91%E4%BA%8B%E4%BB%B6%E5%AF%B9%E9%BD%90-vsync">阶段 6：对齐帧处理（关键事件尽快，高频事件对齐 VSYNC）</a></li><li class="toc-child"><a href="#%E9%98%B6%E6%AE%B5-7%E5%9B%9E%E6%89%A7%E4%B8%8E-anr%E5%A4%84%E7%90%86%E5%AE%8C">阶段 7：回执与 ANR（处理完）</a></li><li><a href="#%E6%8C%89%E8%A7%A6%E5%8F%91%E9%A2%91%E7%8E%87%E7%90%86%E8%A7%A3%E5%90%84%E9%98%B6%E6%AE%B5">按触发频率理解各阶段</a></li><li><a href="#%E6%8E%92%E6%9F%A5%E6%96%B9%E6%B3%95%E4%B8%8E%E5%85%B3%E9%94%AE%E7%BB%93%E8%AE%BA">排查方法与关键结论</a></li><li class="toc-child"><a href="#%E6%8E%92%E6%9F%A5%E5%B7%A5%E5%85%B7">排查工具</a></li><li class="toc-child"><a href="#%E5%85%B3%E9%94%AE%E7%BB%93%E8%AE%BA">关键结论</a></li></ol></nav><a class="toc-return" href="/#articles">← 全部文章</a></aside></div></body></html>

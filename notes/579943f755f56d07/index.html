@@ -1,9 +1,9 @@
-<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light"><meta name="theme-color" content="#f7f6f2"><title>SystemServer 启动服务流程</title><meta name="description" content="技术学习与工程实践。"><link rel="icon" href="/favicon.svg?v=14ae5a412d40f95d"><link rel="stylesheet" href="/reader.css?v=14ae5a412d40f95d"><script src="/reader.js?v=14ae5a412d40f95d" defer></script></head><body><div class="reading-progress" aria-hidden="true"></div><a class="skip" href="#main">跳到正文</a><header class="reader-nav"><nav aria-label="站点导航"><a href="/">← 首页</a><a href="/#articles">全部文章 ↗</a></nav></header><div class="reading-layout"><main id="main"><nav class="breadcrumbs" aria-label="当前位置"><a href="/#articles">文章</a><span>/</span><a href="/?category=client#articles">客户端开发</a><span>/</span><span>Android</span><span>/</span><span>系统原理</span></nav>
-  <header class="article-heading"><p class="article-category">客户端开发</p><h1>SystemServer 启动服务流程</h1></header>
-  <details class="mobile-toc"><summary>本篇目录 <span>4 节</span></summary><nav aria-label="本篇目录"><ol><li><a href="#%E5%90%AF%E5%8A%A8%E5%85%A5%E5%8F%A3%E4%B8%8E%E6%9C%8D%E5%8A%A1%E7%AE%A1%E7%90%86%E5%99%A8">启动入口与服务管理器</a></li><li><a href="#%E6%8C%89%E4%BE%9D%E8%B5%96%E9%A1%BA%E5%BA%8F%E5%90%AF%E5%8A%A8%E4%B8%89%E7%B1%BB%E6%9C%8D%E5%8A%A1">按依赖顺序启动三类服务</a></li><li><a href="#%E9%98%B6%E6%AE%B5%E9%80%9A%E7%9F%A5%E4%B8%8E%E5%BA%94%E7%94%A8%E8%BF%90%E8%A1%8C%E5%87%86%E5%A4%87">阶段通知与应用运行准备</a></li><li><a href="#%E8%AE%BE%E8%AE%A1%E5%8F%96%E8%88%8D">设计取舍</a></li></ol></nav></details><article class="prose" id="content"><p><code>SystemServer</code> 是 <code>system_server</code> 进程里的 Java 入口类，负责把 Android Framework 的系统服务按依赖顺序启动起来。它本身不是具体业务能力的实现，真正的系统逻辑分散在 AMS、PMS、WMS、Power、Display、Input 等服务里。</p>
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light"><meta name="theme-color" content="#f7f6f2"><title>SystemServer 启动服务流程</title><meta name="description" content="技术学习与工程实践。"><link rel="icon" href="/favicon.svg?v=7ea8198bf5c60782"><link rel="stylesheet" href="/reader.css?v=7ea8198bf5c60782"><script src="/reader.js?v=7ea8198bf5c60782" defer></script></head><body><div class="reading-progress" aria-hidden="true"></div><a class="skip" href="#main">跳到正文</a><header class="reader-nav"><nav aria-label="站点导航"><a href="/">← 首页</a><a href="/#articles">全部文章 ↗</a></nav></header><div class="reading-layout"><main id="main"><nav class="breadcrumbs" aria-label="当前位置"><a href="/#articles">文章</a><span>/</span><a href="/?category=client#articles">客户端开发</a><span>/</span><span>Android</span><span>/</span><span>系统原理</span></nav>
+  <header class="article-heading"><h1>SystemServer 启动服务流程</h1></header>
+  <details class="mobile-toc"><summary>本篇目录 <span>4 节</span></summary><nav aria-label="本篇目录"><ol><li><a href="#%E5%90%AF%E5%8A%A8%E5%85%A5%E5%8F%A3%E4%B8%8E%E6%9C%8D%E5%8A%A1%E7%AE%A1%E7%90%86%E5%99%A8">启动入口与服务管理器</a></li><li class="toc-child"><a href="#%E6%95%B4%E4%BD%93%E4%B8%BB%E7%BA%BF">整体主线</a></li><li class="toc-child"><a href="#systemcontext-%E5%92%8C-systemservicemanager">SystemContext 和 SystemServiceManager</a></li><li><a href="#%E6%8C%89%E4%BE%9D%E8%B5%96%E9%A1%BA%E5%BA%8F%E5%90%AF%E5%8A%A8%E4%B8%89%E7%B1%BB%E6%9C%8D%E5%8A%A1">按依赖顺序启动三类服务</a></li><li class="toc-child"><a href="#startbootstrapservices%E5%90%AF%E5%8A%A8%E7%B3%BB%E7%BB%9F%E5%BA%95%E5%BA%A7">startBootstrapServices：启动系统底座</a></li><li class="toc-child"><a href="#startcoreservices%E5%90%AF%E5%8A%A8%E6%A0%B8%E5%BF%83%E8%BF%90%E8%A1%8C%E6%80%81%E6%9C%8D%E5%8A%A1">startCoreServices：启动核心运行态服务</a></li><li class="toc-child"><a href="#startotherservices%E5%90%AF%E5%8A%A8%E5%8A%9F%E8%83%BD%E5%9E%8B%E6%9C%8D%E5%8A%A1">startOtherServices：启动功能型服务</a></li><li><a href="#%E9%98%B6%E6%AE%B5%E9%80%9A%E7%9F%A5%E4%B8%8E%E5%BA%94%E7%94%A8%E8%BF%90%E8%A1%8C%E5%87%86%E5%A4%87">阶段通知与应用运行准备</a></li><li class="toc-child"><a href="#boot-phase%E6%9C%8D%E5%8A%A1%E5%90%AF%E5%8A%A8%E5%90%8E%E7%9A%84%E9%98%B6%E6%AE%B5%E9%80%9A%E7%9F%A5">boot phase：服务启动后的阶段通知</a></li><li class="toc-child"><a href="#amssystemready%E4%BB%8E%E6%9C%8D%E5%8A%A1%E5%88%9D%E5%A7%8B%E5%8C%96%E8%BF%9B%E5%85%A5%E5%BA%94%E7%94%A8%E8%BF%90%E8%A1%8C">AMS.systemReady：从服务初始化进入应用运行</a></li><li><a href="#%E8%AE%BE%E8%AE%A1%E5%8F%96%E8%88%8D">设计取舍</a></li></ol></nav></details><article class="prose" id="content"><p><code>SystemServer</code> 是 <code>system_server</code> 进程里的 Java 入口类，负责把 Android Framework 的系统服务按依赖顺序启动起来。它本身不是具体业务能力的实现，真正的系统逻辑分散在 AMS、PMS、WMS、Power、Display、Input 等服务里。</p>
 <h2 id="启动入口与服务管理器">启动入口与服务管理器</h2>
 <h3 id="整体主线">整体主线</h3>
-<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>Zygote fork system_server
+<div class="code-block" data-language="text"><div class="code-label"><span>示意</span></div><pre tabindex="0"><code>Zygote fork system_server
   -&gt; SystemServer.main()
   -&gt; SystemServer.run()
   -&gt; 创建 SystemContext
@@ -19,7 +19,7 @@
 <h3 id="systemcontext-和-systemservicemanager">SystemContext 和 SystemServiceManager</h3>
 <p><code>SystemContext</code> 是 <code>system_server</code> 内部服务使用的系统级 Context，后续服务访问资源、包信息、配置、ContentResolver 等能力时会依赖它。</p>
 <p><code>SystemServiceManager</code> 是服务生命周期管理器，负责启动继承 <code>SystemService</code> 的服务，并在系统启动阶段变化时通知它们。</p>
-<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>SystemServiceManager.startService(...)
+<div class="code-block" data-language="text"><div class="code-label"><span>示意</span></div><pre tabindex="0"><code>SystemServiceManager.startService(...)
   -&gt; 创建服务对象
   -&gt; 调用 service.onStart()
   -&gt; 后续 boot phase 到来时调用 service.onBootPhase(...)</code></pre></div>
@@ -28,7 +28,7 @@
 <h2 id="按依赖顺序启动三类服务">按依赖顺序启动三类服务</h2>
 <h3 id="startbootstrapservices启动系统底座">startBootstrapServices：启动系统底座</h3>
 <p><code>startBootstrapServices()</code> 启动后续服务依赖的基础能力，典型包括：</p>
-<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>ActivityTaskManagerService / ActivityManagerService
+<div class="code-block" data-language="text"><div class="code-label"><span>示意</span></div><pre tabindex="0"><code>ActivityTaskManagerService / ActivityManagerService
 PowerManagerService / DisplayManagerService
 PackageManagerService / UserManagerService</code></pre></div>
 <p>这一阶段可以理解为：先把后续服务普遍依赖的进程、包、用户、电源和显示等底座建立起来。具体服务之间仍会按照源码依赖穿插初始化。</p>
@@ -38,7 +38,7 @@ PackageManagerService / UserManagerService</code></pre></div>
 <h3 id="startcoreservices启动核心运行态服务">startCoreServices：启动核心运行态服务</h3>
 <p><code>startCoreServices()</code> 启动少量系统运行态核心服务。它们很重要，但通常不是最底层的启动依赖。</p>
 <p>常见服务包括：</p>
-<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>BatteryService
+<div class="code-block" data-language="text"><div class="code-label"><span>示意</span></div><pre tabindex="0"><code>BatteryService
 UsageStatsService
 WebViewUpdateService
 CachedDeviceStateService
@@ -46,7 +46,7 @@ BinderCallsStatsService</code></pre></div>
 <p>这一阶段可以理解为：系统基础调度能力已建立，开始补齐运行态统计、状态感知和核心组件管理能力。</p>
 <h3 id="startotherservices启动功能型服务">startOtherServices：启动功能型服务</h3>
 <p><code>startOtherServices()</code> 是最大的一段，会启动大量面向系统功能的服务。典型包括：</p>
-<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>WindowManagerService / InputManagerService
+<div class="code-block" data-language="text"><div class="code-label"><span>示意</span></div><pre tabindex="0"><code>WindowManagerService / InputManagerService
 Network / Connectivity
 NotificationManagerService
 LocationManagerService
@@ -63,7 +63,7 @@ DevicePolicyManagerService</code></pre></div>
 <h3 id="boot-phase服务启动后的阶段通知">boot phase：服务启动后的阶段通知</h3>
 <p>服务 <code>onStart()</code> 执行完，不代表它已经可以做所有事情。Android 还会用 boot phase 通知服务当前系统启动到了哪个阶段。</p>
 <p>常见阶段包括：</p>
-<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>PHASE_WAIT_FOR_DEFAULT_DISPLAY
+<div class="code-block" data-language="text"><div class="code-label"><span>示意</span></div><pre tabindex="0"><code>PHASE_WAIT_FOR_DEFAULT_DISPLAY
 PHASE_LOCK_SETTINGS_READY
 PHASE_SYSTEM_SERVICES_READY
 PHASE_ACTIVITY_MANAGER_READY
@@ -73,10 +73,10 @@ PHASE_BOOT_COMPLETED</code></pre></div>
 <p>boot phase 不是等 <code>startOtherServices()</code> 全部结束后一次性发送。<code>SystemServer</code> 会在启动过程中按依赖穿插推进，例如 PMS 前等待默认 Display，核心服务完成后再进入 ActivityManager Ready 和允许第三方 App 启动等阶段。</p>
 <h3 id="amssystemready从服务初始化进入应用运行">AMS.systemReady：从服务初始化进入应用运行</h3>
 <p>当 PMS、WMS、Input、Display 等核心链路准备完成后，<code>SystemServer</code> 会显式调用：</p>
-<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>SystemServer.startOtherServices()
+<div class="code-block" data-language="text"><div class="code-label"><span>示意</span></div><pre tabindex="0"><code>SystemServer.startOtherServices()
   -&gt; AMS.systemReady(callback)</code></pre></div>
 <p>这一步不是创建 AMS，而是告诉 AMS：核心系统服务已经准备完成，可以进入启动系统应用和普通应用的阶段。</p>
-<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>SystemServer
+<div class="code-block" data-language="text"><div class="code-label"><span>示意</span></div><pre tabindex="0"><code>SystemServer
   -&gt; AMS.systemReady(...)
   -&gt; 推进 ActivityManager Ready 等 boot phase
   -&gt; 启动 SystemUI、persistent App 和 Launcher
@@ -86,5 +86,5 @@ PHASE_BOOT_COMPLETED</code></pre></div>
 <p>Framework 服务之间依赖复杂，不能无序启动。<code>SystemServer</code> 通过分阶段启动解决三个问题：</p>
 <ol start="1"><li><p>依赖顺序：先建立进程和 Activity 调度底座，再补齐电源、显示、包、窗口和输入，最后启动依赖它们的功能服务。</p></li><li><p>生命周期统一：继承 <code>SystemService</code> 的服务由 <code>SystemServiceManager</code> 统一启动和分发 boot phase。</p></li><li><p>对外可用时机：服务创建、Binder 注册、系统 ready、三方 App 可启动是不同阶段，不能混成一步。</p></li></ol>
 <p>一句话概括：</p>
-<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>SystemServer 负责按依赖顺序搭建 Framework 服务体系；具体系统能力不在 SystemServer 里实现，而在各个 Framework Service 内部实现。</code></pre></div></article><footer class="article-footer"><a href="/#articles">← 返回文章列表</a><a href="#main">回到顶部 ↑</a></footer></main>
-  <aside class="desktop-toc"><p>本篇目录</p><nav aria-label="本篇目录"><ol><li><a href="#%E5%90%AF%E5%8A%A8%E5%85%A5%E5%8F%A3%E4%B8%8E%E6%9C%8D%E5%8A%A1%E7%AE%A1%E7%90%86%E5%99%A8">启动入口与服务管理器</a></li><li><a href="#%E6%8C%89%E4%BE%9D%E8%B5%96%E9%A1%BA%E5%BA%8F%E5%90%AF%E5%8A%A8%E4%B8%89%E7%B1%BB%E6%9C%8D%E5%8A%A1">按依赖顺序启动三类服务</a></li><li><a href="#%E9%98%B6%E6%AE%B5%E9%80%9A%E7%9F%A5%E4%B8%8E%E5%BA%94%E7%94%A8%E8%BF%90%E8%A1%8C%E5%87%86%E5%A4%87">阶段通知与应用运行准备</a></li><li><a href="#%E8%AE%BE%E8%AE%A1%E5%8F%96%E8%88%8D">设计取舍</a></li></ol></nav><a class="toc-return" href="/#articles">← 全部文章</a></aside></div></body></html>
+<div class="code-block" data-language="text"><div class="code-label"><span>示意</span></div><pre tabindex="0"><code>SystemServer 负责按依赖顺序搭建 Framework 服务体系；具体系统能力不在 SystemServer 里实现，而在各个 Framework Service 内部实现。</code></pre></div></article><footer class="article-footer"><a href="/#articles">← 返回文章列表</a><a href="#main">回到顶部 ↑</a></footer></main>
+  <aside class="desktop-toc"><p>本篇目录</p><nav aria-label="本篇目录"><ol><li><a href="#%E5%90%AF%E5%8A%A8%E5%85%A5%E5%8F%A3%E4%B8%8E%E6%9C%8D%E5%8A%A1%E7%AE%A1%E7%90%86%E5%99%A8">启动入口与服务管理器</a></li><li class="toc-child"><a href="#%E6%95%B4%E4%BD%93%E4%B8%BB%E7%BA%BF">整体主线</a></li><li class="toc-child"><a href="#systemcontext-%E5%92%8C-systemservicemanager">SystemContext 和 SystemServiceManager</a></li><li><a href="#%E6%8C%89%E4%BE%9D%E8%B5%96%E9%A1%BA%E5%BA%8F%E5%90%AF%E5%8A%A8%E4%B8%89%E7%B1%BB%E6%9C%8D%E5%8A%A1">按依赖顺序启动三类服务</a></li><li class="toc-child"><a href="#startbootstrapservices%E5%90%AF%E5%8A%A8%E7%B3%BB%E7%BB%9F%E5%BA%95%E5%BA%A7">startBootstrapServices：启动系统底座</a></li><li class="toc-child"><a href="#startcoreservices%E5%90%AF%E5%8A%A8%E6%A0%B8%E5%BF%83%E8%BF%90%E8%A1%8C%E6%80%81%E6%9C%8D%E5%8A%A1">startCoreServices：启动核心运行态服务</a></li><li class="toc-child"><a href="#startotherservices%E5%90%AF%E5%8A%A8%E5%8A%9F%E8%83%BD%E5%9E%8B%E6%9C%8D%E5%8A%A1">startOtherServices：启动功能型服务</a></li><li><a href="#%E9%98%B6%E6%AE%B5%E9%80%9A%E7%9F%A5%E4%B8%8E%E5%BA%94%E7%94%A8%E8%BF%90%E8%A1%8C%E5%87%86%E5%A4%87">阶段通知与应用运行准备</a></li><li class="toc-child"><a href="#boot-phase%E6%9C%8D%E5%8A%A1%E5%90%AF%E5%8A%A8%E5%90%8E%E7%9A%84%E9%98%B6%E6%AE%B5%E9%80%9A%E7%9F%A5">boot phase：服务启动后的阶段通知</a></li><li class="toc-child"><a href="#amssystemready%E4%BB%8E%E6%9C%8D%E5%8A%A1%E5%88%9D%E5%A7%8B%E5%8C%96%E8%BF%9B%E5%85%A5%E5%BA%94%E7%94%A8%E8%BF%90%E8%A1%8C">AMS.systemReady：从服务初始化进入应用运行</a></li><li><a href="#%E8%AE%BE%E8%AE%A1%E5%8F%96%E8%88%8D">设计取舍</a></li></ol></nav><a class="toc-return" href="/#articles">← 全部文章</a></aside></div></body></html>

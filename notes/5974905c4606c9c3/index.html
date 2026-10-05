@@ -1,13 +1,13 @@
-<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light"><meta name="theme-color" content="#f7f6f2"><title>WebRTC 连接建立：SDP、ICE 与 DTLS/SRTP</title><meta name="description" content="技术学习与工程实践。"><link rel="icon" href="/favicon.svg?v=14ae5a412d40f95d"><link rel="stylesheet" href="/reader.css?v=14ae5a412d40f95d"><script src="/reader.js?v=14ae5a412d40f95d" defer></script></head><body><div class="reading-progress" aria-hidden="true"></div><a class="skip" href="#main">跳到正文</a><header class="reader-nav"><nav aria-label="站点导航"><a href="/">← 首页</a><a href="/#articles">全部文章 ↗</a></nav></header><div class="reading-layout"><main id="main"><nav class="breadcrumbs" aria-label="当前位置"><a href="/#articles">文章</a><span>/</span><a href="/?category=media#articles">音视频</a><span>/</span><span>WebRTC</span></nav>
-  <header class="article-heading"><p class="article-category">音视频</p><h1>WebRTC 连接建立：SDP、ICE 与 DTLS/SRTP</h1></header>
-  <details class="mobile-toc"><summary>本篇目录 <span>5 节</span></summary><nav aria-label="本篇目录"><ol><li><a href="#%E8%AE%A8%E8%AE%BA%E8%8C%83%E5%9B%B4%E4%B8%8E%E5%BB%BA%E8%BF%9E%E7%9B%AE%E6%A0%87">讨论范围与建连目标</a></li><li><a href="#%E5%8D%8F%E8%AE%AE%E5%88%86%E5%B7%A5%E5%8D%8F%E5%95%86%E6%8E%A2%E8%B7%AF%E4%B8%8E%E5%AF%86%E9%92%A5%E5%BB%BA%E7%AB%8B">协议分工：协商、探路与密钥建立</a></li><li><a href="#%E6%95%B4%E4%BD%93%E6%97%B6%E5%BA%8F%E4%B8%8E%E7%AD%89%E5%BE%85%E6%88%90%E6%9C%AC">整体时序与等待成本</a></li><li><a href="#%E4%BA%91%E6%B8%B8%E6%88%8F%E6%8E%A5%E5%85%A5%E6%96%B9%E6%A1%88%E4%B8%8E%E9%80%82%E7%94%A8%E8%BE%B9%E7%95%8C">云游戏接入方案与适用边界</a></li><li><a href="#%E7%BB%93%E8%AE%BA">结论</a></li></ol></nav></details><article class="prose" id="content"><p>本文说明媒体发送前的能力协商、路径探测和加密握手，并讨论一种云游戏接入方案。</p>
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light"><meta name="theme-color" content="#f7f6f2"><title>WebRTC 连接建立：SDP、ICE 与 DTLS/SRTP</title><meta name="description" content="技术学习与工程实践。"><link rel="icon" href="/favicon.svg?v=7ea8198bf5c60782"><link rel="stylesheet" href="/reader.css?v=7ea8198bf5c60782"><script src="/reader.js?v=7ea8198bf5c60782" defer></script></head><body><div class="reading-progress" aria-hidden="true"></div><a class="skip" href="#main">跳到正文</a><header class="reader-nav"><nav aria-label="站点导航"><a href="/">← 首页</a><a href="/#articles">全部文章 ↗</a></nav></header><div class="reading-layout"><main id="main"><nav class="breadcrumbs" aria-label="当前位置"><a href="/#articles">文章</a><span>/</span><a href="/?category=media#articles">音视频</a><span>/</span><span>WebRTC</span></nav>
+  <header class="article-heading"><h1>WebRTC 连接建立：SDP、ICE 与 DTLS/SRTP</h1></header>
+  <details class="mobile-toc"><summary>本篇目录 <span>5 节</span></summary><nav aria-label="本篇目录"><ol><li><a href="#%E8%AE%A8%E8%AE%BA%E8%8C%83%E5%9B%B4%E4%B8%8E%E5%BB%BA%E8%BF%9E%E7%9B%AE%E6%A0%87">讨论范围与建连目标</a></li><li class="toc-child"><a href="#%E8%AE%A8%E8%AE%BA%E8%8C%83%E5%9B%B4">讨论范围</a></li><li class="toc-child"><a href="#%E6%A0%B8%E5%BF%83%E6%9C%BA%E5%88%B6">核心机制</a></li><li><a href="#%E5%8D%8F%E8%AE%AE%E5%88%86%E5%B7%A5%E5%8D%8F%E5%95%86%E6%8E%A2%E8%B7%AF%E4%B8%8E%E5%AF%86%E9%92%A5%E5%BB%BA%E7%AB%8B">协议分工：协商、探路与密钥建立</a></li><li class="toc-child"><a href="#sdp%E8%B0%88%E5%AA%92%E4%BD%93%E8%83%BD%E5%8A%9B%E5%92%8C%E4%BC%A0%E8%BE%93%E5%8F%82%E6%95%B0">SDP：谈媒体能力和传输参数</a></li><li class="toc-child"><a href="#ice%E5%81%9A%E8%BF%9E%E9%80%9A%E6%80%A7%E6%A3%80%E6%9F%A5%E5%92%8C%E8%B7%AF%E5%BE%84%E9%80%89%E6%8B%A9">ICE：做连通性检查和路径选择</a></li><li class="toc-child"><a href="#dtlssrtp%E6%8F%A1%E6%89%8B%E9%AA%8C%E8%BA%AB%E4%BB%BD%E5%8A%A0%E5%AF%86%E5%AA%92%E4%BD%93">DTLS/SRTP：握手、验身份、加密媒体</a></li><li><a href="#%E6%95%B4%E4%BD%93%E6%97%B6%E5%BA%8F%E4%B8%8E%E7%AD%89%E5%BE%85%E6%88%90%E6%9C%AC">整体时序与等待成本</a></li><li class="toc-child"><a href="#%E6%B5%81%E7%A8%8B%E5%9B%BE%E6%A0%87%E5%87%86-webrtc-%E4%B8%8E%E4%BA%91%E6%B8%B8%E6%88%8F%E8%BF%9E%E6%8E%A5%E5%BB%BA%E7%AB%8B%E5%AF%B9%E7%85%A7">流程图：标准 WebRTC 与云游戏连接建立对照</a></li><li class="toc-child"><a href="#%E6%A0%87%E5%87%86-webrtc-%E7%9A%84%E5%BB%BA%E8%BF%9E%E8%80%97%E6%97%B6%E5%9C%A8%E5%93%AA%E9%87%8C">标准 WebRTC 的建连耗时在哪里</a></li><li><a href="#%E4%BA%91%E6%B8%B8%E6%88%8F%E6%8E%A5%E5%85%A5%E6%96%B9%E6%A1%88%E4%B8%8E%E9%80%82%E7%94%A8%E8%BE%B9%E7%95%8C">云游戏接入方案与适用边界</a></li><li class="toc-child"><a href="#%E4%BA%91%E6%B8%B8%E6%88%8F%E8%BF%9E%E6%8E%A5%E5%BB%BA%E7%AB%8B%E4%B8%BA%E4%BB%80%E4%B9%88%E8%A6%81%E6%94%B9%E9%80%A0">云游戏连接建立为什么要改造</a></li><li class="toc-child"><a href="#%E4%BA%91%E6%B8%B8%E6%88%8F%E4%B8%8E%E6%A0%87%E5%87%86-webrtc-%E7%9A%84%E5%85%B3%E9%94%AE%E5%B7%AE%E5%BC%82">云游戏与标准 WebRTC 的关键差异</a></li><li><a href="#%E7%BB%93%E8%AE%BA">结论</a></li></ol></nav></details><article class="prose" id="content"><p>本文说明媒体发送前的能力协商、路径探测和加密握手，并讨论一种云游戏接入方案。</p>
 <h2 id="讨论范围与建连目标">讨论范围与建连目标</h2>
 <h3 id="讨论范围">讨论范围</h3>
 <p>本文只讨论连接建立阶段：SDP、ICE、DTLS/SRTP，以及云游戏连接建立的对照。</p>
 <p>不展开 RTP/RTCP 媒体包、拥塞控制、Pacer、JitterBuffer、NACK、FEC、DataChannel，这些不在本文范围内。</p>
 <h3 id="核心机制">核心机制</h3>
 <p>WebRTC 连接建立解决三件事：</p>
-<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>SDP：谈清楚“用什么媒体能力和传输参数”
+<div class="code-block" data-language="text"><div class="code-label"><span>示意</span></div><pre tabindex="0"><code>SDP：谈清楚“用什么媒体能力和传输参数”
 ICE：找出“一条真正能通的网络路径”
 DTLS/SRTP：在这条路径上完成身份校验、密钥协商和媒体加密</code></pre></div>
 <p>它的设计目标是在未知设备能力、未知 NAT 环境、未知业务信令的前提下，尽量建立一条安全、低延迟、可传 RTP/RTCP 的通路。</p>
@@ -17,7 +17,7 @@ DTLS/SRTP：在这条路径上完成身份校验、密钥协商和媒体加密</
 <p>SDP 里通常会描述这些信息：</p>
 <ul><li><p>媒体类型：音频、视频、数据通道。</p></li><li><p>媒体方向：sendrecv、sendonly、recvonly、inactive。</p></li><li><p>编解码能力：H264、VP8、VP9、AV1、Opus，以及对应的 fmtp 参数。</p></li><li><p>RTP 扩展：例如 TWCC、abs-send-time、audio-level、video-orientation。</p></li><li><p>ICE 参数：ice-ufrag、ice-pwd，用于后续 ICE 连通性检查认证。</p></li><li><p>DTLS 指纹：fingerprint，用于后续 DTLS 握手时校验证书。</p></li><li><p>BUNDLE / RTCP mux：把多路媒体复用到同一条传输连接上，减少端口和 ICE 检查成本。</p></li></ul>
 <p>Offer / Answer 的含义是：一端先提出自己能支持和想使用的能力，另一端在自己的能力范围内选择双方交集并返回结果。</p>
-<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>A createOffer
+<div class="code-block" data-language="text"><div class="code-label"><span>示意</span></div><pre tabindex="0"><code>A createOffer
   → A setLocalDescription(offer)
   → 通过业务信令发给 B
   → B setRemoteDescription(offer)
@@ -31,7 +31,7 @@ DTLS/SRTP：在这条路径上完成身份校验、密钥协商和媒体加密</
 <p>常见 candidate 类型：</p>
 <div class="table-wrap" tabindex="0" role="region" aria-label="数据表格"><table><thead><tr><th scope="col">类型</th><th scope="col">含义</th><th scope="col">特点</th></tr></thead><tbody><tr><td>host</td><td>本机网卡地址</td><td>同局域网可能直连，公网不可直接访问内网地址</td></tr><tr><td>srflx</td><td>STUN 看到的公网映射地址</td><td>普通 NAT 下可能可用</td></tr><tr><td>relay</td><td>TURN 中继地址</td><td>成功率最高，但延迟和成本最高</td></tr></tbody></table></div>
 <p>ICE 的基本过程：</p>
-<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>收集本端 candidate
+<div class="code-block" data-language="text"><div class="code-label"><span>示意</span></div><pre tabindex="0"><code>收集本端 candidate
   → 通过业务信令交换 candidate
   → 双方 candidate 两两组成 candidate pair
   → 对每个 pair 发送 STUN binding request
@@ -41,12 +41,12 @@ DTLS/SRTP：在这条路径上完成身份校验、密钥协商和媒体加密</
 <h3 id="dtlssrtp握手验身份加密媒体">DTLS/SRTP：握手、验身份、加密媒体</h3>
 <p>ICE 选出路径后，媒体还不能明文传。WebRTC 强制加密，所以需要 DTLS/SRTP。</p>
 <p>准确分工是：</p>
-<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>DTLS：在 UDP 路径上握手、验证 SDP fingerprint、协商密钥
+<div class="code-block" data-language="text"><div class="code-label"><span>示意</span></div><pre tabindex="0"><code>DTLS：在 UDP 路径上握手、验证 SDP fingerprint、协商密钥
 SRTP：使用 DTLS 导出的密钥，加密真正的 RTP/RTCP 媒体包</code></pre></div>
 <p>为什么不是直接用 DTLS 加密每个 RTP 包？因为实时媒体包频率高、延迟敏感，SRTP 更贴合 RTP/RTCP 的格式和开销模型。DTLS 主要负责握手和密钥导出，媒体传输阶段由 SRTP/SRTCP 承担。</p>
 <h2 id="整体时序与等待成本">整体时序与等待成本</h2>
 <h3 id="流程图标准-webrtc-与云游戏连接建立对照">流程图：标准 WebRTC 与云游戏连接建立对照</h3>
-<div class="code-block"><div class="code-label">Mermaid · 流程图源码</div><pre tabindex="0"><code>flowchart LR
+<div class="code-block" data-language="mermaid"><div class="code-label"><span>Mermaid · 流程图源码</span></div><pre tabindex="0"><code>flowchart LR
   subgraph W[标准 WebRTC 建连]
     W1[createOffer / createAnswer&lt;br/&gt;生成 SDP] --&gt; W2[业务信令交换 SDP&lt;br/&gt;WebRTC 不规定信令协议]
     W2 --&gt; W3[收集 ICE candidate&lt;br/&gt;host / srflx / relay]
@@ -76,7 +76,7 @@ SRTP：使用 DTLS 导出的密钥，加密真正的 RTP/RTCP 媒体包</code></
 <h3 id="云游戏连接建立为什么要改造">云游戏连接建立为什么要改造</h3>
 <p>云游戏和普通 WebRTC 通话不一样。普通 WebRTC 是两个对等端实时通话；云游戏更接近“客户端连接一个云端实例/媒体服务”，并且强关注首帧和操作跟手。</p>
 <p>以下以包含业务调度、P2S 保底和 P2P 升级的云游戏接入方案为例；这不是所有云游戏平台的统一实现：</p>
-<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>业务请求（例如 pod_start / launch）
+<div class="code-block" data-language="text"><div class="code-label"><span>示意</span></div><pre tabindex="0"><code>业务请求（例如 pod_start / launch）
   → 分配云端实例或接入节点
   → 返回 room_id、token、pod_user_id、媒体/信令接入信息
   → 客户端基于这些信息进入 RTC 建连与推拉流</code></pre></div>
@@ -86,6 +86,6 @@ SRTP：使用 DTLS 导出的密钥，加密真正的 RTP/RTCP 媒体包</code></
 <p>这里要注意：云游戏不是完全抛弃 WebRTC 机制。它仍然可能使用 SDP、ICE、SRTP 这些基础能力，只是把业务调度、接入服务、P2S/P2P 选择、预置信息和推拉流信令做了工程化封装。</p>
 <h2 id="结论">结论</h2>
 <p>这条连接建立链路可以压缩成一句话：</p>
-<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>SDP 谈参数，ICE 找路径，DTLS 协商密钥，SRTP 保护媒体。</code></pre></div>
+<div class="code-block" data-language="text"><div class="code-label"><span>示意</span></div><pre tabindex="0"><code>SDP 谈参数，ICE 找路径，DTLS 协商密钥，SRTP 保护媒体。</code></pre></div>
 <p>云游戏在这条链路上的优化目标不是改变 WebRTC 的基本物理问题，而是把“找谁连、怎么更快连上、首帧怎么更快到、后续能否升级更低延迟路径”这些业务和传输决策前置、工程化。</p></article><footer class="article-footer"><a href="/#articles">← 返回文章列表</a><a href="#main">回到顶部 ↑</a></footer></main>
-  <aside class="desktop-toc"><p>本篇目录</p><nav aria-label="本篇目录"><ol><li><a href="#%E8%AE%A8%E8%AE%BA%E8%8C%83%E5%9B%B4%E4%B8%8E%E5%BB%BA%E8%BF%9E%E7%9B%AE%E6%A0%87">讨论范围与建连目标</a></li><li><a href="#%E5%8D%8F%E8%AE%AE%E5%88%86%E5%B7%A5%E5%8D%8F%E5%95%86%E6%8E%A2%E8%B7%AF%E4%B8%8E%E5%AF%86%E9%92%A5%E5%BB%BA%E7%AB%8B">协议分工：协商、探路与密钥建立</a></li><li><a href="#%E6%95%B4%E4%BD%93%E6%97%B6%E5%BA%8F%E4%B8%8E%E7%AD%89%E5%BE%85%E6%88%90%E6%9C%AC">整体时序与等待成本</a></li><li><a href="#%E4%BA%91%E6%B8%B8%E6%88%8F%E6%8E%A5%E5%85%A5%E6%96%B9%E6%A1%88%E4%B8%8E%E9%80%82%E7%94%A8%E8%BE%B9%E7%95%8C">云游戏接入方案与适用边界</a></li><li><a href="#%E7%BB%93%E8%AE%BA">结论</a></li></ol></nav><a class="toc-return" href="/#articles">← 全部文章</a></aside></div></body></html>
+  <aside class="desktop-toc"><p>本篇目录</p><nav aria-label="本篇目录"><ol><li><a href="#%E8%AE%A8%E8%AE%BA%E8%8C%83%E5%9B%B4%E4%B8%8E%E5%BB%BA%E8%BF%9E%E7%9B%AE%E6%A0%87">讨论范围与建连目标</a></li><li class="toc-child"><a href="#%E8%AE%A8%E8%AE%BA%E8%8C%83%E5%9B%B4">讨论范围</a></li><li class="toc-child"><a href="#%E6%A0%B8%E5%BF%83%E6%9C%BA%E5%88%B6">核心机制</a></li><li><a href="#%E5%8D%8F%E8%AE%AE%E5%88%86%E5%B7%A5%E5%8D%8F%E5%95%86%E6%8E%A2%E8%B7%AF%E4%B8%8E%E5%AF%86%E9%92%A5%E5%BB%BA%E7%AB%8B">协议分工：协商、探路与密钥建立</a></li><li class="toc-child"><a href="#sdp%E8%B0%88%E5%AA%92%E4%BD%93%E8%83%BD%E5%8A%9B%E5%92%8C%E4%BC%A0%E8%BE%93%E5%8F%82%E6%95%B0">SDP：谈媒体能力和传输参数</a></li><li class="toc-child"><a href="#ice%E5%81%9A%E8%BF%9E%E9%80%9A%E6%80%A7%E6%A3%80%E6%9F%A5%E5%92%8C%E8%B7%AF%E5%BE%84%E9%80%89%E6%8B%A9">ICE：做连通性检查和路径选择</a></li><li class="toc-child"><a href="#dtlssrtp%E6%8F%A1%E6%89%8B%E9%AA%8C%E8%BA%AB%E4%BB%BD%E5%8A%A0%E5%AF%86%E5%AA%92%E4%BD%93">DTLS/SRTP：握手、验身份、加密媒体</a></li><li><a href="#%E6%95%B4%E4%BD%93%E6%97%B6%E5%BA%8F%E4%B8%8E%E7%AD%89%E5%BE%85%E6%88%90%E6%9C%AC">整体时序与等待成本</a></li><li class="toc-child"><a href="#%E6%B5%81%E7%A8%8B%E5%9B%BE%E6%A0%87%E5%87%86-webrtc-%E4%B8%8E%E4%BA%91%E6%B8%B8%E6%88%8F%E8%BF%9E%E6%8E%A5%E5%BB%BA%E7%AB%8B%E5%AF%B9%E7%85%A7">流程图：标准 WebRTC 与云游戏连接建立对照</a></li><li class="toc-child"><a href="#%E6%A0%87%E5%87%86-webrtc-%E7%9A%84%E5%BB%BA%E8%BF%9E%E8%80%97%E6%97%B6%E5%9C%A8%E5%93%AA%E9%87%8C">标准 WebRTC 的建连耗时在哪里</a></li><li><a href="#%E4%BA%91%E6%B8%B8%E6%88%8F%E6%8E%A5%E5%85%A5%E6%96%B9%E6%A1%88%E4%B8%8E%E9%80%82%E7%94%A8%E8%BE%B9%E7%95%8C">云游戏接入方案与适用边界</a></li><li class="toc-child"><a href="#%E4%BA%91%E6%B8%B8%E6%88%8F%E8%BF%9E%E6%8E%A5%E5%BB%BA%E7%AB%8B%E4%B8%BA%E4%BB%80%E4%B9%88%E8%A6%81%E6%94%B9%E9%80%A0">云游戏连接建立为什么要改造</a></li><li class="toc-child"><a href="#%E4%BA%91%E6%B8%B8%E6%88%8F%E4%B8%8E%E6%A0%87%E5%87%86-webrtc-%E7%9A%84%E5%85%B3%E9%94%AE%E5%B7%AE%E5%BC%82">云游戏与标准 WebRTC 的关键差异</a></li><li><a href="#%E7%BB%93%E8%AE%BA">结论</a></li></ol></nav><a class="toc-return" href="/#articles">← 全部文章</a></aside></div></body></html>

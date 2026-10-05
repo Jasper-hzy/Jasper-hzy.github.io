@@ -1,42 +1,42 @@
-<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light"><meta name="theme-color" content="#f7f6f2"><title>C++ 容器：对象存储、地址失效与选型</title><meta name="description" content="技术学习与工程实践。"><link rel="icon" href="/favicon.svg?v=14ae5a412d40f95d"><link rel="stylesheet" href="/reader.css?v=14ae5a412d40f95d"><script src="/reader.js?v=14ae5a412d40f95d" defer></script></head><body><div class="reading-progress" aria-hidden="true"></div><a class="skip" href="#main">跳到正文</a><header class="reader-nav"><nav aria-label="站点导航"><a href="/">← 首页</a><a href="/#articles">全部文章 ↗</a></nav></header><div class="reading-layout"><main id="main"><nav class="breadcrumbs" aria-label="当前位置"><a href="/#articles">文章</a><span>/</span><a href="/?category=fundamentals#articles">编程与系统基础</a><span>/</span><span>C++</span></nav>
-  <header class="article-heading"><p class="article-category">编程与系统基础</p><h1>C++ 容器：对象存储、地址失效与选型</h1></header>
-  <details class="mobile-toc"><summary>本篇目录 <span>4 节</span></summary><nav aria-label="本篇目录"><ol><li><a href="#%E5%85%88%E6%98%8E%E7%A1%AE%E5%AE%B9%E5%99%A8%E4%BF%9D%E5%AD%98%E7%9A%84%E6%98%AF%E5%AF%B9%E8%B1%A1%E8%BF%98%E6%98%AF%E6%8C%87%E9%92%88">先明确容器保存的是对象还是指针</a></li><li><a href="#%E9%A1%BA%E5%BA%8F%E5%AE%B9%E5%99%A8%E5%86%85%E5%AD%98%E5%B8%83%E5%B1%80%E6%8F%92%E5%85%A5%E4%B8%8E%E5%9C%B0%E5%9D%80%E5%A4%B1%E6%95%88">顺序容器：内存布局、插入与地址失效</a></li><li><a href="#%E5%85%B3%E8%81%94%E5%AE%B9%E5%99%A8%E9%A1%BA%E5%BA%8F%E5%A4%8D%E6%9D%82%E5%BA%A6%E4%B8%8E%E5%93%88%E5%B8%8C%E8%A1%8C%E4%B8%BA">关联容器：顺序、复杂度与哈希行为</a></li><li><a href="#%E8%A6%81%E7%82%B9%E5%9B%9E%E9%A1%BE">要点回顾</a></li></ol></nav></details><article class="prose" id="content"><p>容器选择需要同时考虑元素的所有权、访问方式和句柄稳定性。本文比较 vector、map 与 unordered_map，并说明插入或扩容对对象地址和迭代器的影响。</p>
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light"><meta name="theme-color" content="#f7f6f2"><title>C++ 容器：对象存储、地址失效与选型</title><meta name="description" content="技术学习与工程实践。"><link rel="icon" href="/favicon.svg?v=7ea8198bf5c60782"><link rel="stylesheet" href="/reader.css?v=7ea8198bf5c60782"><script src="/reader.js?v=7ea8198bf5c60782" defer></script></head><body><div class="reading-progress" aria-hidden="true"></div><a class="skip" href="#main">跳到正文</a><header class="reader-nav"><nav aria-label="站点导航"><a href="/">← 首页</a><a href="/#articles">全部文章 ↗</a></nav></header><div class="reading-layout"><main id="main"><nav class="breadcrumbs" aria-label="当前位置"><a href="/#articles">文章</a><span>/</span><a href="/?category=fundamentals#articles">编程与系统基础</a><span>/</span><span>C++</span></nav>
+  <header class="article-heading"><h1>C++ 容器：对象存储、地址失效与选型</h1></header>
+  <details class="mobile-toc"><summary>本篇目录 <span>4 节</span></summary><nav aria-label="本篇目录"><ol><li><a href="#%E5%85%88%E6%98%8E%E7%A1%AE%E5%AE%B9%E5%99%A8%E4%BF%9D%E5%AD%98%E7%9A%84%E6%98%AF%E5%AF%B9%E8%B1%A1%E8%BF%98%E6%98%AF%E6%8C%87%E9%92%88">先明确容器保存的是对象还是指针</a></li><li><a href="#%E9%A1%BA%E5%BA%8F%E5%AE%B9%E5%99%A8%E5%86%85%E5%AD%98%E5%B8%83%E5%B1%80%E6%8F%92%E5%85%A5%E4%B8%8E%E5%9C%B0%E5%9D%80%E5%A4%B1%E6%95%88">顺序容器：内存布局、插入与地址失效</a></li><li class="toc-child"><a href="#vector-%E6%8C%89%E5%80%BC%E8%BF%9E%E7%BB%AD%E4%BF%9D%E5%AD%98%E5%85%83%E7%B4%A0">vector 按值连续保存元素</a></li><li class="toc-child"><a href="#pushback-%E4%B8%8E-emplaceback">push_back 与 emplace_back</a></li><li><a href="#%E5%85%B3%E8%81%94%E5%AE%B9%E5%99%A8%E9%A1%BA%E5%BA%8F%E5%A4%8D%E6%9D%82%E5%BA%A6%E4%B8%8E%E5%93%88%E5%B8%8C%E8%A1%8C%E4%B8%BA">关联容器：顺序、复杂度与哈希行为</a></li><li><a href="#%E8%A6%81%E7%82%B9%E5%9B%9E%E9%A1%BE">要点回顾</a></li></ol></nav></details><article class="prose" id="content"><p>容器选择需要同时考虑元素的所有权、访问方式和句柄稳定性。本文比较 vector、map 与 unordered_map，并说明插入或扩容对对象地址和迭代器的影响。</p>
 <h2 id="先明确容器保存的是对象还是指针">先明确容器保存的是对象还是指针</h2>
 <p>Java 的 <code>ArrayList&lt;User&gt;</code> 通常保存 GC 引用；C++ 容器保存模板参数指定的类型本身：</p>
-<div class="code-block"><div class="code-label">cpp</div><pre tabindex="0"><code>std::vector&lt;User&gt;                  // 保存对象
-std::vector&lt;std::unique_ptr&lt;User&gt;&gt; // 保存独占所有权指针
-std::vector&lt;std::shared_ptr&lt;User&gt;&gt; // 保存共享所有权指针
-std::vector&lt;User*&gt;                 // 保存不管理生命周期的裸指针</code></pre></div>
+<div class="code-block" data-language="cpp"><div class="code-label"><span>C++</span></div><pre tabindex="0"><code>std::vector&lt;User&gt;                  <span class="syntax-comment">// 保存对象</span>
+std::vector&lt;std::unique_ptr&lt;User&gt;&gt; <span class="syntax-comment">// 保存独占所有权指针</span>
+std::vector&lt;std::shared_ptr&lt;User&gt;&gt; <span class="syntax-comment">// 保存共享所有权指针</span>
+std::vector&lt;User*&gt;                 <span class="syntax-comment">// 保存不管理生命周期的裸指针</span></code></pre></div>
 <p>按值存储具有连续内存、缓存局部性和较少独立分配等优势，代价是扩容时需要处理拷贝、移动和地址失效。</p>
 <h2 id="顺序容器内存布局插入与地址失效">顺序容器：内存布局、插入与地址失效</h2>
 <h3 id="vector-按值连续保存元素"><code>vector</code> 按值连续保存元素</h3>
-<div class="code-block"><div class="code-label">cpp</div><pre tabindex="0"><code>std::vector&lt;User&gt; users;</code></pre></div>
+<div class="code-block" data-language="cpp"><div class="code-label"><span>C++</span></div><pre tabindex="0"><code>std::vector&lt;User&gt; users;</code></pre></div>
 <p><code>User</code> 对象直接连续构造在 <code>vector</code> 的存储中。扩容时容器申请更大的连续内存，移动或复制旧元素，再释放旧内存：</p>
-<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>旧内存：[A][B][C]
+<div class="code-block" data-language="text"><div class="code-label"><span>示意</span></div><pre tabindex="0"><code>旧内存：[A][B][C]
 新内存：[A][B][C][新元素]</code></pre></div>
 <p>发生扩容后，旧元素的指针、引用和迭代器全部失效。长期定位元素时可以保存下标并在使用时重新访问，或者根据所有权需求存储智能指针：</p>
-<div class="code-block"><div class="code-label">cpp</div><pre tabindex="0"><code>std::vector&lt;std::unique_ptr&lt;User&gt;&gt; users;</code></pre></div>
+<div class="code-block" data-language="cpp"><div class="code-label"><span>C++</span></div><pre tabindex="0"><code>std::vector&lt;std::unique_ptr&lt;User&gt;&gt; users;</code></pre></div>
 <p>后者扩容时移动的是 <code>unique_ptr</code>，其管理的堆对象通常保持原地址，但对象被删除或替换时，借用指针仍会悬空。</p>
 <p><code>reserve(n)</code> 可以减少达到预期规模前的扩容次数，但超过容量后仍可能扩容。</p>
 <h3 id="pushback-与-emplaceback"><code>push_back</code> 与 <code>emplace_back</code></h3>
 <p><code>push_back</code> 接收已经构造好的元素：</p>
-<div class="code-block"><div class="code-label">cpp</div><pre tabindex="0"><code>users.push_back(User(&quot;Alice&quot;, 18));</code></pre></div>
+<div class="code-block" data-language="cpp"><div class="code-label"><span>C++</span></div><pre tabindex="0"><code>users.push_back(User(<span class="syntax-string">&quot;Alice&quot;</span>, <span class="syntax-number">18</span>));</code></pre></div>
 <p><code>emplace_back</code> 接收构造参数，在新元素位置直接构造：</p>
-<div class="code-block"><div class="code-label">cpp</div><pre tabindex="0"><code>users.emplace_back(&quot;Alice&quot;, 18);</code></pre></div>
+<div class="code-block" data-language="cpp"><div class="code-label"><span>C++</span></div><pre tabindex="0"><code>users.emplace_back(<span class="syntax-string">&quot;Alice&quot;</span>, <span class="syntax-number">18</span>);</code></pre></div>
 <p>它可能避免新元素临时对象的一次移动或拷贝，但并不总是更快：</p>
 <ul><li><p>已经持有完整对象时，两者都需要拷贝或移动。</p></li><li><p>简单类型通常没有明显区别。</p></li><li><p>扩容时旧元素仍然需要搬迁。</p></li></ul>
 <h2 id="关联容器顺序复杂度与哈希行为">关联容器：顺序、复杂度与哈希行为</h2>
 <div class="table-wrap" tabindex="0" role="region" aria-label="数据表格"><table><thead><tr><th scope="col">项目</th><th scope="col"><code>std::map</code></th><th scope="col"><code>std::unordered_map</code></th></tr></thead><tbody><tr><td>常见实现</td><td>平衡搜索树</td><td>哈希表</td></tr><tr><td>查询、插入、删除</td><td><code>O(log n)</code></td><td>平均 <code>O(1)</code>，最坏 <code>O(n)</code></td></tr><tr><td>顺序</td><td>按 key 排序</td><td>无稳定顺序</td></tr><tr><td>范围查询</td><td>支持</td><td>不适合</td></tr></tbody></table></div>
 <p><code>map</code> 插入通常不使已有迭代器、指针和引用失效，删除只使被删除元素相关句柄失效。</p>
 <p><code>unordered_map</code> 常使用桶数组处理哈希结果。冲突元素可能进入同一个桶的节点结构：</p>
-<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>桶 2：A -&gt; C -&gt; F</code></pre></div>
+<div class="code-block" data-language="text"><div class="code-label"><span>示意</span></div><pre tabindex="0"><code>桶 2：A -&gt; C -&gt; F</code></pre></div>
 <p>负载因子是：</p>
-<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>size() / bucket_count()</code></pre></div>
+<div class="code-block" data-language="text"><div class="code-label"><span>示意</span></div><pre tabindex="0"><code>size() / bucket_count()</code></pre></div>
 <p>超过阈值时，容器申请更多桶并重新分配元素，称为 <code>rehash</code>。<code>rehash</code> 会使迭代器失效；元素指针和引用通常仍有效。单个桶冲突严重并不等于负载因子高，也不保证自动触发 <code>rehash</code>。</p>
-<div class="code-block"><div class="code-label">cpp</div><pre tabindex="0"><code>users.reserve(10000);</code></pre></div>
+<div class="code-block" data-language="cpp"><div class="code-label"><span>C++</span></div><pre tabindex="0"><code>users.reserve(<span class="syntax-number">10000</span>);</code></pre></div>
 <p>可以降低容量增长引发的 <code>rehash</code> 次数，但不能改善劣质哈希函数造成的集中冲突。</p>
 <p>选择原则：</p>
 <ul><li><p>需要排序遍历、范围查询或稳定最坏复杂度：<code>map</code>。</p></li><li><p>高频单 key 查找、无顺序要求且哈希可靠：<code>unordered_map</code>。</p></li></ul>
 <h2 id="要点回顾">要点回顾</h2>
 <p>连续存储有利于局部性，但扩容会影响地址稳定性；树与哈希表则在排序、范围查询和复杂度上各有取舍。reserve 与 emplace_back 只能优化特定成本，不能代替对元素生命周期和访问模式的判断。</p></article><footer class="article-footer"><a href="/#articles">← 返回文章列表</a><a href="#main">回到顶部 ↑</a></footer></main>
-  <aside class="desktop-toc"><p>本篇目录</p><nav aria-label="本篇目录"><ol><li><a href="#%E5%85%88%E6%98%8E%E7%A1%AE%E5%AE%B9%E5%99%A8%E4%BF%9D%E5%AD%98%E7%9A%84%E6%98%AF%E5%AF%B9%E8%B1%A1%E8%BF%98%E6%98%AF%E6%8C%87%E9%92%88">先明确容器保存的是对象还是指针</a></li><li><a href="#%E9%A1%BA%E5%BA%8F%E5%AE%B9%E5%99%A8%E5%86%85%E5%AD%98%E5%B8%83%E5%B1%80%E6%8F%92%E5%85%A5%E4%B8%8E%E5%9C%B0%E5%9D%80%E5%A4%B1%E6%95%88">顺序容器：内存布局、插入与地址失效</a></li><li><a href="#%E5%85%B3%E8%81%94%E5%AE%B9%E5%99%A8%E9%A1%BA%E5%BA%8F%E5%A4%8D%E6%9D%82%E5%BA%A6%E4%B8%8E%E5%93%88%E5%B8%8C%E8%A1%8C%E4%B8%BA">关联容器：顺序、复杂度与哈希行为</a></li><li><a href="#%E8%A6%81%E7%82%B9%E5%9B%9E%E9%A1%BE">要点回顾</a></li></ol></nav><a class="toc-return" href="/#articles">← 全部文章</a></aside></div></body></html>
+  <aside class="desktop-toc"><p>本篇目录</p><nav aria-label="本篇目录"><ol><li><a href="#%E5%85%88%E6%98%8E%E7%A1%AE%E5%AE%B9%E5%99%A8%E4%BF%9D%E5%AD%98%E7%9A%84%E6%98%AF%E5%AF%B9%E8%B1%A1%E8%BF%98%E6%98%AF%E6%8C%87%E9%92%88">先明确容器保存的是对象还是指针</a></li><li><a href="#%E9%A1%BA%E5%BA%8F%E5%AE%B9%E5%99%A8%E5%86%85%E5%AD%98%E5%B8%83%E5%B1%80%E6%8F%92%E5%85%A5%E4%B8%8E%E5%9C%B0%E5%9D%80%E5%A4%B1%E6%95%88">顺序容器：内存布局、插入与地址失效</a></li><li class="toc-child"><a href="#vector-%E6%8C%89%E5%80%BC%E8%BF%9E%E7%BB%AD%E4%BF%9D%E5%AD%98%E5%85%83%E7%B4%A0">vector 按值连续保存元素</a></li><li class="toc-child"><a href="#pushback-%E4%B8%8E-emplaceback">push_back 与 emplace_back</a></li><li><a href="#%E5%85%B3%E8%81%94%E5%AE%B9%E5%99%A8%E9%A1%BA%E5%BA%8F%E5%A4%8D%E6%9D%82%E5%BA%A6%E4%B8%8E%E5%93%88%E5%B8%8C%E8%A1%8C%E4%B8%BA">关联容器：顺序、复杂度与哈希行为</a></li><li><a href="#%E8%A6%81%E7%82%B9%E5%9B%9E%E9%A1%BE">要点回顾</a></li></ol></nav><a class="toc-return" href="/#articles">← 全部文章</a></aside></div></body></html>

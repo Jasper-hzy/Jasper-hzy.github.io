@@ -1,12 +1,12 @@
-<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light"><meta name="theme-color" content="#f7f6f2"><title>Android 渲染上屏流程</title><meta name="description" content="技术学习与工程实践。"><link rel="icon" href="/favicon.svg?v=14ae5a412d40f95d"><link rel="stylesheet" href="/reader.css?v=14ae5a412d40f95d"><script src="/reader.js?v=14ae5a412d40f95d" defer></script></head><body><div class="reading-progress" aria-hidden="true"></div><a class="skip" href="#main">跳到正文</a><header class="reader-nav"><nav aria-label="站点导航"><a href="/">← 首页</a><a href="/#articles">全部文章 ↗</a></nav></header><div class="reading-layout"><main id="main"><nav class="breadcrumbs" aria-label="当前位置"><a href="/#articles">文章</a><span>/</span><a href="/?category=client#articles">客户端开发</a><span>/</span><span>Android</span><span>/</span><span>系统原理</span></nav>
-  <header class="article-heading"><p class="article-category">客户端开发</p><h1>Android 渲染上屏流程</h1></header>
-  <details class="mobile-toc"><summary>本篇目录 <span>4 节</span></summary><nav aria-label="本篇目录"><ol><li><a href="#%E5%BA%94%E7%94%A8%E4%BE%A7%E5%A6%82%E4%BD%95%E7%94%9F%E4%BA%A7%E4%B8%80%E5%B8%A7">应用侧如何生产一帧</a></li><li><a href="#surface-%E4%B8%8E%E7%8B%AC%E7%AB%8B%E5%9B%BE%E5%B1%82%E7%9A%84%E7%BB%84%E7%BB%87">Surface 与独立图层的组织</a></li><li><a href="#%E7%B3%BB%E7%BB%9F%E5%90%88%E6%88%90%E4%B8%8E%E6%98%BE%E7%A4%BA%E8%BE%93%E5%87%BA">系统合成与显示输出</a></li><li><a href="#%E7%BC%93%E5%86%B2%E5%90%8C%E6%AD%A5%E4%B8%8E%E4%BA%91%E6%B8%B8%E6%88%8F%E5%9C%BA%E6%99%AF">缓冲同步与云游戏场景</a></li></ol></nav></details><article class="prose" id="content"><p>这篇文档只围绕一条主线：一帧画面从 App 侧产生，到进入 Surface/BufferQueue，再到 SurfaceFlinger 合成，最后输出到屏幕或虚拟显示。</p>
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light"><meta name="theme-color" content="#f7f6f2"><title>Android 渲染上屏流程</title><meta name="description" content="技术学习与工程实践。"><link rel="icon" href="/favicon.svg?v=7ea8198bf5c60782"><link rel="stylesheet" href="/reader.css?v=7ea8198bf5c60782"><script src="/reader.js?v=7ea8198bf5c60782" defer></script></head><body><div class="reading-progress" aria-hidden="true"></div><a class="skip" href="#main">跳到正文</a><header class="reader-nav"><nav aria-label="站点导航"><a href="/">← 首页</a><a href="/#articles">全部文章 ↗</a></nav></header><div class="reading-layout"><main id="main"><nav class="breadcrumbs" aria-label="当前位置"><a href="/#articles">文章</a><span>/</span><a href="/?category=client#articles">客户端开发</a><span>/</span><span>Android</span><span>/</span><span>系统原理</span></nav>
+  <header class="article-heading"><h1>Android 渲染上屏流程</h1></header>
+  <details class="mobile-toc"><summary>本篇目录 <span>4 节</span></summary><nav aria-label="本篇目录"><ol><li><a href="#%E5%BA%94%E7%94%A8%E4%BE%A7%E5%A6%82%E4%BD%95%E7%94%9F%E4%BA%A7%E4%B8%80%E5%B8%A7">应用侧如何生产一帧</a></li><li class="toc-child"><a href="#%E4%B8%BB%E7%AA%97%E5%8F%A3%E4%BB%8E-vsync-%E5%88%B0-viewrootimpl">主窗口从 VSYNC 到 ViewRootImpl</a></li><li class="toc-child"><a href="#view-%E7%BB%98%E5%88%B6%E5%88%86%E4%B8%BA%E7%A1%AC%E4%BB%B6%E7%BB%98%E5%88%B6%E5%92%8C%E8%BD%AF%E4%BB%B6%E7%BB%98%E5%88%B6">View 绘制分为硬件绘制和软件绘制</a></li><li><a href="#surface-%E4%B8%8E%E7%8B%AC%E7%AB%8B%E5%9B%BE%E5%B1%82%E7%9A%84%E7%BB%84%E7%BB%87">Surface 与独立图层的组织</a></li><li class="toc-child"><a href="#viewrootimplmsurface-%E6%98%AF%E4%B8%BB%E7%AA%97%E5%8F%A3%E7%9A%84-producer-%E5%85%A5%E5%8F%A3">ViewRootImpl#mSurface 是主窗口的 producer 入口</a></li><li class="toc-child"><a href="#surfaceview-%E6%98%AF%E9%A2%9D%E5%A4%96%E7%9A%84%E7%8B%AC%E7%AB%8B-layer">SurfaceView 是额外的独立 Layer</a></li><li><a href="#%E7%B3%BB%E7%BB%9F%E5%90%88%E6%88%90%E4%B8%8E%E6%98%BE%E7%A4%BA%E8%BE%93%E5%87%BA">系统合成与显示输出</a></li><li class="toc-child"><a href="#surfaceflinger-%E5%A6%82%E4%BD%95%E5%90%88%E6%88%90">SurfaceFlinger 如何合成</a></li><li class="toc-child"><a href="#%E5%90%88%E6%88%90%E8%B7%AF%E5%BE%84gpu-%E5%90%88%E6%88%90%E6%88%96-hwc-%E7%A1%AC%E4%BB%B6%E5%90%88%E6%88%90">合成路径：GPU 合成或 HWC 硬件合成</a></li><li class="toc-child"><a href="#%E8%BE%93%E5%87%BA%E7%9B%AE%E6%A0%87%E7%89%A9%E7%90%86%E5%B1%8F%E6%88%96-virtualdisplay">输出目标：物理屏或 VirtualDisplay</a></li><li><a href="#%E7%BC%93%E5%86%B2%E5%90%8C%E6%AD%A5%E4%B8%8E%E4%BA%91%E6%B8%B8%E6%88%8F%E5%9C%BA%E6%99%AF">缓冲同步与云游戏场景</a></li><li class="toc-child"><a href="#81-surfaceview-%E4%B8%8E-textureview">8.1 SurfaceView 与 TextureView</a></li><li class="toc-child"><a href="#82-bufferqueuefence-%E5%92%8C%E4%B8%89%E7%BC%93%E5%86%B2">8.2 BufferQueue、Fence 和三缓冲</a></li><li class="toc-child"><a href="#83-%E4%BD%8E%E5%BB%B6%E8%BF%9F%E5%9C%BA%E6%99%AF%E9%87%8C%E7%9A%84%E5%8F%96%E8%88%8D">8.3 低延迟场景里的取舍</a></li></ol></nav></details><article class="prose" id="content"><p>这篇文档只围绕一条主线：一帧画面从 App 侧产生，到进入 Surface/BufferQueue，再到 SurfaceFlinger 合成，最后输出到屏幕或虚拟显示。</p>
 <p>下面这张图是本文的主图，后文按图从左到右解释。</p>
 <p><img src="/media/2c27700f4a6eeb5f.png" alt="Android Surface 上屏完整流程" loading="lazy" decoding="async"></p>
 <h2 id="应用侧如何生产一帧">应用侧如何生产一帧</h2>
 <h3 id="主窗口从-vsync-到-viewrootimpl">主窗口从 VSYNC 到 ViewRootImpl</h3>
 <p>主窗口的绘制由 VSYNC 驱动。VSYNC 到来后，Choreographer 触发 <code>doFrame</code>，UI 线程进入 ViewRootImpl 的 traversal 流程。</p>
-<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>VSYNC 信号
+<div class="code-block" data-language="text"><div class="code-label"><span>示意</span></div><pre tabindex="0"><code>VSYNC 信号
   -&gt; Choreographer#doFrame
   -&gt; UI 线程 / ViewRootImpl
   -&gt; performTraversals
@@ -16,7 +16,7 @@
 <p>ViewRootImpl 进入 draw 后，会根据是否启用硬件加速走两条路径。</p>
 <h4 id="硬件绘制路径">硬件绘制路径</h4>
 <p>硬件加速开启时，View 的绘制命令会进入 RenderThread 和 HWUI/OpenGL/EGL 路径。</p>
-<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>onDraw / canvas.draw
+<div class="code-block" data-language="text"><div class="code-label"><span>示意</span></div><pre tabindex="0"><code>onDraw / canvas.draw
   -&gt; 硬件加速
   -&gt; RenderThread 执行 draw / 收集 DisplayList
   -&gt; OpenGL / EGL GPU 绘制
@@ -25,7 +25,7 @@
 <p>这里的 <code>GraphicBuffer</code> 是 App 侧最终提交给窗口 Surface 的图形缓冲。硬件绘制并不是直接画到屏幕，而是把 View 树绘制结果写入与窗口 Surface 关联的 buffer。</p>
 <h4 id="软件绘制路径">软件绘制路径</h4>
 <p>未走硬件加速时，会通过 CPU Canvas 绘制，并通过 <code>Surface.lockCanvas</code> / <code>unlockCanvasAndPost</code> 提交。</p>
-<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>onDraw / canvas.draw
+<div class="code-block" data-language="text"><div class="code-label"><span>示意</span></div><pre tabindex="0"><code>onDraw / canvas.draw
   -&gt; CPU 执行 draw
   -&gt; Surface.lockCanvas
   -&gt; Surface.unlockCanvasAndPost
@@ -35,7 +35,7 @@
 <h3 id="viewrootimplmsurface-是主窗口的-producer-入口">ViewRootImpl#mSurface 是主窗口的 producer 入口</h3>
 <p>主窗口的 Layer 不是每帧绘制后才生成。窗口创建或 relayout 时，WMS 通过 SurfaceControl 在 SurfaceFlinger 侧创建和配置 App Window Layer；App 侧 ViewRootImpl 持有与这个 Layer 关联的 <code>Surface</code>，也就是 <code>ViewRootImpl#mSurface</code>。</p>
 <p>窗口和 Layer 建立链路可以理解为：</p>
-<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>Activity / Window
+<div class="code-block" data-language="text"><div class="code-label"><span>示意</span></div><pre tabindex="0"><code>Activity / Window
   -&gt; ViewRootImpl.setView
   -&gt; IWindowSession.addToDisplay / relayout
   -&gt; WMS / WindowState
@@ -43,7 +43,7 @@
   -&gt; SurfaceFlinger 创建或配置 App Window Layer
   -&gt; ViewRootImpl#mSurface 获得 producer 入口</code></pre></div>
 <p>每帧绘制时，App 只是通过这个 producer 入口提交新的 buffer：</p>
-<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>ViewRootImpl / RenderThread
+<div class="code-block" data-language="text"><div class="code-label"><span>示意</span></div><pre tabindex="0"><code>ViewRootImpl / RenderThread
   -&gt; ViewRootImpl#mSurface
   -&gt; IGraphicBufferProducer.queueBuffer
   -&gt; BufferQueue
@@ -52,7 +52,7 @@
 <p>所以，主窗口里普通 View 的内容最终都合并在 App Window Layer 里。SurfaceFlinger 不理解 TextView、Button、RecyclerView 这些 View 结构，它只消费 Layer 的 buffer。</p>
 <h3 id="surfaceview-是额外的独立-layer">SurfaceView 是额外的独立 Layer</h3>
 <p>图中下方的 SurfaceView 分支表示：SurfaceView 的内容不先画进 ViewRootImpl 的主窗口 Surface。视频、相机、游戏或解码器可以直接写入 SurfaceView 自己的 Surface。</p>
-<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>SurfaceView / 游戏引擎 / MediaCodec / Camera
+<div class="code-block" data-language="text"><div class="code-label"><span>示意</span></div><pre tabindex="0"><code>SurfaceView / 游戏引擎 / MediaCodec / Camera
   -&gt; OpenGL / EGL GPU 绘制或解码输出
   -&gt; GraphicBuffer
   -&gt; SurfaceView 自己的 Surface
@@ -62,7 +62,7 @@
 <h2 id="系统合成与显示输出">系统合成与显示输出</h2>
 <h3 id="surfaceflinger-如何合成">SurfaceFlinger 如何合成</h3>
 <p>SurfaceFlinger 收到 VSYNC 后，会遍历当前所有 Layer，检查每个 Layer 是否有新的 buffer。</p>
-<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>VSYNC 信号
+<div class="code-block" data-language="text"><div class="code-label"><span>示意</span></div><pre tabindex="0"><code>VSYNC 信号
   -&gt; SurfaceFlinger
   -&gt; 遍历所有 Layer
   -&gt; acquire / dequeue GraphicBuffer
@@ -71,14 +71,14 @@
 <p>每个 Layer 不只有 buffer，还包含位置、大小、裁剪、透明度、层级、旋转等合成属性。SurfaceFlinger 会根据这些信息决定合成方式。</p>
 <h3 id="合成路径gpu-合成或-hwc-硬件合成">合成路径：GPU 合成或 HWC 硬件合成</h3>
 <p>图右侧展示了两类合成路径。</p>
-<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>多个 Layer 的 GraphicBuffer + Layer 坐标/变换信息
+<div class="code-block" data-language="text"><div class="code-label"><span>示意</span></div><pre tabindex="0"><code>多个 Layer 的 GraphicBuffer + Layer 坐标/变换信息
   -&gt; 软件合成 / OpenGL
   -&gt; 或 HWC 硬件合成
   -&gt; 输出到目标 Surface</code></pre></div>
 <p>如果硬件合成器能够处理当前 Layer 的格式、裁剪、缩放、旋转和混合方式，系统会尽量使用 HWC。否则会回退到 GPU/OpenGL 合成。</p>
 <h3 id="输出目标物理屏或-virtualdisplay">输出目标：物理屏或 VirtualDisplay</h3>
 <p>SurfaceFlinger 合成后的结果不一定只输出到物理屏幕。图中展示的是另一类场景：输出到一个 Surface，再进入 VirtualDisplay，并触发下游编码器。</p>
-<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>SurfaceFlinger 合成结果
+<div class="code-block" data-language="text"><div class="code-label"><span>示意</span></div><pre tabindex="0"><code>SurfaceFlinger 合成结果
   -&gt; Surface
   -&gt; VirtualDisplay
   -&gt; onFrameAvailable
@@ -90,7 +90,7 @@
 <p><img src="/media/1c131a3d64e7cb9c.svg" alt="SurfaceView 与 TextureView 图形链路差异" loading="lazy" decoding="async"></p>
 <div class="table-wrap" tabindex="0" role="region" aria-label="数据表格"><table><thead><tr><th scope="col">对比项</th><th scope="col">SurfaceView</th><th scope="col">TextureView</th></tr></thead><tbody><tr><td>最终是否额外独立 Layer</td><td>是，SurfaceFlinger 除 App Window Layer 外还会合成 SurfaceView Layer</td><td>否，先画进 App Window Layer</td></tr><tr><td>producer 写入位置</td><td>SurfaceView 自己的 Surface</td><td>SurfaceTexture 暴露的 Surface</td></tr><tr><td>是否参与 View 树绘制</td><td>不直接参与内容绘制，View 树主要控制位置和可见性</td><td>参与 View 树绘制，通过 TextureLayer 被采样</td></tr><tr><td>性能和延迟</td><td>路径短，适合低延迟</td><td>多一次 App 侧纹理采样和合成，灵活但更重</td></tr></tbody></table></div>
 <p>TextureView 的简化链路是：</p>
-<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>Producer
+<div class="code-block" data-language="text"><div class="code-label"><span>示意</span></div><pre tabindex="0"><code>Producer
   -&gt; Surface(SurfaceTexture)
   -&gt; SurfaceTexture 接收 buffer
   -&gt; TextureLayer
@@ -101,7 +101,7 @@
 <h3 id="82-bufferqueuefence-和三缓冲">8.2 BufferQueue、Fence 和三缓冲</h3>
 <p><img src="/media/22c47346f1ad9bae.svg" alt="Surface 与 BufferQueue 生产消费模型" loading="lazy" decoding="async"></p>
 <p>BufferQueue 负责连接 producer 和 consumer。典型流程是：</p>
-<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>producer dequeueBuffer
+<div class="code-block" data-language="text"><div class="code-label"><span>示意</span></div><pre tabindex="0"><code>producer dequeueBuffer
   -&gt; 写入 buffer
   -&gt; queueBuffer
 consumer acquireBuffer
@@ -112,14 +112,14 @@ consumer acquireBuffer
 <h3 id="83-低延迟场景里的取舍">8.3 低延迟场景里的取舍</h3>
 <p>视频、相机、云游戏这类场景关心的不是“能不能显示”，而是“画面能不能少排队、少拷贝、少合成一次”。</p>
 <p>以云游戏为例，远端抓屏侧可能是：</p>
-<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>游戏 App Surface
+<div class="code-block" data-language="text"><div class="code-label"><span>示意</span></div><pre tabindex="0"><code>游戏 App Surface
   -&gt; SurfaceFlinger / HWC 合成
   -&gt; VirtualDisplay 或厂商 HWC 抓屏
   -&gt; OES / YUV / 编码 Surface
   -&gt; MediaCodec 编码</code></pre></div>
 <p>客户端渲染侧可能是：</p>
-<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>MediaCodec 解码
+<div class="code-block" data-language="text"><div class="code-label"><span>示意</span></div><pre tabindex="0"><code>MediaCodec 解码
   -&gt; SurfaceTexture / FBO / Surface
   -&gt; SurfaceFlinger 合成上屏</code></pre></div>
 <p>优化时要看清楚每个方案省掉了什么：少一次 SurfaceTexture、少一次 OES 转 YUV、少一次 OpenGL 绘制，或让 MediaCodec 直接消费/生产图形 buffer。</p></article><footer class="article-footer"><a href="/#articles">← 返回文章列表</a><a href="#main">回到顶部 ↑</a></footer></main>
-  <aside class="desktop-toc"><p>本篇目录</p><nav aria-label="本篇目录"><ol><li><a href="#%E5%BA%94%E7%94%A8%E4%BE%A7%E5%A6%82%E4%BD%95%E7%94%9F%E4%BA%A7%E4%B8%80%E5%B8%A7">应用侧如何生产一帧</a></li><li><a href="#surface-%E4%B8%8E%E7%8B%AC%E7%AB%8B%E5%9B%BE%E5%B1%82%E7%9A%84%E7%BB%84%E7%BB%87">Surface 与独立图层的组织</a></li><li><a href="#%E7%B3%BB%E7%BB%9F%E5%90%88%E6%88%90%E4%B8%8E%E6%98%BE%E7%A4%BA%E8%BE%93%E5%87%BA">系统合成与显示输出</a></li><li><a href="#%E7%BC%93%E5%86%B2%E5%90%8C%E6%AD%A5%E4%B8%8E%E4%BA%91%E6%B8%B8%E6%88%8F%E5%9C%BA%E6%99%AF">缓冲同步与云游戏场景</a></li></ol></nav><a class="toc-return" href="/#articles">← 全部文章</a></aside></div></body></html>
+  <aside class="desktop-toc"><p>本篇目录</p><nav aria-label="本篇目录"><ol><li><a href="#%E5%BA%94%E7%94%A8%E4%BE%A7%E5%A6%82%E4%BD%95%E7%94%9F%E4%BA%A7%E4%B8%80%E5%B8%A7">应用侧如何生产一帧</a></li><li class="toc-child"><a href="#%E4%B8%BB%E7%AA%97%E5%8F%A3%E4%BB%8E-vsync-%E5%88%B0-viewrootimpl">主窗口从 VSYNC 到 ViewRootImpl</a></li><li class="toc-child"><a href="#view-%E7%BB%98%E5%88%B6%E5%88%86%E4%B8%BA%E7%A1%AC%E4%BB%B6%E7%BB%98%E5%88%B6%E5%92%8C%E8%BD%AF%E4%BB%B6%E7%BB%98%E5%88%B6">View 绘制分为硬件绘制和软件绘制</a></li><li><a href="#surface-%E4%B8%8E%E7%8B%AC%E7%AB%8B%E5%9B%BE%E5%B1%82%E7%9A%84%E7%BB%84%E7%BB%87">Surface 与独立图层的组织</a></li><li class="toc-child"><a href="#viewrootimplmsurface-%E6%98%AF%E4%B8%BB%E7%AA%97%E5%8F%A3%E7%9A%84-producer-%E5%85%A5%E5%8F%A3">ViewRootImpl#mSurface 是主窗口的 producer 入口</a></li><li class="toc-child"><a href="#surfaceview-%E6%98%AF%E9%A2%9D%E5%A4%96%E7%9A%84%E7%8B%AC%E7%AB%8B-layer">SurfaceView 是额外的独立 Layer</a></li><li><a href="#%E7%B3%BB%E7%BB%9F%E5%90%88%E6%88%90%E4%B8%8E%E6%98%BE%E7%A4%BA%E8%BE%93%E5%87%BA">系统合成与显示输出</a></li><li class="toc-child"><a href="#surfaceflinger-%E5%A6%82%E4%BD%95%E5%90%88%E6%88%90">SurfaceFlinger 如何合成</a></li><li class="toc-child"><a href="#%E5%90%88%E6%88%90%E8%B7%AF%E5%BE%84gpu-%E5%90%88%E6%88%90%E6%88%96-hwc-%E7%A1%AC%E4%BB%B6%E5%90%88%E6%88%90">合成路径：GPU 合成或 HWC 硬件合成</a></li><li class="toc-child"><a href="#%E8%BE%93%E5%87%BA%E7%9B%AE%E6%A0%87%E7%89%A9%E7%90%86%E5%B1%8F%E6%88%96-virtualdisplay">输出目标：物理屏或 VirtualDisplay</a></li><li><a href="#%E7%BC%93%E5%86%B2%E5%90%8C%E6%AD%A5%E4%B8%8E%E4%BA%91%E6%B8%B8%E6%88%8F%E5%9C%BA%E6%99%AF">缓冲同步与云游戏场景</a></li><li class="toc-child"><a href="#81-surfaceview-%E4%B8%8E-textureview">8.1 SurfaceView 与 TextureView</a></li><li class="toc-child"><a href="#82-bufferqueuefence-%E5%92%8C%E4%B8%89%E7%BC%93%E5%86%B2">8.2 BufferQueue、Fence 和三缓冲</a></li><li class="toc-child"><a href="#83-%E4%BD%8E%E5%BB%B6%E8%BF%9F%E5%9C%BA%E6%99%AF%E9%87%8C%E7%9A%84%E5%8F%96%E8%88%8D">8.3 低延迟场景里的取舍</a></li></ol></nav><a class="toc-return" href="/#articles">← 全部文章</a></aside></div></body></html>

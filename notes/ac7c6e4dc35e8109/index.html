@@ -1,103 +1,95 @@
-<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light"><meta name="theme-color" content="#f7f6f2"><title>IM 会话缓存与数据访问调度设计</title><meta name="description" content="技术学习与工程实践。"><link rel="icon" href="/favicon.svg?v=14ae5a412d40f95d"><link rel="stylesheet" href="/reader.css?v=14ae5a412d40f95d"><script src="/reader.js?v=14ae5a412d40f95d" defer></script></head><body><div class="reading-progress" aria-hidden="true"></div><a class="skip" href="#main">跳到正文</a><header class="reader-nav"><nav aria-label="站点导航"><a href="/">← 首页</a><a href="/#articles">全部文章 ↗</a></nav></header><div class="reading-layout"><main id="main"><nav class="breadcrumbs" aria-label="当前位置"><a href="/#articles">文章</a><span>/</span><a href="/?category=practice#articles">项目实践</a><span>/</span><span>业务问题</span></nav>
-  <header class="article-heading"><p class="article-category">项目实践</p><h1>IM 会话缓存与数据访问调度设计</h1></header>
-  <details class="mobile-toc"><summary>本篇目录 <span>5 节</span></summary><nav aria-label="本篇目录"><ol><li><a href="#%E9%97%AE%E9%A2%98%E8%8C%83%E5%9B%B4%E4%B8%8E%E5%8E%9F%E6%9C%89%E7%93%B6%E9%A2%88">问题范围与原有瓶颈</a></li><li><a href="#%E6%9E%B6%E6%9E%84%E4%B8%8E%E7%BC%93%E5%AD%98%E6%95%B0%E6%8D%AE%E6%A8%A1%E5%9E%8B">架构与缓存数据模型</a></li><li><a href="#%E8%AF%BB%E5%86%99%E4%B8%8E%E8%AE%A2%E9%98%85%E5%A6%82%E4%BD%95%E5%8D%8F%E4%BD%9C">读、写与订阅如何协作</a></li><li><a href="#%E6%8C%81%E4%B9%85%E5%8C%96%E5%A4%B1%E8%B4%A5%E4%B8%8E%E6%81%A2%E5%A4%8D%E8%BE%B9%E7%95%8C">持久化失败与恢复边界</a></li><li><a href="#%E6%94%B6%E7%9B%8A%E5%81%87%E8%AE%BE%E9%A3%8E%E9%99%A9%E4%B8%8E%E9%AA%8C%E8%AF%81%E6%96%B9%E6%B3%95">收益假设、风险与验证方法</a></li></ol></nav></details><article class="prose" id="content"><h2 id="问题范围与原有瓶颈">问题范围与原有瓶颈</h2>
-<h3 id="文档边界">文档边界</h3>
-<p>IM 会话存储的缓存与读写调度设计需要回答两个问题：</p>
-<ol start="1"><li><p>如何降低高频并发读写 ObjectBox 带来的事务竞争和锁等待。</p></li><li><p>如何通过缓存、请求合并和批量持久化优化会话读写速度。</p></li></ol>
-<p>本文讨论缓存、版本校验和失败恢复的设计语义。原始工程源码与性能数据尚未重新校验，因此示例用于说明方案，不作为已验证的生产实现或性能收益证据。</p>
-<h3 id="原有问题">原有问题</h3>
-<p>会话列表、未读数、最后一条消息摘要等数据会被多个业务模块频繁读取和更新。如果每个 CRUD 都独立提交线程池，会出现：</p>
-<ul><li><p>同一会话被重复查询，增加数据库访问次数。</p></li><li><p>多个写线程同时提交，底层仍需要争用写事务或锁。</p></li><li><p>中间状态被逐次持久化，事务次数高于业务实际需求。</p></li><li><p>频繁的任务提交、阻塞、唤醒和线程切换增加调度开销。</p></li><li><p>数据库异步读取可能在缓存更新之后返回旧数据，造成状态回退。</p></li></ul>
-<p>本设计的优化目标是收敛数据库访问，不是让业务为了强一致性等待整个写队列。</p>
-<h2 id="架构与缓存数据模型">架构与缓存数据模型</h2>
-<h3 id="整体架构">整体架构</h3>
-<div class="code-block"><div class="code-label">Mermaid · 流程图源码</div><pre tabindex="0"><code>flowchart TD
-    B[&quot;会话列表 / 业务模块&quot;] --&gt; R[&quot;SessionRepository&quot;]
-    R --&gt; C[&quot;会话内存缓存&lt;br/&gt;UID + SessionID / Snapshot / Version&quot;]
-    C --&gt;|&quot;命中：返回快照&quot;| B
-    C --&gt;|&quot;未命中&quot;| RP[&quot;读管道&lt;br/&gt;去重 / 合并 / 批量查询&quot;]
-    RP --&gt; DB[&quot;ObjectBox&quot;]
-    DB --&gt;|&quot;版本校验后回填&quot;| C
-    R --&gt;|&quot;写入：先更新缓存&quot;| C
-    C --&gt; N[&quot;按 Key 通知观察者&quot;]
-    C --&gt; WP[&quot;单写管道&lt;br/&gt;状态合并 / 批量事务&quot;]
-    WP --&gt; DB
-    DB --&gt;|&quot;失败：版本校验 / 重试 / 失效&quot;| C</code></pre></div>
-<p>服务端是可同步会话事实的最终来源，ObjectBox 保存本地持久化投影，内存缓存则保存进程内最新会话快照。</p>
-<h3 id="缓存数据结构">缓存数据结构</h3>
-<p>内存会话可按以下语义组织：</p>
-<div class="code-block"><div class="code-label">java</div><pre tabindex="0"><code>record SessionKey(long uid, String conversationId) {}
-
-record CacheEntry&lt;T&gt;(
-        T snapshot,
-        long version,
-        PersistState persistState
-) {}
-
-ConcurrentHashMap&lt;SessionKey, CacheEntry&lt;SessionSnapshot&gt;&gt; sessionCache;</code></pre></div>
-<ul><li><p><code>UID + conversationId</code> 作为组合 Key，使不同账号和会话在缓存、待写任务和订阅关系中保持隔离。</p></li><li><p><code>ConcurrentHashMap</code> 保证并发容器访问，使用 <code>compute()</code> 收敛同 Key 的读-改-写。它不是“每个 Key 一把锁”；JDK 8 以后主要使用 CAS 和桶粒度并发控制。</p></li><li><p><code>SessionSnapshot</code> 对外不可变，业务不能直接修改对象，必须通过 Repository 更新，以便统一增加版本、触发持久化和发送通知。</p></li><li><p>对 <code>compute()</code> 的回调只执行快速内存计算，不在其中访问数据库、请求网络或通知业务。</p></li></ul>
-<h2 id="读写与订阅如何协作">读、写与订阅如何协作</h2>
-<h3 id="读管道">读管道</h3>
-<h4 id="51-缓存优先">5.1 缓存优先</h4>
-<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>读取会话
-→ 命中内存缓存
-→ 直接返回当前不可变快照</code></pre></div>
-<p>读取接口返回的是调用时刻的快照。读取后发生新写入时，已返回的快照不需要追溯修改，由按 Key 订阅通知后续变化。</p>
-<h4 id="52-缓存未命中合并">5.2 缓存未命中合并</h4>
-<p>同一 Key 的并发查询可共享一次数据库任务：</p>
-<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>get(A) + get(A) + get(A)
-→ 一次 ObjectBox 查询
-→ 将结果分发给所有等待者</code></pre></div>
-<p>短时间内多个 Key 的读取也可聚合为批量查询，但需要限制聚合窗口，避免为了批处理反而增加首次读取延迟。</p>
-<h4 id="53-数据库回填校验">5.3 数据库回填校验</h4>
-<p>查询发起后，缓存可能已被写管道更新：</p>
-<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>发起查询 A(v10)
-→ 缓存更新为 B(v11)
-→ 数据库返回 A(v10)
-→ 禁止用 A 覆盖 B</code></pre></div>
-<p>数据库结果仅用于回填空缓存，或在版本校验通过后回填；旧结果不得造成缓存和 UI 状态回退。</p>
-<h3 id="写管道">写管道</h3>
-<h4 id="61-先更新缓存">6.1 先更新缓存</h4>
-<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>业务写入
-→ 生成新快照
-→ 原子更新缓存并增加版本
-→ 通知该 Key 的观察者
-→ 提交数据库写任务</code></pre></div>
-<p>因为后续读取优先访问缓存，所以正常路径不需要等待同 Key 的数据库写任务。读写之间保留的是同 Key 的状态时序，不是读管道对整个写队列的结构依赖。</p>
-<h4 id="62-单写队列">6.2 单写队列</h4>
-<p>数据准备可以并行，只将最终的数据库写入临界区收敛到单写队列。队列的价值是主动安排底层本就需要协调的写事务，减少多线程争锁、阻塞和唤醒。</p>
-<p>队列中不应执行网络请求、复杂计算或长时间回调，否则会形成队头阻塞。</p>
-<h4 id="63-写任务合并">6.3 写任务合并</h4>
-<p>合并必须根据业务语义进行，不能笼统地将所有读写任务合并。</p>
-<div class="table-wrap" tabindex="0" role="region" aria-label="数据表格"><table><thead><tr><th scope="col">数据类型</th><th scope="col">合并策略</th><th scope="col">示例</th></tr></thead><tbody><tr><td>最新状态</td><td>只保留同 Key 的最新快照</td><td>未读数 <code>1 -&gt; 2 -&gt; 3</code> 只持久化 <code>3</code></td></tr><tr><td>可累加状态</td><td>按明确规则累加</td><td>计数增量在合并后一次提交</td></tr><tr><td>事件型数据</td><td>不覆盖，仅批量提交</td><td>消息 <code>M1/M2/M3</code> 全部保留，同一事务写入</td></tr><tr><td>删除或撤回</td><td>保留顺序和幂等语义</td><td>不能被后续普通更新无条件覆盖</td></tr></tbody></table></div>
-<h3 id="按-key-订阅会话更新">按 Key 订阅会话更新</h3>
-<p>一次读取只能返回当前时刻的快照。写入发生后，缓存层按 Key 通知对应观察者：</p>
-<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>读取 A(v10)
-→ 业务写入 B(v11)
-→ 缓存更新为 B(v11)
-→ 通知观察者
-→ UI 使用 B(v11) 刷新</code></pre></div>
-<p>“读取当前值”和“注册监听”应形成一个完整语义，避免两步之间发生更新而丢失通知。可由 <code>observe(key, listener)</code> 在注册后立即回放当前最新快照，或注册后再次检查版本并补发。</p>
-<p>通知应满足：</p>
-<ul><li><p>同 Key 的版本顺序不倒退。</p></li><li><p>在缓存内部锁或 <code>compute()</code> 之外执行业务回调。</p></li><li><p>观察者按页面或账号生命周期解除订阅，避免泄漏。</p></li><li><p>账号切换后，旧 UID 任务可继续落到旧数据命名空间，但不能通知新账号页面。</p></li></ul>
-<h2 id="持久化失败与恢复边界">持久化失败与恢复边界</h2>
-<h3 id="持久化失败与恢复">持久化失败与恢复</h3>
-<p>缓存写入后会触发一次异步数据库同步。缓存项可区分：</p>
-<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>DIRTY -&gt; PERSISTING -&gt; CLEAN
-                    -&gt; FAILED / INVALID</code></pre></div>
-<ul><li><p>持久化失败后进行有上限的重试，并保存下次重试时间，不让单个异常任务永久阻塞写队列。</p></li><li><p>失败回调必须校验任务版本。<code>v11</code> 写入失败时，如果缓存已经到达 <code>v12</code>，不能清除或失效 <code>v12</code>。</p></li><li><p>状态型数据重试时可持久化当前最新快照，不必重复写入已被替代的中间版本。</p></li><li><p>重试耗尽后，对应版本可标记为失败或无效，再由服务端增量同步修复。</p></li></ul>
-<p>会话缓存保存的是服务端可重建投影，因此允许 App 被终止时丢失尚未持久化的最近更新。App 重启后按上次成功位点拉取增量会话记录并幂等更新本地数据。</p>
-<p>恢复位点不能先于数据落盘：如果同步游标或时间位点已经推进，但对应会话数据未持久化就被终止，重启后可能永久跳过该部分数据。因此，最好将会话数据和新位点放在同一事务提交，或仅在数据写入成功后推进位点。只有时间戳时，需使用重叠窗口和服务端唯一 ID 幂等去重，避免边界漏数。</p>
-<h3 id="为什么不自己用-mmap-保证可靠性">为什么不自己用 mmap 保证可靠性</h3>
-<p><code>mmap</code> 只是文件映射机制，不自动提供事务原子性和掉电持久性。如果要自己保证可靠落盘，还需要实现刷盘时序、提交标记、校验、部分写恢复和多项修改的原子性，本质上是再实现一套 WAL 或数据库。</p>
-<p>对于本设计中可从服务端恢复的会话投影，无需额外引入 mmap 文件；继续使用 ObjectBox 事务保证已进入数据库修改的原子性，未进入事务的内存任务则依赖重启后增量同步恢复。</p>
-<h2 id="收益假设风险与验证方法">收益假设、风险与验证方法</h2>
-<h3 id="性能收益来源">性能收益来源</h3>
-<div class="table-wrap" tabindex="0" role="region" aria-label="数据表格"><table><thead><tr><th scope="col">优化点</th><th scope="col">减少的开销</th></tr></thead><tbody><tr><td>缓存优先读取</td><td>减少热点会话的 ObjectBox 查询</td></tr><tr><td>同 Key 读取合并</td><td>减少缓存冷启或失效时的重复查询</td></tr><tr><td>写队列串行化</td><td>减少并发写事务的锁竞争、阻塞和唤醒</td></tr><tr><td>同 Key 状态合并</td><td>减少中间状态的落盘次数</td></tr><tr><td>批量事务</td><td>减少事务启动和提交次数</td></tr><tr><td>统一读写调度</td><td>减少每次 CRUD 独立创建任务带来的线程调度和上下文切换</td></tr><tr><td>按 Key 通知</td><td>业务可直接消费最新内存快照，无需为刷新 UI 再查一次数据库</td></tr></tbody></table></div>
-<p>不将上述优化笼统表述为“降低 iowait”。在没有系统级指标前，只能直接宣称减少数据库访问、事务次数、锁等待和线程调度开销。</p>
-<h3 id="风险和边界">风险和边界</h3>
-<div class="table-wrap" tabindex="0" role="region" aria-label="数据表格"><table><thead><tr><th scope="col">风险</th><th scope="col">处理原则</th></tr></thead><tbody><tr><td>单写队列队头阻塞</td><td>仅串行化短数据库临界区，限制单批任务量，不在队列中执行网络或复杂计算</td></tr><tr><td>队列长期积压</td><td>记录队列长度和最长等待时间，对可覆盖状态执行合并和背压</td></tr><tr><td>读取旧值后发生写入</td><td>读取是时点快照，写后通过按 Key 订阅发送新版本</td></tr><tr><td>旧查询晚于新写入返回</td><td>回填前校验版本，禁止状态倒退</td></tr><tr><td>读取和注册监听之间丢更新</td><td>使用订阅并回放最新快照的统一接口</td></tr><tr><td>旧写任务失败后清除新缓存</td><td>失败和重试操作必须校验任务版本</td></tr><tr><td>账号切换串数据</td><td>任务创建时固化 UID，所有容器、查询和订阅使用组合 Key</td></tr><tr><td>进程退出丢失待写投影</td><td>仅对服务端可重建会话数据允许丢失，通过持久化位点增量恢复</td></tr><tr><td>增量位点提前推进</td><td>会话数据与位点同事务提交，或数据落盘成功后再推进</td></tr></tbody></table></div>
-<h3 id="验证方法">验证方法</h3>
-<p>要证明方案真正改善了原始问题，应在相同业务负载下对比：</p>
-<ul><li><p>每秒会话读请求数与实际 ObjectBox 查询数，得到缓存命中率和读合并率。</p></li><li><p>业务写请求数与数据库实际写入数，得到状态合并率。</p></li><li><p>数据库事务次数、单事务耗时以及 P50/P95/P99 写入延迟。</p></li><li><p>写队列平均长度、最大长度和最长等待时间。</p></li><li><p>数据库锁等待、阻塞线程数、线程唤醒和上下文切换。</p></li><li><p>会话列表首次加载、刷新及高频消息到达场景的端到端延迟。</p></li><li><p>故障测试：查询返回乱序、写入失败、重试期间出现新版本、账号切换、进程被终止后增量恢复。</p></li></ul></article><footer class="article-footer"><a href="/#articles">← 返回文章列表</a><a href="#main">回到顶部 ↑</a></footer></main>
-  <aside class="desktop-toc"><p>本篇目录</p><nav aria-label="本篇目录"><ol><li><a href="#%E9%97%AE%E9%A2%98%E8%8C%83%E5%9B%B4%E4%B8%8E%E5%8E%9F%E6%9C%89%E7%93%B6%E9%A2%88">问题范围与原有瓶颈</a></li><li><a href="#%E6%9E%B6%E6%9E%84%E4%B8%8E%E7%BC%93%E5%AD%98%E6%95%B0%E6%8D%AE%E6%A8%A1%E5%9E%8B">架构与缓存数据模型</a></li><li><a href="#%E8%AF%BB%E5%86%99%E4%B8%8E%E8%AE%A2%E9%98%85%E5%A6%82%E4%BD%95%E5%8D%8F%E4%BD%9C">读、写与订阅如何协作</a></li><li><a href="#%E6%8C%81%E4%B9%85%E5%8C%96%E5%A4%B1%E8%B4%A5%E4%B8%8E%E6%81%A2%E5%A4%8D%E8%BE%B9%E7%95%8C">持久化失败与恢复边界</a></li><li><a href="#%E6%94%B6%E7%9B%8A%E5%81%87%E8%AE%BE%E9%A3%8E%E9%99%A9%E4%B8%8E%E9%AA%8C%E8%AF%81%E6%96%B9%E6%B3%95">收益假设、风险与验证方法</a></li></ol></nav><a class="toc-return" href="/#articles">← 全部文章</a></aside></div></body></html>
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light"><meta name="theme-color" content="#f7f6f2"><title>IM 会话列表的数据访问优化</title><meta name="description" content="技术学习与工程实践。"><link rel="icon" href="/favicon.svg?v=7ea8198bf5c60782"><link rel="stylesheet" href="/reader.css?v=7ea8198bf5c60782"><script src="/reader.js?v=7ea8198bf5c60782" defer></script></head><body><div class="reading-progress" aria-hidden="true"></div><a class="skip" href="#main">跳到正文</a><header class="reader-nav"><nav aria-label="站点导航"><a href="/">← 首页</a><a href="/#articles">全部文章 ↗</a></nav></header><div class="reading-layout"><main id="main"><nav class="breadcrumbs" aria-label="当前位置"><a href="/#articles">文章</a><span>/</span><a href="/?category=practice#articles">项目实践</a><span>/</span><span>业务问题</span></nav>
+  <header class="article-heading"><h1>IM 会话列表的数据访问优化</h1></header>
+  <details class="mobile-toc"><summary>本篇目录 <span>6 节</span></summary><nav aria-label="本篇目录"><ol><li><a href="#1-%E4%B8%9A%E5%8A%A1%E5%9C%BA%E6%99%AF%E4%B8%8E%E6%95%B0%E6%8D%AE%E8%AE%BF%E9%97%AE%E9%97%AE%E9%A2%98">1. 业务场景与数据访问问题</a></li><li><a href="#2-%E6%96%B9%E6%A1%88%E5%AF%B9%E6%AF%94%E4%B8%8E%E6%95%B4%E4%BD%93%E6%9E%B6%E6%9E%84">2. 方案对比与整体架构</a></li><li class="toc-child"><a href="#21-%E4%B8%89%E7%A7%8D%E8%AF%BB%E5%86%99%E6%96%B9%E6%A1%88%E5%AF%B9%E6%AF%94">2.1 三种读写方案对比</a></li><li class="toc-child"><a href="#22-%E6%95%B4%E4%BD%93%E6%9E%B6%E6%9E%84">2.2 整体架构</a></li><li><a href="#3-%E5%B9%B6%E5%8F%91%E6%9F%A5%E8%AF%A2%E5%90%88%E5%B9%B6%E4%B8%8E%E7%BC%93%E5%AD%98%E6%9B%B4%E6%96%B0">3. 并发查询合并与缓存更新</a></li><li class="toc-child"><a href="#31-%E5%A4%9A%E4%B8%AA%E6%A8%A1%E5%9D%97%E5%85%B1%E4%BA%AB%E6%9F%A5%E8%AF%A2%E7%BB%93%E6%9E%9C">3.1 多个模块共享查询结果</a></li><li class="toc-child"><a href="#32-%E6%97%A7%E6%9F%A5%E8%AF%A2%E7%BB%93%E6%9E%9C%E7%9A%84%E5%9B%9E%E5%A1%AB%E6%A0%A1%E9%AA%8C">3.2 旧查询结果的回填校验</a></li><li><a href="#4-%E4%BC%9A%E8%AF%9D%E6%91%98%E8%A6%81%E7%9A%84%E5%86%99%E5%85%A5%E5%90%88%E5%B9%B6">4. 会话摘要的写入合并</a></li><li class="toc-child"><a href="#41-%E5%8F%AA%E5%90%88%E5%B9%B6%E5%B0%9A%E6%9C%AA%E6%89%A7%E8%A1%8C%E7%9A%84%E6%91%98%E8%A6%81">4.1 只合并尚未执行的摘要</a></li><li class="toc-child"><a href="#42-%E6%91%98%E8%A6%81%E8%AE%A1%E7%AE%97%E6%9C%9F%E9%97%B4%E7%9A%84%E6%95%B0%E6%8D%AE%E6%9B%B4%E6%96%B0">4.2 摘要计算期间的数据更新</a></li><li class="toc-child"><a href="#43-%E6%89%B9%E6%AC%A1%E5%A4%A7%E5%B0%8F%E4%B8%8E%E4%BF%9D%E5%AD%98%E4%BC%98%E5%85%88%E7%BA%A7">4.3 批次大小与保存优先级</a></li><li><a href="#5-%E6%B6%88%E6%81%AF%E4%BF%9D%E5%AD%98%E5%8F%91%E9%80%81%E4%B8%8E%E5%BC%82%E5%B8%B8%E6%81%A2%E5%A4%8D">5. 消息保存、发送与异常恢复</a></li><li class="toc-child"><a href="#51-%E6%B6%88%E6%81%AF%E4%B8%8E%E5%BE%85%E5%8F%91%E4%BB%BB%E5%8A%A1%E5%90%8C%E6%97%B6%E4%BF%9D%E5%AD%98">5.1 消息与待发任务同时保存</a></li><li class="toc-child"><a href="#52-%E8%B6%85%E6%97%B6%E9%87%8D%E8%AF%95%E4%B8%8E%E9%87%8D%E5%A4%8D%E6%B6%88%E6%81%AF%E5%A4%84%E7%90%86">5.2 超时重试与重复消息处理</a></li><li class="toc-child"><a href="#53-%E8%8D%89%E7%A8%BF%E4%BF%9D%E5%AD%98%E4%B8%8E%E7%89%88%E6%9C%AC%E6%8E%A7%E5%88%B6">5.3 草稿保存与版本控制</a></li><li class="toc-child"><a href="#54-%E8%BF%9B%E7%A8%8B%E9%87%8D%E5%90%AF%E4%B8%8E%E8%B4%A6%E5%8F%B7%E5%88%87%E6%8D%A2">5.4 进程重启与账号切换</a></li><li><a href="#6-%E9%AA%8C%E8%AF%81%E6%96%B9%E6%B3%95%E4%B8%8E%E9%A2%84%E6%9C%9F%E6%95%88%E6%9E%9C">6. 验证方法与预期效果</a></li></ol></nav></details><article class="prose" id="content"><p>会话系统由多个业务模块组成，各模块可能并发读写同一条会话数据，带来重复查询、频繁写入和数据一致性问题。</p>
+<p>各模块通过同一个数据访问层读写会话，减少重复查询和写入。消息与草稿保存成功后，才向页面确认。</p>
+<aside class="callout callout-note" aria-label="示例"><p class="callout-title">示例</p><p>两个模块同时查询同一会话，只查一次数据库，结果分别返回。连续收到多条消息时，消息全部保存，尚未执行的列表写入可以合并。</p></aside>
+<h2 id="1-业务场景与数据访问问题">1. 业务场景与数据访问问题</h2>
+<p>会话列表根据新消息更新内容、未读数和排列顺序。多个模块独立查询同一条会话记录，会产生重复访问。</p>
+<aside class="callout callout-note" aria-label="会话摘要"><p class="callout-title">会话摘要</p><p>指列表展示所需的数据，如最后一条消息、未读数和排序时间。摘要可以重新计算，消息和草稿必须可靠保存。</p></aside>
+<p>连续收到消息还会多次修改摘要。优化时需要区分查询、摘要和原始记录：</p>
+<div class="table-wrap" tabindex="0" role="region" aria-label="数据表格"><table><thead><tr><th scope="col">数据或操作</th><th scope="col">处理要求</th></tr></thead><tbody><tr><td>多个模块读取同一份会话记录</td><td>可以共享一次查询结果</td></tr><tr><td>同一会话连续产生多个待写摘要</td><td>可以只保存最新摘要</td></tr><tr><td>每条消息、草稿、已读位置和删除记录</td><td>按业务操作可靠保存，不能随摘要合并而丢弃</td></tr><tr><td>查询或摘要计算期间发生新更新</td><td>拒绝用旧结果覆盖当前状态</td></tr></tbody></table></div>
+<p>未发送消息和草稿可能只有本地副本，因此不能等缓存批量写入时才保存，也不能依赖服务端重新同步来恢复。</p>
+<h2 id="2-方案对比与整体架构">2. 方案对比与整体架构</h2>
+<h3 id="21-三种读写方案对比">2.1 三种读写方案对比</h3>
+<div class="table-wrap" tabindex="0" role="region" aria-label="数据表格"><table><thead><tr><th scope="col">对比维度</th><th scope="col">先写缓存，定时保存</th><th scope="col">各模块直接读写数据库</th><th scope="col">统一读写，分类保存</th></tr></thead><tbody><tr><td>消息与草稿保存</td><td>写入数据库前可能丢失</td><td>提交后确认保存</td><td>提交后确认保存</td></tr><tr><td>相同并发查询</td><td>有缓存时复用，未命中时仍可能重复</td><td>各模块分别查询</td><td>有缓存则复用，否则共享一次查询</td></tr><tr><td>摘要写入次数</td><td>可合并尚未执行的写入</td><td>每次更新分别写入</td><td>同一会话只保留最新待写摘要</td></tr><tr><td>保存确认耗时</td><td>需等待定时保存完成</td><td>等待本次事务完成</td><td>等待事务完成，消息与草稿优先</td></tr><tr><td>并发一致性</td><td>需处理缓存与数据库的先后关系</td><td>数据库处理事务，页面仍需防止旧回调覆盖新值</td><td>统一检查数据版本和回调归属</td></tr><tr><td>进程退出后恢复</td><td>只能恢复已写入数据库的内容</td><td>从已提交记录恢复</td><td>恢复原始记录，重建摘要，继续待发任务</td></tr><tr><td>实现与维护</td><td>需要定时保存和失败重试</td><td>初始实现简单，访问逻辑分散</td><td>集中维护缓存、任务队列与版本，复杂度较高</td></tr></tbody></table></div>
+<p>选择第三种方案：集中处理重复访问，分别安排消息保存和摘要更新。代价是增加任务调度与版本管理。</p>
+<aside class="callout callout-note" aria-label="保存确认"><p class="callout-title">保存确认</p><p>页面回显只表示内容已显示，数据库提交成功才表示保存完成。三种方案都需要处理发送重试和草稿保护。</p></aside>
+<h3 id="22-整体架构">2.2 整体架构</h3>
+<p>业务模块通过数据访问层访问本地数据库。读取请求共用缓存和查询任务；消息、草稿优先保存；摘要按会话合并写入。发送模块只处理已保存的待发任务。</p>
+<figure class="article-figure"><a class="figure-link" href="/media/69bb5125e95a15f5.svg" target="_blank" rel="noopener" aria-label="查看原图：业务模块通过统一数据访问层查询缓存、保存原始记录和更新摘要；本地数据库保存消息、草稿、待发任务和同步位置，发送与同步模块连接服务端"><img src="/media/69bb5125e95a15f5.svg" alt="业务模块通过统一数据访问层查询缓存、保存原始记录和更新摘要；本地数据库保存消息、草稿、待发任务和同步位置，发送与同步模块连接服务端" loading="lazy" decoding="async"></a><figcaption>图 1 · 会话数据访问整体架构</figcaption></figure>
+<aside class="callout callout-note" aria-label="图中边界"><p class="callout-title">图中边界</p><p>数据库事务保证一组修改全部成功或全部撤销；数据访问层负责查询合并、写入调度和版本检查。网络请求在事务外执行，发送前先保存消息与待发任务。发送结果和同步消息也通过保存路径入库，再更新缓存和页面。</p></aside>
+<h2 id="3-并发查询合并与缓存更新">3. 并发查询合并与缓存更新</h2>
+<h3 id="31-多个模块共享查询结果">3.1 多个模块共享查询结果</h3>
+<p>数据访问层按“账号 ID + 会话 ID”查找缓存。缓存有效则直接返回；否则发起一次查询，其余相同请求等待结果。</p>
+<figure class="article-figure"><a class="figure-link" href="/media/6f77ca6960bb944b.svg" target="_blank" rel="noopener" aria-label="查看原图：独立查询各自访问数据库；统一入口让同一会话的并发请求等待同一次查询，并将结果分别返回"><img src="/media/6f77ca6960bb944b.svg" alt="独立查询各自访问数据库；统一入口让同一会话的并发请求等待同一次查询，并将结果分别返回" loading="lazy" decoding="async"></a><figcaption>图 2 · 同一会话的并发查询合并</figcaption></figure>
+<p>查询结束后，每个等待者分别收到结果或错误。</p>
+<aside class="callout callout-note" aria-label="合并条件"><p class="callout-title">合并条件</p><p>查询范围和返回内容必须相同。不同消息页、不同筛选条件不能只按会话 ID 合并。</p></aside>
+<h3 id="32-旧查询结果的回填校验">3.2 旧查询结果的回填校验</h3>
+<p>查询返回时，先检查会话是否已更新。若已有新数据，就丢弃旧结果。</p>
+<figure class="article-figure"><a class="figure-link" href="/media/841fbd36b69bb690.svg" target="_blank" rel="noopener" aria-label="查看原图：查询发出时记录 v10，新消息将缓存更新为 v11；旧查询返回后因版本不符而拒绝覆盖"><img src="/media/841fbd36b69bb690.svg" alt="查询发出时记录 v10，新消息将缓存更新为 v11；旧查询返回后因版本不符而拒绝覆盖" loading="lazy" decoding="async"></a><figcaption>图 3 · 查询与新消息更新的交错时序</figcaption></figure>
+<p>会话更新或删除时递增本地版本。查询开始时记录版本，返回时比较版本。</p>
+<aside class="callout callout-note" aria-label="并发处理"><p class="callout-title">并发处理</p><p>缓存检查、查询登记和版本记录在同一锁内完成；版本比较与缓存更新也需持锁，避免检查后又插入新更新。图中的查询始于 v10，返回时已是 v11，因此不能覆盖缓存。</p></aside>
+<div class="code-block" data-language="text"><div class="code-label"><span>示意</span></div><pre tabindex="0"><code>读取会话（账号 ID，会话 ID）：
+  在锁内检查缓存：
+    缓存有效 → 返回当前快照
+    已有相同查询 → 登记等待者
+    否则 → 记录登录批次和本地版本，登记查询任务
+  仅新登记的查询任务在锁外访问数据库，其余请求等待结果
+  查询返回后，在锁内检查：
+    登录批次已失效 → 结束旧请求
+    版本相同且未删除 → 更新缓存，准备返回结果
+    已有更新或删除 → 准备返回当前状态，丢弃旧结果
+    无有效状态或查询失败 → 限次重试或返回错误
+    只移除本次查询的任务登记
+  在锁外通知等待者</code></pre></div>
+<p>“登录批次”是每次登录生成的标识，用来区分同一账号退出后重新登录的两次会话。旧请求不能更新新登录的页面。删除标记和本地版本至少保留到旧查询结束，不能随缓存一起清除，否则旧结果可能恢复已删除的会话。</p>
+<p>页面订阅会话变化时，也要在同一锁内完成订阅登记和当前快照读取，再按版本顺序通知后续更新，避免首次显示与订阅之间漏掉消息。服务端消息乱序仍按业务序号处理，本地版本仅用于判断本地异步结果是否过期。</p>
+<h2 id="4-会话摘要的写入合并">4. 会话摘要的写入合并</h2>
+<h3 id="41-只合并尚未执行的摘要">4.1 只合并尚未执行的摘要</h3>
+<p>连续消息会改变最后一条消息、未读数和排序时间。数据访问层按会话保留最新待写摘要，新的摘要替换队列中尚未执行的旧版本，消息记录仍完整保存。</p>
+<figure class="article-figure"><a class="figure-link" href="/media/0e64bf01ab334a8f.svg" target="_blank" rel="noopener" aria-label="查看原图：A、B、C 三条消息全部保存；若摘要均未开始写入，则只提交包含 C 和累计未读数的最新摘要"><img src="/media/0e64bf01ab334a8f.svg" alt="A、B、C 三条消息全部保存；若摘要均未开始写入，则只提交包含 C 和累计未读数的最新摘要" loading="lazy" decoding="async"></a><figcaption>图 4 · 消息完整保存，待写摘要保留最新版本</figcaption></figure>
+<p>只替换尚未开始写入的摘要。批次结束时，只移除已提交的版本，保留执行期间新增的摘要。</p>
+<aside class="callout callout-note" aria-label="合并示例"><p class="callout-title">合并示例</p><p>收到 A、B、C 三条消息，三条消息全部保存。若对应摘要都未开始写入，只提交 C 对应的最新摘要，未读数仍计入三条消息；若 A 已开始写入，只能合并后续 B、C 的摘要。</p></aside>
+<h3 id="42-摘要计算期间的数据更新">4.2 摘要计算期间的数据更新</h3>
+<p>原始记录更新时，在同一事务中递增会话的数据修订号，标记摘要需要重建。摘要写入前检查修订号；数据已变，则重新计算。</p>
+<p>计算时，从同一数据库快照读取记录和修订号；提交时，在事务中重新校验。摘要同时保存计算依据的修订号，重启后据此判断是否过期。摘要更新不修改原始消息或草稿。</p>
+<aside class="callout callout-note" aria-label="两类版本"><p class="callout-title">两类版本</p><p>本地版本用于检查旧查询能否更新缓存。数据库修订号表示原始记录已更新到哪一版，用于检查摘要是否过期。</p></aside>
+<h3 id="43-批次大小与保存优先级">4.3 批次大小与保存优先级</h3>
+<p>合并写入减少同一会话的摘要更新次数；批量提交则把多个待写操作放进一个事务，减少事务次数。两者可以配合，但批次过大会延迟消息与草稿保存。</p>
+<p>调度器限制每批摘要数量，优先处理正在等待保存确认的消息和草稿。待发任务保留在数据库，内存只领取有限批次。容量不足时拒绝新操作并保留输入，已接受的任务不能被丢弃。</p>
+<h2 id="5-消息保存发送与异常恢复">5. 消息保存、发送与异常恢复</h2>
+<h3 id="51-消息与待发任务同时保存">5.1 消息与待发任务同时保存</h3>
+<p>消息保存成功后，进程可能在网络请求发出前退出。因此，数据库还需保存一条待发任务，记录这条消息尚未发送。消息与任务在同一事务中提交，重启后就能找到需要继续发送的内容。</p>
+<figure class="article-figure"><a class="figure-link" href="/media/8d9d3c82dea4de1a.svg" target="_blank" rel="noopener" aria-label="查看原图：本地事务保存消息和待发任务，成功后发起网络请求；收到服务端确认后，再更新本地消息和任务状态"><img src="/media/8d9d3c82dea4de1a.svg" alt="本地事务保存消息和待发任务，成功后发起网络请求；收到服务端确认后，再更新本地消息和任务状态" loading="lazy" decoding="async"></a><figcaption>图 5 · 本地保存、网络发送与状态确认</figcaption></figure>
+<p>网络请求在本地提交成功后执行，防止服务端已经接收、本地却没有记录。提交成功只表示内容已在本地保存；“已发送”还需要服务端确认，并完成本地状态提交。</p>
+<div class="code-block" data-language="text"><div class="code-label"><span>示意</span></div><pre tabindex="0"><code>提交消息（账号、消息标识、内容、草稿版本）：
+  在后台事务中：
+    相同账号与消息标识已存在 → 校验内容一致，复用结果
+    否则 → 保存消息和待发任务
+    草稿版本仍相同 → 写入更高版本的清空标记
+    递增会话数据修订号，标记摘要需要重建
+  提交成功 → 更新或失效缓存，返回“已接受”，唤醒发送模块
+  提交失败 → 保留输入，返回失败，不发送网络请求</code></pre></div>
+<p>清空编辑器前也要校验草稿版本，避免删掉提交期间的新输入。附件先保存到应用管理的稳定路径，再在事务中登记引用；清理文件前需检查是否仍被数据库记录引用。提交后即使未能唤醒发送模块，重启扫描待发任务也能恢复发送。</p>
+<h3 id="52-超时重试与重复消息处理">5.2 超时重试与重复消息处理</h3>
+<p>网络超时不能证明服务端没有收到消息。重试必须沿用原消息标识和内容，服务端按“账号 + 消息标识”去重，让多次请求对应同一条消息。不同内容不能复用标识，服务端的去重保留时间需覆盖重试周期；超过期限后，先查询处理结果。</p>
+<p>发送模块只领取当前账号的已提交任务。领取时，在短事务中登记本次发送编号和占用期限，再执行网络请求；到期仍未完成的任务可重新领取。有会话内顺序要求时，按本地序号等待前序任务完成。</p>
+<div class="table-wrap" tabindex="0" role="region" aria-label="数据表格"><table><thead><tr><th scope="col">结果</th><th scope="col">本地处理</th></tr></thead><tbody><tr><td>服务端确认成功</td><td>在同一事务中关联服务端消息 ID、将消息标为已发送、将任务标为已确认，提交后更新页面</td></tr><tr><td>断网或超时</td><td>保存重试次数和下次执行时间，逐步延长间隔后重试</td></tr><tr><td>自动重试耗尽</td><td>暂停自动发送，保留消息与任务，支持手动重试</td></tr><tr><td>旧发送尝试返回失败</td><td>校验发送编号，不覆盖新尝试或已发送状态</td></tr></tbody></table></div>
+<p>旧尝试返回有效成功确认时，仍可完成同一条消息；服务端同步到的消息也按原消息标识归并。本地确认事务失败时保留待发记录，重试取得同一结果后再次提交确认。</p>
+<h3 id="53-草稿保存与版本控制">5.3 草稿保存与版本控制</h3>
+<p>草稿连续编辑时，较早的保存任务可能晚于新任务完成。数据访问层为每次编辑串行分配递增版本，立即调度文本与附件引用的保存，数据库只接受更新版本。清空也要保存一个更高版本的删除标记，防止旧任务恢复已清空内容。</p>
+<div class="table-wrap" tabindex="0" role="region" aria-label="数据表格"><table><thead><tr><th scope="col">保存过程</th><th scope="col">页面与数据行为</th></tr></thead><tbody><tr><td>编辑到版本 41，事务未完成</td><td>即时显示输入，标记“保存中”</td></tr><tr><td>版本 41 提交成功，当前仍为 41</td><td>显示“已保存”</td></tr><tr><td>版本 41 返回时已编辑到 42</td><td>保留新输入，等待版本 42 的保存结果</td></tr><tr><td>磁盘满或写入失败</td><td>保留输入并提示失败</td></tr><tr><td>保存期间进程退出</td><td>重启后读取最新已提交版本，版本号继续递增</td></tr></tbody></table></div>
+<p>保存由编辑触发，不依赖页面退出或后台切换。多个保存操作可以共用短事务，但“已保存”必须在相应事务提交后确认。</p>
+<h3 id="54-进程重启与账号切换">5.4 进程重启与账号切换</h3>
+<p>进程退出会丢失内存状态，恢复需以数据库已提交记录为准。图 6 按发送中断的位置区分恢复操作。</p>
+<figure class="article-figure"><a class="figure-link" href="/media/3604a12bba8ca3ba.svg" target="_blank" rel="noopener" aria-label="查看原图：本地保存前、保存后、服务端接收后及本地确认时发生中断，分别按数据库中的草稿、消息与任务状态恢复"><img src="/media/3604a12bba8ca3ba.svg" alt="本地保存前、保存后、服务端接收后及本地确认时发生中断，分别按数据库中的草稿、消息与任务状态恢复" loading="lazy" decoding="async"></a><figcaption>图 6 · 发送中断后的恢复依据</figcaption></figure>
+<p>启动时根据数据库修订号重建过期摘要；账号鉴权有效后领取待发任务，并从已保存的同步位置继续拉取消息。每批服务端消息的保存与同步位置更新必须在同一事务提交，避免重启后跳过尚未保存的数据。</p>
+<p>全量同步仅替换服务端管理的字段，保留本地草稿、待发消息与操作。普通退出登录保留这些记录，暂停任务领取并解除页面订阅。在途请求仍可能到达服务端，其结果只归属原账号，旧登录回调不得更新当前页面；再次登录后从数据库恢复任务。</p>
+<h2 id="6-验证方法与预期效果">6. 验证方法与预期效果</h2>
+<p>用相同消息负载比较优化前后的数据库访问，并在图 6 的各个中断点终止进程、重新打开数据库，检查保存和恢复行为。</p>
+<div class="table-wrap" tabindex="0" role="region" aria-label="数据表格"><table><thead><tr><th scope="col">起初的问题</th><th scope="col">验证方法与预期结果</th></tr></thead><tbody><tr><td>相同查询重复执行</td><td>同时请求同一会话，对比业务请求数与实际查询数，确认有效缓存或进行中的查询被共享</td></tr><tr><td>摘要中间版本频繁写入</td><td>连续接收消息，确认原始记录完整，尚未执行的摘要只提交最新版本，未读数和排序正确</td></tr><tr><td>旧结果覆盖新数据</td><td>延迟返回查询与草稿保存回调，确认数据不倒退、已删除内容不恢复</td></tr><tr><td>已接受的内容丢失</td><td>提交后终止进程，重启后能恢复消息、草稿和待发任务</td></tr><tr><td>超时后重复发送</td><td>丢弃确认响应，再用原标识重试，服务端仍返回同一条消息</td></tr></tbody></table></div>
+<p>并发验证还需覆盖订阅登记与更新同时发生、账号切换时返回旧请求，以及全量同步时存在本地未发送内容。异常验证覆盖磁盘满、确认事务失败和服务端去重期限到期。</p>
+<p>性能记录包括查询次数、摘要写入次数、事务次数，以及消息和草稿提交延迟、待发积压与列表更新延迟。事务减少但保存变慢时，应检查摘要批次是否长期占用写队列，调整批次大小或优先级后复测。</p>
+<p>方案的预期效果是减少相同查询和摘要中间版本的写入，同时保持消息与草稿可恢复、列表状态不倒退。验收需要同时满足这两组条件。</p>
+<p>相关资料：<a href="https://docs.aws.amazon.com/prescriptive-guidance/latest/cloud-design-patterns/transactional-outbox.html">消息与待发任务的事务提交</a>、<a href="https://aws.amazon.com/builders-library/making-retries-safe-with-idempotent-APIs/">服务端去重与安全重试</a>。</p></article><footer class="article-footer"><a href="/#articles">← 返回文章列表</a><a href="#main">回到顶部 ↑</a></footer></main>
+  <aside class="desktop-toc"><p>本篇目录</p><nav aria-label="本篇目录"><ol><li><a href="#1-%E4%B8%9A%E5%8A%A1%E5%9C%BA%E6%99%AF%E4%B8%8E%E6%95%B0%E6%8D%AE%E8%AE%BF%E9%97%AE%E9%97%AE%E9%A2%98">1. 业务场景与数据访问问题</a></li><li><a href="#2-%E6%96%B9%E6%A1%88%E5%AF%B9%E6%AF%94%E4%B8%8E%E6%95%B4%E4%BD%93%E6%9E%B6%E6%9E%84">2. 方案对比与整体架构</a></li><li class="toc-child"><a href="#21-%E4%B8%89%E7%A7%8D%E8%AF%BB%E5%86%99%E6%96%B9%E6%A1%88%E5%AF%B9%E6%AF%94">2.1 三种读写方案对比</a></li><li class="toc-child"><a href="#22-%E6%95%B4%E4%BD%93%E6%9E%B6%E6%9E%84">2.2 整体架构</a></li><li><a href="#3-%E5%B9%B6%E5%8F%91%E6%9F%A5%E8%AF%A2%E5%90%88%E5%B9%B6%E4%B8%8E%E7%BC%93%E5%AD%98%E6%9B%B4%E6%96%B0">3. 并发查询合并与缓存更新</a></li><li class="toc-child"><a href="#31-%E5%A4%9A%E4%B8%AA%E6%A8%A1%E5%9D%97%E5%85%B1%E4%BA%AB%E6%9F%A5%E8%AF%A2%E7%BB%93%E6%9E%9C">3.1 多个模块共享查询结果</a></li><li class="toc-child"><a href="#32-%E6%97%A7%E6%9F%A5%E8%AF%A2%E7%BB%93%E6%9E%9C%E7%9A%84%E5%9B%9E%E5%A1%AB%E6%A0%A1%E9%AA%8C">3.2 旧查询结果的回填校验</a></li><li><a href="#4-%E4%BC%9A%E8%AF%9D%E6%91%98%E8%A6%81%E7%9A%84%E5%86%99%E5%85%A5%E5%90%88%E5%B9%B6">4. 会话摘要的写入合并</a></li><li class="toc-child"><a href="#41-%E5%8F%AA%E5%90%88%E5%B9%B6%E5%B0%9A%E6%9C%AA%E6%89%A7%E8%A1%8C%E7%9A%84%E6%91%98%E8%A6%81">4.1 只合并尚未执行的摘要</a></li><li class="toc-child"><a href="#42-%E6%91%98%E8%A6%81%E8%AE%A1%E7%AE%97%E6%9C%9F%E9%97%B4%E7%9A%84%E6%95%B0%E6%8D%AE%E6%9B%B4%E6%96%B0">4.2 摘要计算期间的数据更新</a></li><li class="toc-child"><a href="#43-%E6%89%B9%E6%AC%A1%E5%A4%A7%E5%B0%8F%E4%B8%8E%E4%BF%9D%E5%AD%98%E4%BC%98%E5%85%88%E7%BA%A7">4.3 批次大小与保存优先级</a></li><li><a href="#5-%E6%B6%88%E6%81%AF%E4%BF%9D%E5%AD%98%E5%8F%91%E9%80%81%E4%B8%8E%E5%BC%82%E5%B8%B8%E6%81%A2%E5%A4%8D">5. 消息保存、发送与异常恢复</a></li><li class="toc-child"><a href="#51-%E6%B6%88%E6%81%AF%E4%B8%8E%E5%BE%85%E5%8F%91%E4%BB%BB%E5%8A%A1%E5%90%8C%E6%97%B6%E4%BF%9D%E5%AD%98">5.1 消息与待发任务同时保存</a></li><li class="toc-child"><a href="#52-%E8%B6%85%E6%97%B6%E9%87%8D%E8%AF%95%E4%B8%8E%E9%87%8D%E5%A4%8D%E6%B6%88%E6%81%AF%E5%A4%84%E7%90%86">5.2 超时重试与重复消息处理</a></li><li class="toc-child"><a href="#53-%E8%8D%89%E7%A8%BF%E4%BF%9D%E5%AD%98%E4%B8%8E%E7%89%88%E6%9C%AC%E6%8E%A7%E5%88%B6">5.3 草稿保存与版本控制</a></li><li class="toc-child"><a href="#54-%E8%BF%9B%E7%A8%8B%E9%87%8D%E5%90%AF%E4%B8%8E%E8%B4%A6%E5%8F%B7%E5%88%87%E6%8D%A2">5.4 进程重启与账号切换</a></li><li><a href="#6-%E9%AA%8C%E8%AF%81%E6%96%B9%E6%B3%95%E4%B8%8E%E9%A2%84%E6%9C%9F%E6%95%88%E6%9E%9C">6. 验证方法与预期效果</a></li></ol></nav><a class="toc-return" href="/#articles">← 全部文章</a></aside></div></body></html>
