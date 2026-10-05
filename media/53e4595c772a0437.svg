@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="884" viewBox="0 0 800 884" role="img" aria-labelledby="title desc"><title id="title">lynx-loading-timeline.svg</title><desc id="desc">容器准备、资源请求与业务数据请求并行；容器和页面包就绪后出现首次内容，业务数据就绪后更新正文。</desc><defs><marker id="a" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto-start-reverse"><path d="M0 0L8 4L0 8Z" fill="#247267"/></marker></defs><rect width="800" height="884" rx="16" fill="#f7faf9"/><g font-family="Microsoft YaHei, PingFang SC, sans-serif"><text x="32" y="48" fill="#263b42" font-size="31" text-anchor="start" font-weight="600">一次页面打开，三条准备链路</text>
+<text x="32" y="87" fill="#647779" font-size="23" text-anchor="start" font-weight="400">示意：先显示骨架屏，再显示业务正文；时间向下</text>
+<text x="150" y="150" fill="#247267" font-size="27" text-anchor="middle" font-weight="600">容器</text>
+<path d="M150 170V630" fill="none" stroke="#bdceca" stroke-width="2.5" stroke-dasharray="7 7"/>
+<text x="400" y="150" fill="#247267" font-size="27" text-anchor="middle" font-weight="600">页面包</text>
+<path d="M400 170V630" fill="none" stroke="#bdceca" stroke-width="2.5" stroke-dasharray="7 7"/>
+<text x="650" y="150" fill="#247267" font-size="27" text-anchor="middle" font-weight="600">业务数据</text>
+<path d="M650 170V630" fill="none" stroke="#bdceca" stroke-width="2.5" stroke-dasharray="7 7"/>
+<path d="M150 186H650" fill="none" stroke="#247267" stroke-width="2.5"/>
+<text x="400" y="215" fill="#647779" font-size="23" text-anchor="middle" font-weight="400">页面打开 · 并行准备</text>
+<rect x="44" y="240" width="212" height="88" rx="12" fill="#fff" stroke="#cbdcd8"/>
+<text x="150" y="293" fill="#247267" font-size="28" text-anchor="middle" font-weight="600">创建与初始化</text>
+<rect x="294" y="240" width="212" height="88" rx="12" fill="#fff" stroke="#cbdcd8"/>
+<text x="400" y="293" fill="#247267" font-size="28" text-anchor="middle" font-weight="600">读取或下载</text>
+<rect x="544" y="240" width="212" height="88" rx="12" fill="#fff" stroke="#cbdcd8"/>
+<text x="650" y="293" fill="#247267" font-size="28" text-anchor="middle" font-weight="600">请求业务数据</text>
+<rect x="44" y="377" width="212" height="80" rx="12" fill="#fff" stroke="#cbdcd8"/>
+<text x="150" y="426" fill="#247267" font-size="28" text-anchor="middle" font-weight="600">容器就绪</text>
+<rect x="294" y="377" width="212" height="80" rx="12" fill="#fff" stroke="#cbdcd8"/>
+<text x="400" y="426" fill="#247267" font-size="28" text-anchor="middle" font-weight="600">页面包就绪</text>
+<path d="M400 457V487H150V512" fill="none" stroke="#247267" stroke-width="2.5" marker-end="url(#a)"/>
+<rect x="44" y="518" width="212" height="90" rx="12" fill="#fff" stroke="#cbdcd8"/>
+<text x="150" y="554" fill="#247267" font-size="28" text-anchor="middle" font-weight="600">首次内容</text>
+<text x="150" y="590" fill="#263b42" font-size="24" text-anchor="middle" font-weight="400">骨架屏</text>
+<rect x="544" y="518" width="212" height="90" rx="12" fill="#fff" stroke="#cbdcd8"/>
+<text x="650" y="572" fill="#247267" font-size="28" text-anchor="middle" font-weight="600">数据就绪</text>
+<path d="M650 608V650H150V685" fill="none" stroke="#247267" stroke-width="2.5" marker-end="url(#a)"/>
+<text x="400" y="639" fill="#247267" font-size="24" text-anchor="middle" font-weight="400">提交关键数据更新</text>
+<rect x="44" y="693" width="462" height="95" rx="12" fill="#fff" stroke="#cbdcd8"/>
+<text x="275" y="731.5" fill="#247267" font-size="28" text-anchor="middle" font-weight="600">关键内容完成</text>
+<text x="275" y="767.5" fill="#263b42" font-size="24" text-anchor="middle" font-weight="400">正文与必需模块满足展示条件</text>
+<text x="400" y="842" fill="#647779" font-size="25" text-anchor="middle" font-weight="400">各阶段存在重叠，总耗时不能直接相加</text></g></svg>
