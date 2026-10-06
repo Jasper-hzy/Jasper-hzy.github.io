@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1460" height="760" viewBox="0 0 1460 760" role="img" aria-labelledby="title desc">
+  <title id="title">云游戏一帧全链路</title>
+  <desc id="desc">展示云游戏一帧从远端 Android 游戏渲染、抓屏、编码、网络传输、客户端解码到渲染上屏的完整链路。</desc>
+  <defs>
+    <style>
+      .bg{fill:#fffdf8}.title{font:700 25px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;fill:#172033}.sub{font:13px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;fill:#526174}.lane{fill:#f8fafc;stroke:#d1d9e6;stroke-width:1.4}.server{fill:#e9f5ff;stroke:#6aa6d8}.net{fill:#fff4df;stroke:#d6a24a}.client{fill:#eef8ed;stroke:#71a96d}.box{fill:#fff;stroke:#435166;stroke-width:1.5;rx:12}.hot{fill:#fff7ed;stroke:#fb923c}.label{font:700 13.5px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;fill:#172033}.txt{font:12px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;fill:#4b5563}.small{font:11.5px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;fill:#64748b}.arrow{stroke:#334155;stroke-width:2;fill:none;marker-end:url(#arrow)}.back{stroke:#7c8796;stroke-width:1.8;fill:none;stroke-dasharray:7 6;marker-end:url(#arrow2)}.metric{fill:#f8fafc;stroke:#cbd5e1}.num{font:700 11px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;fill:#fff}.circle{fill:#334155}
+    </style>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L8,3 L0,6 Z" fill="#334155"/></marker>
+    <marker id="arrow2" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L8,3 L0,6 Z" fill="#7c8796"/></marker>
+  </defs>
+  <rect class="bg" width="1460" height="760"/>
+  <text class="title" x="44" y="44">云游戏一帧全链路：从远端出帧到客户端上屏</text>
+  <text class="sub" x="44" y="72">优化的目标是同时降低固定耗时和链路抖动，而不是只优化某一个函数。</text>
+
+  <rect class="lane server" x="42" y="112" width="560" height="470" rx="18"/>
+  <text class="label" x="70" y="144">远端 Android 容器</text>
+  <rect class="lane net" x="632" y="112" width="270" height="470" rx="18"/>
+  <text class="label" x="660" y="144">实时网络</text>
+  <rect class="lane client" x="932" y="112" width="485" height="470" rx="18"/>
+  <text class="label" x="960" y="144">客户端播放端</text>
+
+  <g transform="translate(78,190)"><rect class="box" width="145" height="62" rx="12"/><circle class="circle" cx="20" cy="20" r="12"/><text class="num" x="20" y="24" text-anchor="middle">1</text><text class="label" x="45" y="24">游戏渲染</text><text class="txt" x="45" y="45">Surface / Layer</text></g>
+  <g transform="translate(250,190)"><rect class="box hot" width="145" height="62" rx="12"/><circle class="circle" cx="20" cy="20" r="12"/><text class="num" x="20" y="24" text-anchor="middle">2</text><text class="label" x="45" y="24">抓屏采集</text><text class="txt" x="45" y="45">VirtualDisplay / HWC</text></g>
+  <g transform="translate(425,190)"><rect class="box hot" width="145" height="62" rx="12"/><circle class="circle" cx="20" cy="20" r="12"/><text class="num" x="20" y="24" text-anchor="middle">3</text><text class="label" x="45" y="24">编码前处理</text><text class="txt" x="45" y="45">OES / YUV / 旋转</text></g>
+  <g transform="translate(250,330)"><rect class="box hot" width="145" height="62" rx="12"/><circle class="circle" cx="20" cy="20" r="12"/><text class="num" x="20" y="24" text-anchor="middle">4</text><text class="label" x="45" y="24">硬件编码</text><text class="txt" x="45" y="45">MediaCodec</text></g>
+  <g transform="translate(425,330)"><rect class="box" width="145" height="62" rx="12"/><circle class="circle" cx="20" cy="20" r="12"/><text class="num" x="20" y="24" text-anchor="middle">5</text><text class="label" x="45" y="24">Pacer</text><text class="txt" x="45" y="45">RTP 分包 / 平滑发送</text></g>
+
+  <g transform="translate(690,215)"><rect class="box hot" width="155" height="66" rx="12"/><circle class="circle" cx="20" cy="20" r="12"/><text class="num" x="20" y="24" text-anchor="middle">6</text><text class="label" x="45" y="24">网络传输</text><text class="txt" x="45" y="45">RTT / Loss / Jitter</text></g>
+  <g transform="translate(690,350)"><rect class="box" width="155" height="66" rx="12"/><circle class="circle" cx="20" cy="20" r="12"/><text class="num" x="20" y="24" text-anchor="middle">7</text><text class="label" x="45" y="24">组帧</text><text class="txt" x="45" y="45">FEC / NACK / 乱序</text></g>
+
+  <g transform="translate(970,190)"><rect class="box hot" width="155" height="62" rx="12"/><circle class="circle" cx="20" cy="20" r="12"/><text class="num" x="20" y="24" text-anchor="middle">8</text><text class="label" x="45" y="24">JitterBuffer</text><text class="txt" x="45" y="45">抗抖但引入延迟</text></g>
+  <g transform="translate(1190,190)"><rect class="box hot" width="155" height="62" rx="12"/><circle class="circle" cx="20" cy="20" r="12"/><text class="num" x="20" y="24" text-anchor="middle">9</text><text class="label" x="45" y="24">硬件解码</text><text class="txt" x="45" y="45">MediaCodec</text></g>
+  <g transform="translate(970,330)"><rect class="box hot" width="155" height="62" rx="12"/><circle class="circle" cx="20" cy="20" r="12"/><text class="num" x="20" y="24" text-anchor="middle">10</text><text class="label" x="45" y="24">解码后处理</text><text class="txt" x="45" y="45">SurfaceTexture / FBO</text></g>
+  <g transform="translate(1190,330)"><rect class="box hot" width="155" height="62" rx="12"/><circle class="circle" cx="20" cy="20" r="12"/><text class="num" x="20" y="24" text-anchor="middle">11</text><text class="label" x="45" y="24">渲染上屏</text><text class="txt" x="45" y="45">SurfaceFlinger / HWC</text></g>
+
+  <path class="arrow" d="M223 221 L250 221"/><path class="arrow" d="M395 221 L425 221"/><path class="arrow" d="M498 252 C498 300,340 300,322 330"/><path class="arrow" d="M395 361 L425 361"/><path class="arrow" d="M570 361 C615 361,640 248,690 248"/><path class="arrow" d="M768 281 L768 350"/><path class="arrow" d="M845 383 C905 383,915 220,970 220"/><path class="arrow" d="M1125 221 L1190 221"/><path class="arrow" d="M1268 252 C1268 302,1050 302,1048 330"/><path class="arrow" d="M1125 361 L1190 361"/>
+  <path class="back" d="M970 515 C770 655,360 620,120 515"/><text class="small" x="512" y="648">上行输入：触摸 / 按键 / 传感器，影响下一帧画面变化</text>
+
+  <rect class="metric" x="78" y="610" width="520" height="62" rx="12"/>
+  <text class="sub" x="102" y="638">体验指标：操作延迟 = 上行输入 + 远端出帧 + 下行视频 + 客户端上屏</text>
+  <text class="sub" x="102" y="660">稳定指标：100ms 卡顿率 = 渲染间隔异常带来的可感知画面停顿</text>
+  <rect class="metric" x="650" y="610" width="690" height="62" rx="12"/>
+  <text class="sub" x="674" y="638">优化抓手：少一次格式转换、少一次 buffer 排队、少一次 OpenGL draw、更快网络反馈、更稳硬编硬解。</text>
+  <text class="sub" x="674" y="660">定位方法：按帧序把每段耗时、Jitter、无效帧和丢帧原因串起来看。</text>
+</svg>

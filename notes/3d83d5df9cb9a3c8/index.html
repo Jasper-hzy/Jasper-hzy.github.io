@@ -1,114 +1,49 @@
-<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light"><meta name="theme-color" content="#f7f6f2"><title>鸡蛋掉落：为什么下一次要少跳一层</title><meta name="description" content="技术学习与工程实践。"><link rel="icon" href="/favicon.svg?v=7ea8198bf5c60782"><link rel="stylesheet" href="/reader.css?v=7ea8198bf5c60782"><script src="/reader.js?v=7ea8198bf5c60782" defer></script></head><body><div class="reading-progress" aria-hidden="true"></div><a class="skip" href="#main">跳到正文</a><header class="reader-nav"><nav aria-label="站点导航"><a href="/">← 首页</a><a href="/#articles">全部文章 ↗</a></nav></header><div class="reading-layout"><main id="main"><nav class="breadcrumbs" aria-label="当前位置"><a href="/#articles">文章</a><span>/</span><a href="/?category=algorithms#articles">算法练习</a><span>/</span><span>智力题</span></nav>
-  <header class="article-heading"><p class="article-category">算法笔记</p><h1>鸡蛋掉落：为什么下一次要少跳一层</h1><p class="article-description">从固定间隔的最坏情况出发，推导递减策略、覆盖状态与一维实现。</p></header>
-  <details class="mobile-toc"><summary>本篇目录 <span>5 节</span></summary><nav aria-label="本篇目录"><ol><li><a href="#%E8%83%8C%E6%99%AF%E7%A1%AE%E5%AE%9A%E6%9C%80%E9%AB%98%E5%AE%89%E5%85%A8%E6%A5%BC%E5%B1%82">背景：确定最高安全楼层</a></li><li><a href="#%E9%97%AE%E9%A2%98%E5%9B%BA%E5%AE%9A%E9%97%B4%E9%9A%94%E8%AE%A9%E6%9C%80%E5%9D%8F%E6%83%85%E5%86%B5%E8%B6%8A%E6%9D%A5%E8%B6%8A%E5%B7%AE">问题：固定间隔让最坏情况越来越差</a></li><li class="toc-child"><a href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E4%B8%8D%E8%83%BD%E7%9B%B4%E6%8E%A5%E6%94%B9%E6%88%90%E4%BA%8C%E5%88%86">为什么不能直接改成二分</a></li><li><a href="#%E6%96%B9%E6%A1%88%E6%AF%94%E8%BE%83%E6%8A%8A%E5%89%A9%E4%BD%99%E6%AC%A1%E6%95%B0%E5%88%86%E9%85%8D%E7%BB%99%E6%AF%8F%E4%B8%AA%E5%8C%BA%E9%97%B4">方案比较：把剩余次数分配给每个区间</a></li><li class="toc-child"><a href="#%E9%80%92%E5%87%8F%E9%97%B4%E9%9A%94%E6%80%8E%E6%A0%B7%E4%BB%8E%E9%A2%84%E7%AE%97%E4%B8%AD%E6%8E%A8%E5%AF%BC%E5%87%BA%E6%9D%A5">递减间隔怎样从预算中推导出来</a></li><li class="toc-child"><a href="#%E8%AF%81%E6%98%8E-14-%E6%AC%A1%E7%9A%84%E4%B8%8B%E7%95%8C%E5%B9%B6%E6%9E%84%E9%80%A0%E6%8A%95%E6%8E%B7%E6%96%B9%E6%A1%88">证明 14 次的下界并构造投掷方案</a></li><li><a href="#%E5%AE%9E%E7%8E%B0%E7%94%A8%E8%A6%86%E7%9B%96%E6%A5%BC%E5%B1%82%E6%95%B0%E7%BB%9F%E4%B8%80%E5%A4%84%E7%90%86%E5%A4%9A%E4%B8%AA%E9%B8%A1%E8%9B%8B">实现：用覆盖楼层数统一处理多个鸡蛋</a></li><li class="toc-child"><a href="#%E4%BB%8E%E6%89%8B%E5%B7%A5%E7%AD%96%E7%95%A5%E8%BD%AC%E4%B8%BA%E8%A6%86%E7%9B%96%E7%8A%B6%E6%80%81">从手工策略转为覆盖状态</a></li><li class="toc-child"><a href="#%E5%8E%8B%E7%BC%A9%E7%8A%B6%E6%80%81%E5%B9%B6%E5%AE%9E%E7%8E%B0-c-%E9%80%92%E6%8E%A8">压缩状态并实现 C++ 递推</a></li><li><a href="#%E5%AE%9E%E7%8E%B0%E6%95%88%E6%9E%9C%E6%9C%80%E5%9D%8F-14-%E6%AC%A1%E4%B8%8E%E7%8B%AC%E7%AB%8B%E7%AE%97%E6%B3%95%E6%A0%B8%E5%AF%B9">实现效果：最坏 14 次与独立算法核对</a></li></ol></nav></details><article class="prose" id="content"><p>本文讨论怎样在最坏情况下，用尽量少的投掷确定最高安全楼层，并将手工策略推广为可实现的递推。</p>
-<p><strong>两个鸡蛋、100 层楼的最少次数是 14。</strong> 第一枚鸡蛋从 14 层开始，之后分别增加 13、12、11 层；每次没碎，下一次就少跨一层，把剩余机会留给碎蛋后的线性检查。推广到更多鸡蛋时，用“给定次数能覆盖多少层”作为状态。</p>
-<p>下面从每隔 10 层试一次的方案出发，找出它最坏需要 19 次的原因，再推导递减间隔、次数下界与代码实现。</p>
-<h2 id="背景确定最高安全楼层">背景：确定最高安全楼层</h2>
-<p>设最高安全楼层为 F，F 可以取 0 到 100：在 F 层及以下扔不会碎，从 F+1 层开始会碎。F=0 表示一楼也不安全，F=100 表示整栋楼都安全。两个鸡蛋性质相同，没碎可以继续用，碎了不能再用。</p>
-<p>目标是无论 F 取多少，都能在尽量少的尝试内确定它。</p>
-<h2 id="问题固定间隔让最坏情况越来越差">问题：固定间隔让最坏情况越来越差</h2>
-<p>如果按下面的顺序扔第一个鸡蛋：</p>
-<div class="code-block" data-language="text"><div class="code-label"><span>示意</span></div><pre tabindex="0"><code>10, 20, 30, ..., 100</code></pre></div>
-<p>它在 100 层才碎时，已经用了 10 次。此时只知道 90 层安全、100 层不安全，还要用剩下的鸡蛋依次试 91 到 99 层。最坏再用 9 次，总计 19 次。</p>
-<p>早碎和晚碎的代价并不一样：在 10 层碎掉，最多总共用 10 次；在 100 层碎掉，却可能用 19 次。固定间隔没有考虑前面已经花掉的尝试次数。</p>
-<h3 id="为什么不能直接改成二分">为什么不能直接改成二分</h3>
-<p>为什么第二个鸡蛋不能继续二分？</p>
-<p>假设还需要区分 91 到 99 层，却直接从 95 层开始。若鸡蛋碎了，之后没有鸡蛋可用，无法判断最高安全楼层究竟是 90、91，还是 94。</p>
-<p>只剩一个鸡蛋时，每次都要从最低尚未确定的楼层开始。碎掉就得到答案，没碎再向上一层。</p>
-<p>这决定了第一个鸡蛋最多能跳多远：一旦碎掉，留下的区间必须能用剩余次数逐层查完。</p>
-<h2 id="方案比较把剩余次数分配给每个区间">方案比较：把剩余次数分配给每个区间</h2>
-<p>在两个鸡蛋、100 层的约束下，可以先比较几种搜索方式：</p>
-<div class="table-wrap" tabindex="0" role="region" aria-label="数据表格"><table><thead><tr><th scope="col">做法</th><th scope="col">优点</th><th scope="col">代价与限制</th></tr></thead><tbody><tr><td>从一楼逐层检查</td><td>一枚鸡蛋即可完成，过程简单</td><td>最坏需要 100 次</td></tr><tr><td>每隔 10 层试一次，碎后逐层检查</td><td>容易构造，明显少于逐层检查</td><td>最坏需要 19 次，前后区间的预算不均衡</td></tr><tr><td>每次取剩余区间中点</td><td>鸡蛋足够时可以快速缩小范围</td><td>两枚鸡蛋无法保证走完所有分支，不能直接采用</td></tr><tr><td>随剩余次数递减间隔</td><td>平衡每次碎蛋后的总成本</td><td>需要先求次数预算；更多鸡蛋时还需推广状态</td></tr></tbody></table></div>
-<p>选择递减间隔的原因，是它能够让晚碎时更少的剩余次数，对应更小的待查区间。接下来需要证明：每一步究竟能跨多远，以及这个策略是否已经最优。</p>
-<h3 id="递减间隔怎样从预算中推导出来">递减间隔怎样从预算中推导出来</h3>
-<p>假设希望最多用 x 次完成。</p>
-<p>第一下从第 k 层扔。如果碎了，已经用掉 1 次，下面还有 k-1 层需要逐层检查。因此必须满足：</p>
-<div class="math-block" role="math" aria-label="1 + (k - 1) &lt;= x
-也就是 k &lt;= x">1 + (k - 1) &lt;= x
-也就是 k &lt;= x</div>
-<p>所以第一下最多试到第 x 层。</p>
-<p>如果没碎，已经消耗一次机会，剩下 x-1 次。下一次最多向上跨 x-1 层：若这次碎了，就要用剩余的 x-2 次检查中间楼层。</p>
-<p>继续推下去，跳跃间隔依次是：</p>
-<div class="code-block" data-language="text"><div class="code-label"><span>示意</span></div><pre tabindex="0"><code>x, x-1, x-2, ..., 1</code></pre></div>
-<p>每多扔一次，剩余次数就少一次；为了在下一次碎掉时仍能查完，中间可留下的楼层也要少一层。递减间隔由这个约束直接得到。</p>
-<figure class="article-figure"><a class="figure-link" href="/media/be2c392b3eac5a11.svg" target="_blank" rel="noopener" aria-label="查看原图：前四次分别试 14、27、39、50 层，剩余逐层检查预算依次减少"><img src="/media/be2c392b3eac5a11.svg" alt="前四次分别试 14、27、39、50 层，剩余逐层检查预算依次减少" loading="lazy" decoding="async"></a><figcaption>图 1 · 已用次数与剩余线性检查次数，共同受 14 次预算限制</figcaption></figure>
-<h3 id="证明-14-次的下界并构造投掷方案">证明 14 次的下界并构造投掷方案</h3>
-<p>预算为 x 次时，两个鸡蛋最多覆盖：</p>
-<div class="math-block" role="math" aria-label="x + (x-1) + ... + 1 = x(x+1)/2 层">x + (x-1) + ... + 1 = x(x+1)/2 层</div>
-<p>这个式子既给出上限，也能构造策略。每一跳都不能超过当前剩余预算，所以最多只能覆盖这些楼层；按上述间隔跳，又确实能在每一种碎蛋情况下用剩余次数完成检查。</p>
-<p>代入 100 层：</p>
-<div class="math-block" role="math" aria-label="13 × 14 / 2 = 91   不够
-14 × 15 / 2 = 105  足够">13 × 14 / 2 = 91   不够
-14 × 15 / 2 = 105  足够</div>
-<p>因此 13 次无法保证完成，14 次可以。</p>
-<p>第一下从 14 层开始，之后依次增加 13、12、11 层，接近楼顶时截到 100 层：</p>
-<div class="code-block" data-language="text"><div class="code-label"><span>示意</span></div><pre tabindex="0"><code>14, 27, 39, 50, 60, 69, 77, 84, 90, 95, 99, 100</code></pre></div>
-<p>可以拿几种情况检查预算：</p>
-<div class="table-wrap" tabindex="0" role="region" aria-label="数据表格"><table><thead><tr><th scope="col">第一个鸡蛋的情况</th><th scope="col">已用次数</th><th scope="col">第二个鸡蛋最多还需检查</th><th scope="col">总次数上限</th></tr></thead><tbody><tr><td>14 层碎</td><td>1</td><td>1～13 层，共 13 次</td><td>14</td></tr><tr><td>27 层碎</td><td>2</td><td>15～26 层，共 12 次</td><td>14</td></tr><tr><td>39 层碎</td><td>3</td><td>28～38 层，共 11 次</td><td>14</td></tr><tr><td>100 层碎</td><td>12</td><td>99 层已知安全，无需再试</td><td>12</td></tr><tr><td>到 100 层都没碎</td><td>12</td><td>已知 F=100</td><td>12</td></tr></tbody></table></div>
-<p>最后两种情况少于 14 次，是因为楼只有 100 层，用不完 105 层的覆盖能力。最坏情况下仍然需要 14 次，例如 F=12 或 F=13。</p>
-<h2 id="实现用覆盖楼层数统一处理多个鸡蛋">实现：用覆盖楼层数统一处理多个鸡蛋</h2>
-<h3 id="从手工策略转为覆盖状态">从手工策略转为覆盖状态</h3>
-<p>两个鸡蛋时，第一次碎掉以后只剩线性检查，因此能手算出递减间隔。增加到三个鸡蛋，碎掉以后还有两个鸡蛋，下半段也可以跳跃；继续手工枚举每次跳多少层，分支很快就多起来。</p>
-<p>一种直接的状态是“k 个鸡蛋、n 层楼，最少试几次”。但这样写递推，需要枚举第一下扔在哪层，再取碎和不碎两种情况中较坏的一边。前面的预算推导给出了更方便的方向：固定可用次数，计算最多能覆盖多少层。这样只需合并碎与不碎两个子问题，不再逐层枚举第一次的位置。</p>
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="description" content="鸡蛋掉落 · 客户端开发、系统原理与工程实践。"><meta name="color-scheme" content="dark"><meta name="theme-color" content="#0b0f16"><title>鸡蛋掉落 · Joel 的技术笔记</title><link rel="icon" href="/favicon.svg?v=c2260201867b8eed"><link rel="stylesheet" href="/style.css?v=c2260201867b8eed"><script src="/app.js?v=c2260201867b8eed" defer></script></head><body><div class="ambient-grid" aria-hidden="true"></div><a class="skip" href="#main">跳到正文</a><header class="site-header"><a class="brand" href="/" aria-label="Joel 的技术笔记首页"><span class="brand-mark" aria-hidden="true">J</span><span>Joel 的技术笔记</span></a><div class="header-actions"><span class="header-note">技术学习 · 工程实践</span><button class="mobile-menu" type="button" aria-controls="site-directory" aria-expanded="false">目录</button><a href="/#search">搜索</a></div></header><div class="layout has-toc"><aside class="sidebar" id="site-directory"><a class="directory-home" href="/"><span class="directory-home-label"><strong>全部文章</strong><small>按主题浏览</small></span><span class="directory-home-count"><b>149</b><small>篇</small></span></a><nav aria-label="知识目录"><details><summary>客户端开发 <small>34</small></summary><a class="section-overview" href="/topics/client/">分类概览 →</a><ul><li><details><summary>Android</summary><ul><li><a href="/notes/cd703068ffa81c0f/">Android</a></li><li><details><summary>系统原理</summary><ul><li><a href="/notes/fab84807ffb6d277/">Android 系统源码学习总纲</a></li><li><a href="/notes/1c136c4416d06071/">系统启动流程</a></li><li><a href="/notes/51a85ec64df5a668/">ART：JIT / AOT / Profile / GC</a></li><li><a href="/notes/579943f755f56d07/">SystemServer 启动服务流程</a></li><li><a href="/notes/08d2a56a2a759fce/">PackageManagerService 包扫描与安装流程</a></li><li><a href="/notes/84363bcc3e1a6595/">ATMS 与 AMS</a></li><li><a href="/notes/ee4541ede89330a8/">WindowManagerService 窗口管理流程</a></li><li><a href="/notes/9e5b0f3f4ca04e76/">Input 输入系统流程</a></li><li><a href="/notes/df4027642366e720/">Activity 启动与显示流程</a></li><li><a href="/notes/03953a247cdb3327/">Binder</a></li><li><a href="/notes/3428c6a7ad967847/">Android 渲染上屏流程</a></li></ul></details></li><li><details><summary>UI与渲染</summary><ul><li><a href="/notes/7582c9b1581b3665/">渲染流程</a></li><li><a href="/notes/4a594de417119321/">RecyclerView 缓存机制</a></li><li><a href="/notes/5202b7428683905e/">事件分发机制</a></li><li><a href="/notes/f6c73d82600acf33/">自定义 ItemDecoration</a></li><li><a href="/notes/22a5902d69c4c940/">ItemTouchHelper 使用</a></li><li><a href="/notes/179570f12295f1ab/">Material Design 布局使用</a></li></ul></details></li><li><details><summary>框架与工程</summary><ul><li><a href="/notes/056423c700c40391/">Android 插件化</a></li><li><a href="/notes/2beac6fcfd86382d/">Android 热更新</a></li><li><a href="/notes/029f8807a6033e04/">Dagger2 基础与多宿主实践</a></li><li><a href="/notes/5db034481aa59958/">Glide 源码</a></li><li><a href="/notes/930c095f85690ccd/">Retrofit 源码解析</a></li></ul></details></li><li><details><summary>性能稳定性</summary><ul><li><a href="/notes/e8bbec3482f2a8d4/">应用启动优化</a></li><li><a href="/notes/2d016d7297cbdba9/">ANR 排查</a></li><li><a href="/notes/689e2041f5c6b580/">内存优化</a></li><li><a href="/notes/7556cd7c3bc2b1c3/">卡顿与丢帧排查</a></li><li><a href="/notes/79948e481206ca62/">BlockCanary</a></li><li><a href="/notes/057de36673ccdcb9/">LeakCanary 原理</a></li></ul></details></li><li><details><summary>工具链</summary><ul><li><a href="/notes/e5d63e4556abf9a6/">Gradle 编译流程梳理</a></li><li><a href="/notes/84901174916c45fd/">Transform 使用</a></li><li><a href="/notes/689954c1e13017ea/">反编译</a></li></ul></details></li></ul></details></li><li><details><summary>跨端</summary><ul><li><details><summary>Lynx</summary><ul><li><a href="/notes/741ac84d1e8f8b8a/">Lynx 跨端框架优势与对比</a></li><li><a href="/notes/a708a884013d8a87/">Lynx 容器监控指标口径</a></li></ul></details></li></ul></details></li></ul></details><details><summary>编程与系统基础 <small>38</small></summary><a class="section-overview" href="/topics/fundamentals/">分类概览 →</a><ul><li><details><summary>C++</summary><ul><li><a href="/notes/04e59128bf1e98a4/">C++</a></li><li><a href="/notes/337f3289ca817d07/">基础语义</a></li><li><a href="/notes/7da782b3a8e0f2ef/">对象与资源管理</a></li><li><a href="/posts/cpp-lifetime/">智能指针与异步生命周期</a></li><li><a href="/notes/b772f3b2675faaf5/">STL 容器</a></li><li><a href="/notes/051be1b8f1d35f56/">并发基础</a></li><li><a href="/posts/cpp-build-and-link/">编译与链接</a></li><li><a href="/notes/23212fc946d4c347/">开发问题汇总</a></li><li><a href="/notes/63c12ecbd19b0f91/">熟练度标准与自测</a></li><li><details><summary>开发问题</summary><ul><li><a href="/notes/1d1f5d117322d7da/">ABI 问题</a></li><li><a href="/notes/29c0c961be175b60/">写已释放地址与内存踩踏</a></li><li><a href="/posts/cpp-container-concurrency/">标准容器并发访问</a></li><li><a href="/notes/85ddc54e262bad58/">对象生命周期与回调</a></li><li><a href="/notes/808f19ab738e16da/">Release 偶现问题</a></li><li><a href="/notes/280f7a3ab5fd45c3/">平台运行态 Crash 分类</a></li><li><a href="/notes/e04fd0e54f9a7d47/">ASAN 场景失败与真实内存错误区分</a></li><li><a href="/notes/623620045defcbb3/">历史排查案例</a></li></ul></details></li></ul></details></li><li><details><summary>Java</summary><ul><li><a href="/notes/b1c8a52ce929a020/">Java</a></li><li><a href="/notes/8e9dc066a5544aab/">Synchronized</a></li><li><a href="/notes/b73248fd23c6b5f8/">多线程同步</a></li><li><a href="/notes/3d67cdd9a9231ab4/">线程池</a></li><li><a href="/notes/1e3108720115f9d3/">CopyOnWriteArrayList</a></li><li><a href="/notes/36a3d031dee2fb29/">Volatile</a></li><li><a href="/notes/e0d01430259a37d3/">垃圾回收机制</a></li></ul></details></li><li><details><summary>Kotlin</summary><ul><li><a href="/notes/8a8e5294a0285aae/">Kotlin</a></li><li><a href="/notes/4061b718089f851b/">协程使用</a></li><li><a href="/notes/7856c70c2fa1cb64/">自定义 Kotlin Compiler Plugin</a></li></ul></details></li><li><details><summary>计算机网络</summary><ul><li><a href="/notes/c4418afb3b4eb8e2/">计算机网络</a></li><li><a href="/notes/f425bc6b5bdafa80/">HTTP 协议</a></li><li><a href="/notes/15d4a1778e656754/">编码加密</a></li><li><a href="/notes/2acb0fe30800e3af/">登陆认证</a></li></ul></details></li><li><details><summary>操作系统</summary><ul><li><a href="/notes/cc459aa9bad2e365/">操作系统</a></li><li><a href="/notes/071abe42adc5d303/">CPU 调度算法</a></li><li><a href="/notes/ce6aa3943fd8ff6d/">mmap 原理</a></li><li><a href="/notes/1e29933ec8a137ff/">生产者消费者模型</a></li></ul></details></li><li><details><summary>编译原理</summary><ul><li><a href="/notes/f354f9e11ab9a802/">龙书</a></li></ul></details></li><li><details><summary>设计模式</summary><ul><li><a href="/notes/ce7abb0ac2e79516/">单例模式</a></li><li><a href="/notes/e4ca0fc073f3a05b/">建造者模式</a></li></ul></details></li></ul></details><details><summary>音视频 <small>7</small></summary><a class="section-overview" href="/topics/media/">分类概览 →</a><ul><li><details><summary>WebRTC</summary><ul><li><a href="/notes/45f67730a5fb6602/">学习大纲</a></li><li><a href="/notes/5974905c4606c9c3/">连接建立</a></li><li><a href="/notes/ac2f41a67eccb700/">拥塞控制</a></li></ul></details></li><li><details><summary>OpenGL</summary><ul><li><a href="/notes/554b2442737d8d68/">基础知识</a></li></ul></details></li><li><details><summary>图片协议</summary><ul><li><a href="/notes/061f8cae8aec25b6/">分辨率</a></li><li><a href="/notes/162f8ef558b698a4/">RGB</a></li><li><a href="/notes/0f88bf544513e7c1/">YUV</a></li></ul></details></li></ul></details><details><summary>云游戏 <small>5</small></summary><a class="section-overview" href="/topics/cloud-gaming/">分类概览 →</a><ul><li><a href="/notes/bf95bcbbbd60604c/">框架实现</a></li><li><a href="/notes/36582d80df98846f/">云游戏优化</a></li><li><details><summary>技术实现</summary><ul><li><a href="/notes/38845869d7192ea0/">Android 容器抓屏实现</a></li><li><a href="/notes/3e3c8cfb2580f5c8/">Android 容器触摸输入原理</a></li><li><a href="/notes/95623197f800b091/">Android 云游戏免安装启动机制</a></li></ul></details></li></ul></details><details><summary>AI 与大模型 <small>1</small></summary><a class="section-overview" href="/topics/ai/">分类概览 →</a><ul><li><a href="/notes/48948eb946ee1473/">基础知识</a></li></ul></details><details open><summary>算法练习 <small>59</small></summary><a class="section-overview" href="/topics/algorithms/">分类概览 →</a><ul><li><a href="/notes/93a9a083af32c3d2/">算法练习</a></li><li><a href="/notes/a78e4d2bbe575447/">高频算法题清单（通用 / 字节风格）</a></li><li><a href="/notes/f745b2389e7d23e7/">小红书高频算法题清单</a></li><li><details><summary>业务场景题</summary><ul><li><a href="/notes/b7d3ba686668f584/">生产者消费者：手写阻塞队列</a></li><li><a href="/notes/f5aa5a3d68dc1a13/">三线程顺序打印 ABC</a></li></ul></details></li><li><details open><summary>智力题</summary><ul><li><a href="/notes/ba2d85f388e95f73/">总览</a></li><li><a href="/notes/434b50db1b597ad4/">高频智力题清单</a></li><li><a href="/notes/b00124b11552e20b/">思维模型</a></li><li><a href="/notes/d5e1d5a9d69eaefc/">12 球称重</a></li><li><a href="/notes/68e6dc07320087af/">毒药小白鼠</a></li><li><a href="/notes/3d83d5df9cb9a3c8/" aria-current="page">鸡蛋掉落</a></li></ul></details></li><li><details><summary>题型模板</summary><ul><li><a href="/notes/dbda860183531936/">滑动窗口</a></li><li><a href="/notes/77bdd4ba7661b40b/">滑动窗口 <small>CPP</small></a></li></ul></details></li><li><details><summary>LeetCode</summary><ul><li><a href="/notes/2d30c32c4a0e89a0/">1.两数之和 <small>CPP</small></a></li><li><a href="/notes/57a5a57f907a0ec4/">2.两数相加 <small>CPP</small></a></li><li><a href="/notes/3f08bcae660db563/">3.无重复字符的最长子串 <small>CPP</small></a></li><li><a href="/notes/b16ca27a01318d4b/">11.盛最多水的容器 <small>CPP</small></a></li><li><a href="/notes/3d08d25f75c18331/">15.三数之和 <small>CPP</small></a></li><li><a href="/notes/8b208b6f30563fb4/">19.删除链表的倒数第-n-个结点 <small>CPP</small></a></li><li><a href="/notes/437bc90908824ab8/">21.合并两个有序链表 <small>CPP</small></a></li><li><a href="/notes/83f209ba4fcd4b26/">23.合并-k-个升序链表 <small>CPP</small></a></li><li><a href="/notes/9aa34711df2551a5/">25.K-个一组翻转链表 <small>CPP</small></a></li><li><a href="/notes/d67130692b90b8f7/">33.搜索旋转排序数组 <small>CPP</small></a></li><li><a href="/notes/9d1a99705c93d424/">34.在排序数组中查找元素的第一个和最后一个位置 <small>CPP</small></a></li><li><a href="/notes/b112df5a6fc5781c/">42.接雨水 <small>CPP</small></a></li><li><a href="/notes/ecc2a5f653ffa5fa/">49.字母异位词分组 <small>CPP</small></a></li><li><a href="/notes/39c18d0756052355/">53.最大子数组和 <small>CPP</small></a></li><li><a href="/notes/e59ded4d7dea5ec5/">56.合并区间 <small>CPP</small></a></li><li><a href="/notes/8509ba7c8d0d17f5/">62.不同路径 <small>CPP</small></a></li><li><a href="/notes/18406501b8d5cc47/">72.编辑距离 <small>CPP</small></a></li><li><a href="/notes/07d983c7275b5666/">82.删除排序链表中的重复元素-ii <small>CPP</small></a></li><li><a href="/notes/0ad3d0db8dd86ec0/">83.删除排序链表中的重复元素 <small>CPP</small></a></li><li><a href="/notes/1c62040a09bc4c3a/">92.反转链表 II <small>CPP</small></a></li><li><a href="/notes/cdb661dcf6e9acbe/">93.复原 IP 地址 <small>CPP</small></a></li><li><a href="/notes/2616f4bde8260e5d/">121.买卖股票的最佳时机 <small>CPP</small></a></li><li><a href="/notes/3db84bfe65ff3824/">122.买卖股票的最佳时机-II <small>CPP</small></a></li><li><a href="/notes/5e5910321065c5f2/">128.最长连续序列 <small>CPP</small></a></li><li><a href="/notes/50db8c67d7d6c96b/">142.环形链表-ii <small>CPP</small></a></li><li><a href="/notes/a745b24e46f7e8e2/">143.重排链表 <small>CPP</small></a></li><li><a href="/notes/50be710fff45d868/">146.lru-缓存 <small>CPP</small></a></li><li><a href="/notes/367810c5271fcc02/">198.打家劫舍 <small>CPP</small></a></li><li><a href="/notes/98723cd4305832f1/">199.二叉树的右视图 <small>CPP</small></a></li><li><a href="/notes/8953c9820b15afeb/">206.反转链表 <small>CPP</small></a></li><li><a href="/notes/aad8d01506c865c3/">207.课程表 <small>CPP</small></a></li><li><a href="/notes/e436ea8876352dc3/">209.长度最小的子数组 <small>CPP</small></a></li><li><a href="/notes/8fa679c5f37a53c9/">215.数组中的第K个最大元素 <small>CPP</small></a></li><li><a href="/notes/2475489ce09d9280/">227.基本计算器-ii <small>CPP</small></a></li><li><a href="/notes/08d2ef416fe36746/">236.二叉树的最近公共祖先 <small>CPP</small></a></li><li><a href="/notes/110fa7fed851d549/">300.最长递增子序列 <small>CPP</small></a></li><li><a href="/notes/5c1073abb1a4354f/">387.字符串中的第一个唯一字符 <small>CPP</small></a></li><li><a href="/notes/ece261e600606b17/">416.分割等和子集 <small>CPP</small></a></li><li><a href="/notes/f0fafa58fa81eced/">438.找到字符串中所有字母异位词 <small>CPP</small></a></li><li><a href="/notes/370133e875553c38/">542.01-矩阵 <small>CPP</small></a></li><li><a href="/notes/e6273d804d024ac3/">688.骑士在棋盘上的概率 <small>CPP</small></a></li><li><a href="/notes/5080a7cf177c528f/">695.岛屿的最大面积 <small>CPP</small></a></li><li><a href="/notes/002e2eddfaae4e16/">739.每日温度 <small>CPP</small></a></li><li><a href="/notes/014e112ab937d378/">785.判断二分图 <small>CPP</small></a></li><li><a href="/notes/5852112c135004af/">1143.最长公共子序列 <small>CPP</small></a></li><li><a href="/notes/85e225b9f26a2a1d/">leetcode <small>H</small></a></li></ul></details></li></ul></details><details><summary>项目实践 <small>4</small></summary><a class="section-overview" href="/topics/practice/">分类概览 →</a><ul><li><details><summary>业务实践</summary><ul><li><a href="/notes/3c9c4da576f6ac05/">AB 实验</a></li><li><a href="/notes/ac7c6e4dc35e8109/">IM 会话缓存与数据访问调度设计</a></li><li><details><summary>案例</summary><ul><li><a href="/notes/f6f786e148e57237/">直播互动玩法 - Cocos 场景切换适配问题</a></li><li><a href="/notes/c251094855ed2daa/">直播互动玩法 - Laya 动态切屏适配</a></li></ul></details></li></ul></details></li></ul></details><details><summary>游戏开发 <small>1</small></summary><a class="section-overview" href="/topics/games/">分类概览 →</a><ul><li><details><summary>游戏</summary><ul><li><details><summary>卡牌游戏</summary><ul><li><a href="/notes/c9dc8f92b42a56bd/">ScriptableObject</a></li></ul></details></li></ul></details></li></ul></details></nav></aside><main id="main"><header class="post-header"><div class="breadcrumbs"><a href="/topics/algorithms/">算法练习</a><span>/ 智力题</span></div><h1>鸡蛋掉落</h1></header><article class="prose"><h2 id="题目">题目</h2>
+<p>有一栋 100 层的楼，给你 2 个完全一样的鸡蛋。</p>
+<p>存在一个临界楼层 F：</p>
+<p>    从 F 层或更低楼层扔，鸡蛋不会碎；
+    从 F+1 层或更高楼层扔，鸡蛋会碎。</p>
+<p>鸡蛋没碎可以继续用，碎了就不能再用。</p>
+<p>问：最坏情况下，最少需要扔几次，才能一定找出最高安全楼层 F？</p>
+<h2 id="只有一个鸡蛋时">只有一个鸡蛋时</h2>
+<p>如果只有 1 个鸡蛋，不能从高层开始冒险。因为一旦碎了，就没有鸡蛋继续验证下面楼层。</p>
+<p>所以只能从 1 层开始一层层试，最坏需要 100 次。</p>
+<h2 id="两个鸡蛋的关键思路">两个鸡蛋的关键思路</h2>
+<p>第一个鸡蛋用来确定区间，第二个鸡蛋用来在区间内线性查找。</p>
+<p>固定每 10 层跳一次不是最优。比如按：</p>
+<p>    10, 20, 30, ..., 100</p>
+<p>如果第一个鸡蛋在 100 层碎了，前面已经扔了 10 次，还要用第二个鸡蛋查 91~99，最坏总共 19 次。</p>
+<p>更好的策略是让每条最坏路径都不超过同一个预算。</p>
+<h2 id="为什么跳跃间隔递减">为什么跳跃间隔递减</h2>
+<p>假设目标是最多 x 次一定找出来。</p>
+<p>第一次最多跳 x 层。因为如果第一次就碎了，下面有 x-1 层需要用第二个鸡蛋一层层查，总共刚好 x 次。</p>
+<p>如果第一次没碎，已经用掉 1 次，只剩 x-1 次预算。所以第二次最多只能再跳 x-1 层。</p>
+<p>继续往后：</p>
+<p>    第1跳：x
+    第2跳：x-1
+    第3跳：x-2
+    ...</p>
+<p>这不是凭感觉递减，而是被“总次数预算”逼出来的：第一个鸡蛋每多扔一次，剩余总次数就少一次；如果下一次碎了，留给第二个鸡蛋线性查找的区间也必须少一层。</p>
+<h2 id="两个鸡蛋100-层的答案">两个鸡蛋、100 层的答案</h2>
+<p>最多 x 次能覆盖的楼层数是：</p>
+<p>    x + (x-1) + (x-2) + ... + 1 = x(x+1)/2</p>
+<p>要覆盖 100 层，需要：</p>
+<p>    x(x+1)/2 &gt;= 100</p>
+<p>试数：</p>
+<p>    13 × 14 / 2 = 91，不够
+    14 × 15 / 2 = 105，够</p>
+<p>所以最坏最少需要 14 次。</p>
+<p>具体楼层可以按递减跳：</p>
+<p>    14, 27, 39, 50, 60, 69, 77, 84, 90, 95, 99, 100</p>
+<p>第一个鸡蛋在哪一层碎，就用第二个鸡蛋从上一个安全楼层的下一层开始线性查。</p>
+<h2 id="三个鸡蛋的推广">三个鸡蛋的推广</h2>
 <p>定义：</p>
-<div class="math-block" role="math" aria-label="cover(k, m) = k 个鸡蛋、最多 m 次尝试，可以确定临界点的最大楼层数">cover(k, m) = k 个鸡蛋、最多 m 次尝试，可以确定临界点的最大楼层数</div>
-<p>第一次选定一个楼层后，会有两种结果：</p>
-<ul><li><p>碎了：下面的区间交给 k-1 个鸡蛋和 m-1 次机会。</p></li><li><p>没碎：上面的区间交给 k 个鸡蛋和 m-1 次机会。</p></li></ul>
-<p>再加上当前试的这一层：</p>
-<div class="math-block" role="math" aria-label="cover(k, m) = cover(k-1, m-1) + 1 + cover(k, m-1)
-
-cover(0, m) = 0
-cover(k, 0) = 0">cover(k, m) = cover(k-1, m-1) + 1 + cover(k, m-1)
-
-cover(0, m) = 0
-cover(k, 0) = 0</div>
-<p>这里统计的是楼层数；n 层楼有 n+1 种可能的最高安全楼层，包括 F=0。不要把两种数量混在一起。</p>
-<p>当 k=1 时，递推得到 <code>cover(1, m)=m</code>，对应逐层检查。当 k=2 时，每增加一次机会，多覆盖 m 层，累计起来就是前面的三角形数。</p>
-<p>对于 3 个鸡蛋：</p>
-<div class="math-block" role="math" aria-label="cover(3, 8) = 92
-cover(3, 9) = 129">cover(3, 8) = 92
-cover(3, 9) = 129</div>
-<p>所以 100 层最少需要 9 次。</p>
-<h3 id="压缩状态并实现-c-递推">压缩状态并实现 C++ 递推</h3>
-<p>递推式可以先写成二维表：行表示尝试次数，列表示鸡蛋数。当前行只依赖上一行，因此可以压缩成一个数组，并逐轮增加尝试次数，直到覆盖目标楼层。</p>
-<p><code>covered[k]</code> 保存 k 个鸡蛋当前能够覆盖的楼层数。每轮开始时，它们属于上一轮；从大到小更新，可以让两个输入都仍然是旧值。</p>
-<p>以两个鸡蛋为例：</p>
-<div class="table-wrap" tabindex="0" role="region" aria-label="数据表格"><table><thead><tr><th scope="col">完成的尝试轮数</th><th scope="col"><code>covered[1]</code></th><th scope="col"><code>covered[2]</code></th></tr></thead><tbody><tr><td>0</td><td>0</td><td>0</td></tr><tr><td>1</td><td>1</td><td>1</td></tr><tr><td>2</td><td>2</td><td>3</td></tr><tr><td>3</td><td>3</td><td>6</td></tr></tbody></table></div>
-<p>第一轮计算 <code>covered[2]</code> 时，应得到 <code>0 + 1 + 0 = 1</code>。若从小到大，先把 <code>covered[1]</code> 改成 1，再计算下一项就得到 2，相当于宣称一次投掷可以区分两层楼，这已经与题意冲突。</p>
-<div class="code-block" data-language="cpp"><div class="code-label"><span>C++17 · 最少投掷次数</span></div><pre tabindex="0"><code><span class="syntax-directive">#include &lt;algorithm&gt;</span>
-<span class="syntax-directive">#include &lt;stdexcept&gt;</span>
-<span class="syntax-directive">#include &lt;vector&gt;</span>
-
-<span class="syntax-keyword">int</span> minimumDrops(<span class="syntax-keyword">int</span> eggCount, <span class="syntax-keyword">int</span> floorCount) {
-    <span class="syntax-keyword">if</span> (eggCount &lt; <span class="syntax-number">0</span> || floorCount &lt; <span class="syntax-number">0</span>) {
-        <span class="syntax-keyword">throw</span> std::invalid_argument(<span class="syntax-string">&quot;negative input&quot;</span>);
-    }
-    <span class="syntax-keyword">if</span> (floorCount == <span class="syntax-number">0</span>) <span class="syntax-keyword">return</span> <span class="syntax-number">0</span>;
-    <span class="syntax-keyword">if</span> (eggCount == <span class="syntax-number">0</span>) {
-        <span class="syntax-keyword">throw</span> std::invalid_argument(<span class="syntax-string">&quot;at least one egg is required&quot;</span>);
-    }
-
-    eggCount = std::min(eggCount, floorCount);
-    std::vector&lt;<span class="syntax-keyword">long</span> <span class="syntax-keyword">long</span>&gt; covered(eggCount + <span class="syntax-number">1</span>, <span class="syntax-number">0</span>);
-    <span class="syntax-keyword">int</span> dropCount = <span class="syntax-number">0</span>;
-
-    <span class="syntax-keyword">while</span> (covered[eggCount] &lt; floorCount) {
-        ++dropCount;
-        <span class="syntax-keyword">for</span> (<span class="syntax-keyword">int</span> eggs = eggCount; eggs &gt;= <span class="syntax-number">1</span>; --eggs) {
-            covered[eggs] = std::min&lt;<span class="syntax-keyword">long</span> <span class="syntax-keyword">long</span>&gt;(
-                floorCount,
-                covered[eggs - <span class="syntax-number">1</span>] + <span class="syntax-number">1</span> + covered[eggs]
-            );
-        }
-    }
-    <span class="syntax-keyword">return</span> dropCount;
-}</code></pre></div>
-<p>内层从大到小更新，是为了让 <code>covered[eggs-1]</code> 仍然表示上一轮的结果。若从小到大更新，同一轮的新值会被再次使用，相当于重复花了尚不存在的机会。</p>
-<p>数组中的值达到目标楼层数后就可以截断，后续不需要知道它究竟能覆盖多少层。这里输入楼层数是 <code>int</code>，中间求和使用 <code>long long</code>，同时对覆盖值做上限截断。</p>
-<p>设最终需要 m 次尝试，k 为限制后的鸡蛋数，时间复杂度为 O(km)，额外空间为 O(k)。这段函数只计算最少次数；如果需要实际的投掷方案，还需要根据覆盖状态选择每次测试的楼层。</p>
-<h2 id="实现效果最坏-14-次与独立算法核对">实现效果：最坏 14 次与独立算法核对</h2>
-<p>先遍历两鸡蛋、100 层的所有临界点 F=0～100，模拟前面的投掷楼层及碎蛋后的逐层检查：应当都能找到答案，最多 14 次。再对小规模输入，用“枚举第一次投掷楼层”的独立递推计算最优值，与覆盖状态算法逐项比较，避免两个实现重复同一个错误。</p>
-<p>本地验证覆盖 1～8 个鸡蛋、0～200 层，共 1,608 组输入，结果一致；上述 101 个临界点的模拟也均通过。另检查零层、没有鸡蛋但楼层非零、负数输入及大整数中间求和。它们验证的是这段次数计算和给出的两鸡蛋策略。</p>
-<p>固定间隔的最坏情况是 19 次，递减间隔的 101 个临界点模拟最多使用 14 次；与此同时，13 次最多覆盖 91 层的下界证明排除了更小的答案。<strong>因此，开头的 14 次既有能够完成的策略，也有不能更少的证明。</strong></p>
-<p>关键变化是让区间大小随剩余预算一起缩小。将这个关系写成覆盖状态后，同一套推导又支持了多个鸡蛋的实现，并通过小规模独立递推的逐项核对。</p></article><footer class="article-footer"><a href="/#articles">← 返回文章列表</a><a href="#main">回到顶部 ↑</a></footer></main>
-  <aside class="desktop-toc"><p>本篇目录</p><nav aria-label="本篇目录"><ol><li><a href="#%E8%83%8C%E6%99%AF%E7%A1%AE%E5%AE%9A%E6%9C%80%E9%AB%98%E5%AE%89%E5%85%A8%E6%A5%BC%E5%B1%82">背景：确定最高安全楼层</a></li><li><a href="#%E9%97%AE%E9%A2%98%E5%9B%BA%E5%AE%9A%E9%97%B4%E9%9A%94%E8%AE%A9%E6%9C%80%E5%9D%8F%E6%83%85%E5%86%B5%E8%B6%8A%E6%9D%A5%E8%B6%8A%E5%B7%AE">问题：固定间隔让最坏情况越来越差</a></li><li class="toc-child"><a href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E4%B8%8D%E8%83%BD%E7%9B%B4%E6%8E%A5%E6%94%B9%E6%88%90%E4%BA%8C%E5%88%86">为什么不能直接改成二分</a></li><li><a href="#%E6%96%B9%E6%A1%88%E6%AF%94%E8%BE%83%E6%8A%8A%E5%89%A9%E4%BD%99%E6%AC%A1%E6%95%B0%E5%88%86%E9%85%8D%E7%BB%99%E6%AF%8F%E4%B8%AA%E5%8C%BA%E9%97%B4">方案比较：把剩余次数分配给每个区间</a></li><li class="toc-child"><a href="#%E9%80%92%E5%87%8F%E9%97%B4%E9%9A%94%E6%80%8E%E6%A0%B7%E4%BB%8E%E9%A2%84%E7%AE%97%E4%B8%AD%E6%8E%A8%E5%AF%BC%E5%87%BA%E6%9D%A5">递减间隔怎样从预算中推导出来</a></li><li class="toc-child"><a href="#%E8%AF%81%E6%98%8E-14-%E6%AC%A1%E7%9A%84%E4%B8%8B%E7%95%8C%E5%B9%B6%E6%9E%84%E9%80%A0%E6%8A%95%E6%8E%B7%E6%96%B9%E6%A1%88">证明 14 次的下界并构造投掷方案</a></li><li><a href="#%E5%AE%9E%E7%8E%B0%E7%94%A8%E8%A6%86%E7%9B%96%E6%A5%BC%E5%B1%82%E6%95%B0%E7%BB%9F%E4%B8%80%E5%A4%84%E7%90%86%E5%A4%9A%E4%B8%AA%E9%B8%A1%E8%9B%8B">实现：用覆盖楼层数统一处理多个鸡蛋</a></li><li class="toc-child"><a href="#%E4%BB%8E%E6%89%8B%E5%B7%A5%E7%AD%96%E7%95%A5%E8%BD%AC%E4%B8%BA%E8%A6%86%E7%9B%96%E7%8A%B6%E6%80%81">从手工策略转为覆盖状态</a></li><li class="toc-child"><a href="#%E5%8E%8B%E7%BC%A9%E7%8A%B6%E6%80%81%E5%B9%B6%E5%AE%9E%E7%8E%B0-c-%E9%80%92%E6%8E%A8">压缩状态并实现 C++ 递推</a></li><li><a href="#%E5%AE%9E%E7%8E%B0%E6%95%88%E6%9E%9C%E6%9C%80%E5%9D%8F-14-%E6%AC%A1%E4%B8%8E%E7%8B%AC%E7%AB%8B%E7%AE%97%E6%B3%95%E6%A0%B8%E5%AF%B9">实现效果：最坏 14 次与独立算法核对</a></li></ol></nav><a class="toc-return" href="/#articles">← 全部文章</a></aside></div></body></html>
+<p>    F(k, x) = k 个鸡蛋、最多扔 x 次，最多能确定多少层</p>
+<p>第一次扔后：</p>
+<ul><li><p>碎了：少一个鸡蛋，少一次机会，楼下最多覆盖 F(k-1, x-1)。</p></li><li><p>没碎：鸡蛋不变，少一次机会，楼上最多覆盖 F(k, x-1)。</p></li><li><p>当前这一层被确定：+1。</p></li></ul>
+<p>所以：</p>
+<p>    F(k, x) = F(k-1, x-1) + 1 + F(k, x-1)</p>
+<p>两个鸡蛋的 x + (x-1) + ... + 1，就是这个通用递推在 k=2 时展开出来的结果。</p>
+<p>对于 3 个鸡蛋、100 层，最少是 9 次：</p>
+<p>    F(3, 8) = 92，不够
+    F(3, 9) = 129，够</p></article><p class="post-bottom"><a href="/topics/algorithms/">← 返回算法练习目录</a><a href="#main">回到顶部 ↑</a></p><footer><span>Joel · 技术学习与实践笔记</span><a href="#main">回到顶部 ↑</a></footer></main><aside class="toc"><span>本篇目录</span><ul><li><a href="#%E9%A2%98%E7%9B%AE">题目</a></li><li><a href="#%E5%8F%AA%E6%9C%89%E4%B8%80%E4%B8%AA%E9%B8%A1%E8%9B%8B%E6%97%B6">只有一个鸡蛋时</a></li><li><a href="#%E4%B8%A4%E4%B8%AA%E9%B8%A1%E8%9B%8B%E7%9A%84%E5%85%B3%E9%94%AE%E6%80%9D%E8%B7%AF">两个鸡蛋的关键思路</a></li><li><a href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E8%B7%B3%E8%B7%83%E9%97%B4%E9%9A%94%E9%80%92%E5%87%8F">为什么跳跃间隔递减</a></li><li><a href="#%E4%B8%A4%E4%B8%AA%E9%B8%A1%E8%9B%8B100-%E5%B1%82%E7%9A%84%E7%AD%94%E6%A1%88">两个鸡蛋、100 层的答案</a></li><li><a href="#%E4%B8%89%E4%B8%AA%E9%B8%A1%E8%9B%8B%E7%9A%84%E6%8E%A8%E5%B9%BF">三个鸡蛋的推广</a></li></ul></aside></div></body></html>

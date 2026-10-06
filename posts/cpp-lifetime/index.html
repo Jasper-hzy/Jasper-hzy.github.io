@@ -1,147 +1,74 @@
-<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light"><meta name="theme-color" content="#f7f6f2"><title>智能指针与异步生命周期</title><meta name="description" content="技术学习与工程实践。"><link rel="icon" href="/favicon.svg?v=7ea8198bf5c60782"><link rel="stylesheet" href="/reader.css?v=7ea8198bf5c60782"><script src="/reader.js?v=7ea8198bf5c60782" defer></script></head><body><div class="reading-progress" aria-hidden="true"></div><a class="skip" href="#main">跳到正文</a><header class="reader-nav"><nav aria-label="站点导航"><a href="/">← 首页</a><a href="/#articles">全部文章 ↗</a></nav></header><div class="reading-layout"><main id="main"><nav class="breadcrumbs" aria-label="当前位置"><a href="/#articles">文章</a><span>/</span><a href="/?category=fundamentals#articles">编程与系统基础</a><span>/</span><span>C++</span></nav>
-  <header class="article-heading"><h1>智能指针与异步生命周期</h1><p class="article-description">从异步悬空访问推导持有策略，细化弱引用、请求代次和取消接口。</p></header>
-  <details class="mobile-toc"><summary>本篇目录 <span>7 节</span></summary><nav aria-label="本篇目录"><ol><li><a href="#%E8%83%8C%E6%99%AF%E9%A1%B5%E9%9D%A2%E6%92%AD%E6%94%BE%E5%99%A8%E4%B8%8E%E4%BB%BB%E5%8A%A1%E5%90%84%E6%9C%89%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F">背景：页面、播放器与任务各有生命周期</a></li><li><a href="#%E9%97%AE%E9%A2%98%E4%BB%BB%E5%8A%A1%E6%8E%92%E9%98%9F%E5%90%8E%E5%AF%B9%E8%B1%A1%E5%85%88%E9%94%80%E6%AF%81">问题：任务排队后，对象先销毁</a></li><li><a href="#%E6%96%B9%E6%A1%88%E6%AF%94%E8%BE%83%E4%BB%BB%E5%8A%A1%E6%98%AF%E5%90%A6%E9%9C%80%E8%A6%81%E6%8C%81%E6%9C%89%E6%92%AD%E6%94%BE%E5%99%A8">方案比较：任务是否需要持有播放器</a></li><li class="toc-child"><a href="#%E5%BC%BA%E5%BC%95%E7%94%A8%E5%BB%B6%E9%95%BF%E5%AF%B9%E8%B1%A1%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F">强引用：延长对象生命周期</a></li><li class="toc-child"><a href="#%E5%BC%B1%E5%BC%95%E7%94%A8%E6%89%A7%E8%A1%8C%E6%97%B6%E6%A3%80%E6%9F%A5%E5%AF%B9%E8%B1%A1">弱引用：执行时检查对象</a></li><li><a href="#%E5%AE%9E%E7%8E%B0%E6%8A%8A%E5%AD%98%E6%B4%BB%E5%8F%96%E6%B6%88%E5%92%8C%E9%87%8A%E6%94%BE%E5%88%86%E5%BC%80%E5%A4%84%E7%90%86">实现：把存活、取消和释放分开处理</a></li><li class="toc-child"><a href="#%E7%94%A8%E8%AF%B7%E6%B1%82%E4%BB%A3%E6%AC%A1%E5%8F%96%E6%B6%88%E8%BF%87%E6%9C%9F%E6%93%8D%E4%BD%9C">用请求代次取消过期操作</a></li><li class="toc-child"><a href="#%E5%8F%96%E5%BE%97%E5%BC%BA%E5%BC%95%E7%94%A8%E6%97%B6%E5%A4%8D%E7%94%A8%E5%B7%B2%E6%9C%89%E6%8E%A7%E5%88%B6%E5%9D%97">取得强引用时复用已有控制块</a></li><li class="toc-child"><a href="#%E6%B2%BF%E6%8C%81%E6%9C%89%E5%85%B3%E7%B3%BB%E6%A3%80%E6%9F%A5%E5%BC%95%E7%94%A8%E7%8E%AF">沿持有关系检查引用环</a></li><li><a href="#%E5%AE%9E%E7%8E%B0%E6%95%88%E6%9E%9C%E5%AF%B9%E8%B1%A1%E5%AE%89%E5%85%A8%E4%B8%8E%E8%AF%B7%E6%B1%82%E6%9C%89%E6%95%88%E5%88%86%E5%88%AB%E9%AA%8C%E8%AF%81">实现效果：对象安全与请求有效分别验证</a></li><li><a href="#%E8%A1%A5%E5%85%85%E5%90%8C%E6%AD%A5%E5%80%9F%E7%94%A8%E4%B8%8E%E5%B1%80%E9%83%A8%E5%BC%95%E7%94%A8">补充：同步借用与局部引用</a></li><li class="toc-child"><a href="#%E5%B1%80%E9%83%A8%E5%8F%98%E9%87%8F%E7%9A%84%E5%BC%95%E7%94%A8%E6%8D%95%E8%8E%B7">局部变量的引用捕获</a></li><li><a href="#%E8%A1%A5%E5%85%85%E5%AF%B9%E8%B1%A1%E6%9E%90%E6%9E%84%E4%B8%8E%E5%AD%98%E5%82%A8%E9%87%8A%E6%94%BE">补充：对象析构与存储释放</a></li></ol></nav></details><article class="prose" id="content"><p>本文讨论对象销毁与异步回调执行顺序不一致时，如何选择捕获方式，并把对象存活、请求取消和资源释放落实到接口中。</p>
-<p><strong>任务需要延长对象生命时捕获已有的强引用；允许随对象消失而放弃时捕获弱引用，并在执行时用 <code>lock()</code> 取得临时强引用。</strong> 页面关闭或新请求替代旧请求，还需要单独的取消或版本判断。智能指针负责对象存活，不负责判断一项业务操作是否仍应执行。</p>
-<h2 id="背景页面播放器与任务各有生命周期">背景：页面、播放器与任务各有生命周期</h2>
-<p>页面通过 <code>shared_ptr</code> 持有播放器，执行器负责保存并调度播放任务。提交任务只表示执行器接收了回调，并不表示回调已经执行；页面可以在这段等待期间关闭，播放器也可能同时被其他模块持有。</p>
-<p>因此，页面是否存在、播放器是否存活、播放请求是否仍然有效，是三个不同的状态。任务需要在哪些状态下继续执行，决定了它应当怎样保存播放器。</p>
-<h2 id="问题任务排队后对象先销毁">问题：任务排队后，对象先销毁</h2>
-<p>一个播放任务已经提交到队列，但还没有执行。此时页面关闭，最后一个持有播放器的对象释放了引用。等到任务出队，回调里保存的 <code>this</code> 还能用吗？</p>
-<div class="code-block" data-language="cpp"><div class="code-label"><span>C++ · 捕获裸 this</span></div><pre tabindex="0"><code>executor.post([<span class="syntax-keyword">this</span>]() {
-    play();
-});</code></pre></div>
-<p>要分析这类故障，先把三个时刻排列出来：任务入队、对象析构、任务执行。示例中，析构发生在执行之前；若能收集实际日志，可以为对象和任务记录标识，确认它们是否属于同一次请求，不能仅凭一次崩溃位置就认定是生命周期问题。</p>
-<p>这段代码只把对象地址交给了任务。假如对象已经销毁，再通过这个地址调用成员函数，就会访问失效对象。即使播放器原本由 <code>shared_ptr</code> 管理，捕获 <code>this</code> 也不会自动增加引用计数。</p>
-<p>给 <code>play()</code> 加锁并不能单独修复这个问题：如果对象已经不存在，访问它的成员锁本身也可能失效。把 <code>this</code> 复制进另一个局部变量，同样只复制地址。</p>
-<p>需要改变的是任务和对象之间的持有关系。选择之前，先确定页面关闭之后，这个任务是否还有继续执行的必要。</p>
-<aside class="callout callout-note" aria-label="示例约定 · C++17"><p class="callout-title">示例约定 · C++17</p><p><code>executor.post()</code> 保存回调供稍后执行；<code>Player</code> 通过 <code>std::make_shared&lt;Player&gt;()</code> 创建，并公开继承 <code>std::enable_shared_from_this&lt;Player&gt;</code>。代码片段省略执行器与业务方法的实现。</p></aside>
-<h2 id="方案比较任务是否需要持有播放器">方案比较：任务是否需要持有播放器</h2>
-<p>有几种办法能约束这个顺序，但代价不同：</p>
-<div class="table-wrap" tabindex="0" role="region" aria-label="数据表格"><table><thead><tr><th scope="col">做法</th><th scope="col">适用条件</th><th scope="col">需要付出的代价</th></tr></thead><tbody><tr><td>对象销毁前取消或等待全部任务</td><td>执行器能保证没有正在运行或稍后启动的回调</td><td>退出可能等待；同线程等待自己队列里的任务可能无法推进</td></tr><tr><td>任务捕获强引用</td><td>即使原调用方离开，任务仍需要这个对象</td><td>对象释放取决于闭包何时销毁，还要检查引用环</td></tr><tr><td>任务捕获弱引用</td><td>对象消失后可以放弃操作</td><td>执行时可能跳过，调用方必须接受这个结果</td></tr><tr><td>只复制任务所需的数据</td><td>操作可以脱离原对象完成</td><td>需要明确输入快照与结果接收方式</td></tr></tbody></table></div>
-<p>下面保留以 <code>Player</code> 为操作对象的接口，分别实现强引用和弱引用路径。若任务只需要几个不可变参数，复制参数也可能比延长整个播放器的生命更合适。</p>
-<figure class="article-figure"><a class="figure-link" href="/media/2510b0e9fe8bb12b.svg" target="_blank" rel="noopener" aria-label="查看原图：强引用持有对象到回调释放；弱引用在没有其他持有者时失效"><img src="/media/2510b0e9fe8bb12b.svg" alt="强引用持有对象到回调释放；弱引用在没有其他持有者时失效" loading="lazy" decoding="async"></a><figcaption>图 1 · 业务释放引用后，两种捕获方式的差别</figcaption></figure>
-<h3 id="强引用延长对象生命周期">强引用：延长对象生命周期</h3>
-<p>如果任务仍然需要访问播放器，可以让回调持有它：</p>
-<div class="code-block" data-language="cpp"><div class="code-label"><span>C++ · 回调持有强引用</span></div><pre tabindex="0"><code><span class="syntax-keyword">auto</span> self = shared_from_this();
-executor.post([self]() {
-    self-&gt;play();
-});</code></pre></div>
-<p>这里有两个持有者：原来的业务对象，以及任务里的 <code>self</code>。页面释放自己的引用后，任务仍持有播放器，因此播放器可以活到回调执行时。</p>
-<p>释放时间还取决于队列什么时候销毁回调。即使回调已经执行，如果执行器继续保存这个闭包，其中的强引用也还存在。判断对象为什么没有析构时，需要沿着实际持有关系检查，不能只看函数是否返回。</p>
-<p>这也说明，捕获强引用只解决对象存活问题。任务会不会被调度、是否超时、能否取消，仍由执行器和业务协议决定。</p>
-<h3 id="弱引用执行时检查对象">弱引用：执行时检查对象</h3>
-<p>如果任务只是更新已关闭页面的播放状态，继续延长对象生命周期就没有必要。可以在执行时尝试取得强引用：</p>
-<div class="code-block" data-language="cpp"><div class="code-label"><span>C++17 · 执行时提升弱引用</span></div><pre tabindex="0"><code>std::weak_ptr&lt;Player&gt; weakSelf = weak_from_this();
-executor.post([weakSelf]() {
-    <span class="syntax-keyword">if</span> (<span class="syntax-keyword">auto</span> self = weakSelf.lock()) {
-        self-&gt;play();
-    }
-});</code></pre></div>
-<p><code>lock()</code> 成功时返回一个 <code>shared_ptr</code>，在 <code>self</code> 存活期间维持对象生命；对象已被销毁时返回空指针，回调跳过本次操作。这个获取过程是原子的，不应拆成“先检查 <code>expired()</code>，再使用裸指针”两个步骤。可核对标准中的 <a href="https://eel.is/c++draft/util.smartptr.weak.obs"><code>weak_ptr::lock()</code> 定义</a>。</p>
-<aside class="callout callout-warning" aria-label="弱引用不等于取消"><p class="callout-title">弱引用不等于取消</p><p>页面关闭后，如果播放器仍被其他模块持有，<code>lock()</code> 依然可能成功。需要取消旧请求时，还应检查取消标记或请求版本。</p></aside>
-<p>同样，<code>self</code> 存活只保证对象没有被销毁。多个线程同时修改 <code>Player</code> 的成员时，仍需同步或将操作放在指定线程上。</p>
-<h2 id="实现把存活取消和释放分开处理">实现：把存活、取消和释放分开处理</h2>
-<h3 id="用请求代次取消过期操作">用请求代次取消过期操作</h3>
-<p>假设页面关闭后允许放弃播放，新的播放请求又会替代排队中的旧请求。弱引用已经能处理对象销毁，但如果别的模块仍持有播放器，旧任务仍能通过 <code>lock()</code>。于是还需要一个请求代次，记录“这个任务是否仍是当前请求”。</p>
-<p>每次发起新请求或取消时递增代次，任务保存提交时的值，执行时再比较。下面约定发起、取消和回调都在同一个事件线程执行；跨线程调用需要先调度到该线程，或另外设计同步。此处不把非原子的成员当作线程安全方案。</p>
-<div class="code-block" data-language="cpp"><div class="code-label"><span>C++17 · 弱引用与请求代次</span></div><pre tabindex="0"><code><span class="syntax-keyword">class</span> Player : <span class="syntax-keyword">public</span> std::enable_shared_from_this&lt;Player&gt; {
-<span class="syntax-keyword">public</span>:
-    <span class="syntax-keyword">explicit</span> Player(Executor&amp; executor) : executor_(executor) {}
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="description" content="智能指针与异步生命周期 · 客户端开发、系统原理与工程实践。"><meta name="color-scheme" content="dark"><meta name="theme-color" content="#0b0f16"><title>智能指针与异步生命周期 · Joel 的技术笔记</title><link rel="icon" href="/favicon.svg?v=c2260201867b8eed"><link rel="stylesheet" href="/style.css?v=c2260201867b8eed"><script src="/app.js?v=c2260201867b8eed" defer></script></head><body><div class="ambient-grid" aria-hidden="true"></div><a class="skip" href="#main">跳到正文</a><header class="site-header"><a class="brand" href="/" aria-label="Joel 的技术笔记首页"><span class="brand-mark" aria-hidden="true">J</span><span>Joel 的技术笔记</span></a><div class="header-actions"><span class="header-note">技术学习 · 工程实践</span><button class="mobile-menu" type="button" aria-controls="site-directory" aria-expanded="false">目录</button><a href="/#search">搜索</a></div></header><div class="layout has-toc"><aside class="sidebar" id="site-directory"><a class="directory-home" href="/"><span class="directory-home-label"><strong>全部文章</strong><small>按主题浏览</small></span><span class="directory-home-count"><b>149</b><small>篇</small></span></a><nav aria-label="知识目录"><details><summary>客户端开发 <small>34</small></summary><a class="section-overview" href="/topics/client/">分类概览 →</a><ul><li><details><summary>Android</summary><ul><li><a href="/notes/cd703068ffa81c0f/">Android</a></li><li><details><summary>系统原理</summary><ul><li><a href="/notes/fab84807ffb6d277/">Android 系统源码学习总纲</a></li><li><a href="/notes/1c136c4416d06071/">系统启动流程</a></li><li><a href="/notes/51a85ec64df5a668/">ART：JIT / AOT / Profile / GC</a></li><li><a href="/notes/579943f755f56d07/">SystemServer 启动服务流程</a></li><li><a href="/notes/08d2a56a2a759fce/">PackageManagerService 包扫描与安装流程</a></li><li><a href="/notes/84363bcc3e1a6595/">ATMS 与 AMS</a></li><li><a href="/notes/ee4541ede89330a8/">WindowManagerService 窗口管理流程</a></li><li><a href="/notes/9e5b0f3f4ca04e76/">Input 输入系统流程</a></li><li><a href="/notes/df4027642366e720/">Activity 启动与显示流程</a></li><li><a href="/notes/03953a247cdb3327/">Binder</a></li><li><a href="/notes/3428c6a7ad967847/">Android 渲染上屏流程</a></li></ul></details></li><li><details><summary>UI与渲染</summary><ul><li><a href="/notes/7582c9b1581b3665/">渲染流程</a></li><li><a href="/notes/4a594de417119321/">RecyclerView 缓存机制</a></li><li><a href="/notes/5202b7428683905e/">事件分发机制</a></li><li><a href="/notes/f6c73d82600acf33/">自定义 ItemDecoration</a></li><li><a href="/notes/22a5902d69c4c940/">ItemTouchHelper 使用</a></li><li><a href="/notes/179570f12295f1ab/">Material Design 布局使用</a></li></ul></details></li><li><details><summary>框架与工程</summary><ul><li><a href="/notes/056423c700c40391/">Android 插件化</a></li><li><a href="/notes/2beac6fcfd86382d/">Android 热更新</a></li><li><a href="/notes/029f8807a6033e04/">Dagger2 基础与多宿主实践</a></li><li><a href="/notes/5db034481aa59958/">Glide 源码</a></li><li><a href="/notes/930c095f85690ccd/">Retrofit 源码解析</a></li></ul></details></li><li><details><summary>性能稳定性</summary><ul><li><a href="/notes/e8bbec3482f2a8d4/">应用启动优化</a></li><li><a href="/notes/2d016d7297cbdba9/">ANR 排查</a></li><li><a href="/notes/689e2041f5c6b580/">内存优化</a></li><li><a href="/notes/7556cd7c3bc2b1c3/">卡顿与丢帧排查</a></li><li><a href="/notes/79948e481206ca62/">BlockCanary</a></li><li><a href="/notes/057de36673ccdcb9/">LeakCanary 原理</a></li></ul></details></li><li><details><summary>工具链</summary><ul><li><a href="/notes/e5d63e4556abf9a6/">Gradle 编译流程梳理</a></li><li><a href="/notes/84901174916c45fd/">Transform 使用</a></li><li><a href="/notes/689954c1e13017ea/">反编译</a></li></ul></details></li></ul></details></li><li><details><summary>跨端</summary><ul><li><details><summary>Lynx</summary><ul><li><a href="/notes/741ac84d1e8f8b8a/">Lynx 跨端框架优势与对比</a></li><li><a href="/notes/a708a884013d8a87/">Lynx 容器监控指标口径</a></li></ul></details></li></ul></details></li></ul></details><details open><summary>编程与系统基础 <small>38</small></summary><a class="section-overview" href="/topics/fundamentals/">分类概览 →</a><ul><li><details open><summary>C++</summary><ul><li><a href="/notes/04e59128bf1e98a4/">C++</a></li><li><a href="/notes/337f3289ca817d07/">基础语义</a></li><li><a href="/notes/7da782b3a8e0f2ef/">对象与资源管理</a></li><li><a href="/posts/cpp-lifetime/" aria-current="page">智能指针与异步生命周期</a></li><li><a href="/notes/b772f3b2675faaf5/">STL 容器</a></li><li><a href="/notes/051be1b8f1d35f56/">并发基础</a></li><li><a href="/posts/cpp-build-and-link/">编译与链接</a></li><li><a href="/notes/23212fc946d4c347/">开发问题汇总</a></li><li><a href="/notes/63c12ecbd19b0f91/">熟练度标准与自测</a></li><li><details><summary>开发问题</summary><ul><li><a href="/notes/1d1f5d117322d7da/">ABI 问题</a></li><li><a href="/notes/29c0c961be175b60/">写已释放地址与内存踩踏</a></li><li><a href="/posts/cpp-container-concurrency/">标准容器并发访问</a></li><li><a href="/notes/85ddc54e262bad58/">对象生命周期与回调</a></li><li><a href="/notes/808f19ab738e16da/">Release 偶现问题</a></li><li><a href="/notes/280f7a3ab5fd45c3/">平台运行态 Crash 分类</a></li><li><a href="/notes/e04fd0e54f9a7d47/">ASAN 场景失败与真实内存错误区分</a></li><li><a href="/notes/623620045defcbb3/">历史排查案例</a></li></ul></details></li></ul></details></li><li><details><summary>Java</summary><ul><li><a href="/notes/b1c8a52ce929a020/">Java</a></li><li><a href="/notes/8e9dc066a5544aab/">Synchronized</a></li><li><a href="/notes/b73248fd23c6b5f8/">多线程同步</a></li><li><a href="/notes/3d67cdd9a9231ab4/">线程池</a></li><li><a href="/notes/1e3108720115f9d3/">CopyOnWriteArrayList</a></li><li><a href="/notes/36a3d031dee2fb29/">Volatile</a></li><li><a href="/notes/e0d01430259a37d3/">垃圾回收机制</a></li></ul></details></li><li><details><summary>Kotlin</summary><ul><li><a href="/notes/8a8e5294a0285aae/">Kotlin</a></li><li><a href="/notes/4061b718089f851b/">协程使用</a></li><li><a href="/notes/7856c70c2fa1cb64/">自定义 Kotlin Compiler Plugin</a></li></ul></details></li><li><details><summary>计算机网络</summary><ul><li><a href="/notes/c4418afb3b4eb8e2/">计算机网络</a></li><li><a href="/notes/f425bc6b5bdafa80/">HTTP 协议</a></li><li><a href="/notes/15d4a1778e656754/">编码加密</a></li><li><a href="/notes/2acb0fe30800e3af/">登陆认证</a></li></ul></details></li><li><details><summary>操作系统</summary><ul><li><a href="/notes/cc459aa9bad2e365/">操作系统</a></li><li><a href="/notes/071abe42adc5d303/">CPU 调度算法</a></li><li><a href="/notes/ce6aa3943fd8ff6d/">mmap 原理</a></li><li><a href="/notes/1e29933ec8a137ff/">生产者消费者模型</a></li></ul></details></li><li><details><summary>编译原理</summary><ul><li><a href="/notes/f354f9e11ab9a802/">龙书</a></li></ul></details></li><li><details><summary>设计模式</summary><ul><li><a href="/notes/ce7abb0ac2e79516/">单例模式</a></li><li><a href="/notes/e4ca0fc073f3a05b/">建造者模式</a></li></ul></details></li></ul></details><details><summary>音视频 <small>7</small></summary><a class="section-overview" href="/topics/media/">分类概览 →</a><ul><li><details><summary>WebRTC</summary><ul><li><a href="/notes/45f67730a5fb6602/">学习大纲</a></li><li><a href="/notes/5974905c4606c9c3/">连接建立</a></li><li><a href="/notes/ac2f41a67eccb700/">拥塞控制</a></li></ul></details></li><li><details><summary>OpenGL</summary><ul><li><a href="/notes/554b2442737d8d68/">基础知识</a></li></ul></details></li><li><details><summary>图片协议</summary><ul><li><a href="/notes/061f8cae8aec25b6/">分辨率</a></li><li><a href="/notes/162f8ef558b698a4/">RGB</a></li><li><a href="/notes/0f88bf544513e7c1/">YUV</a></li></ul></details></li></ul></details><details><summary>云游戏 <small>5</small></summary><a class="section-overview" href="/topics/cloud-gaming/">分类概览 →</a><ul><li><a href="/notes/bf95bcbbbd60604c/">框架实现</a></li><li><a href="/notes/36582d80df98846f/">云游戏优化</a></li><li><details><summary>技术实现</summary><ul><li><a href="/notes/38845869d7192ea0/">Android 容器抓屏实现</a></li><li><a href="/notes/3e3c8cfb2580f5c8/">Android 容器触摸输入原理</a></li><li><a href="/notes/95623197f800b091/">Android 云游戏免安装启动机制</a></li></ul></details></li></ul></details><details><summary>AI 与大模型 <small>1</small></summary><a class="section-overview" href="/topics/ai/">分类概览 →</a><ul><li><a href="/notes/48948eb946ee1473/">基础知识</a></li></ul></details><details><summary>算法练习 <small>59</small></summary><a class="section-overview" href="/topics/algorithms/">分类概览 →</a><ul><li><a href="/notes/93a9a083af32c3d2/">算法练习</a></li><li><a href="/notes/a78e4d2bbe575447/">高频算法题清单（通用 / 字节风格）</a></li><li><a href="/notes/f745b2389e7d23e7/">小红书高频算法题清单</a></li><li><details><summary>业务场景题</summary><ul><li><a href="/notes/b7d3ba686668f584/">生产者消费者：手写阻塞队列</a></li><li><a href="/notes/f5aa5a3d68dc1a13/">三线程顺序打印 ABC</a></li></ul></details></li><li><details><summary>智力题</summary><ul><li><a href="/notes/ba2d85f388e95f73/">总览</a></li><li><a href="/notes/434b50db1b597ad4/">高频智力题清单</a></li><li><a href="/notes/b00124b11552e20b/">思维模型</a></li><li><a href="/notes/d5e1d5a9d69eaefc/">12 球称重</a></li><li><a href="/notes/68e6dc07320087af/">毒药小白鼠</a></li><li><a href="/notes/3d83d5df9cb9a3c8/">鸡蛋掉落</a></li></ul></details></li><li><details><summary>题型模板</summary><ul><li><a href="/notes/dbda860183531936/">滑动窗口</a></li><li><a href="/notes/77bdd4ba7661b40b/">滑动窗口 <small>CPP</small></a></li></ul></details></li><li><details><summary>LeetCode</summary><ul><li><a href="/notes/2d30c32c4a0e89a0/">1.两数之和 <small>CPP</small></a></li><li><a href="/notes/57a5a57f907a0ec4/">2.两数相加 <small>CPP</small></a></li><li><a href="/notes/3f08bcae660db563/">3.无重复字符的最长子串 <small>CPP</small></a></li><li><a href="/notes/b16ca27a01318d4b/">11.盛最多水的容器 <small>CPP</small></a></li><li><a href="/notes/3d08d25f75c18331/">15.三数之和 <small>CPP</small></a></li><li><a href="/notes/8b208b6f30563fb4/">19.删除链表的倒数第-n-个结点 <small>CPP</small></a></li><li><a href="/notes/437bc90908824ab8/">21.合并两个有序链表 <small>CPP</small></a></li><li><a href="/notes/83f209ba4fcd4b26/">23.合并-k-个升序链表 <small>CPP</small></a></li><li><a href="/notes/9aa34711df2551a5/">25.K-个一组翻转链表 <small>CPP</small></a></li><li><a href="/notes/d67130692b90b8f7/">33.搜索旋转排序数组 <small>CPP</small></a></li><li><a href="/notes/9d1a99705c93d424/">34.在排序数组中查找元素的第一个和最后一个位置 <small>CPP</small></a></li><li><a href="/notes/b112df5a6fc5781c/">42.接雨水 <small>CPP</small></a></li><li><a href="/notes/ecc2a5f653ffa5fa/">49.字母异位词分组 <small>CPP</small></a></li><li><a href="/notes/39c18d0756052355/">53.最大子数组和 <small>CPP</small></a></li><li><a href="/notes/e59ded4d7dea5ec5/">56.合并区间 <small>CPP</small></a></li><li><a href="/notes/8509ba7c8d0d17f5/">62.不同路径 <small>CPP</small></a></li><li><a href="/notes/18406501b8d5cc47/">72.编辑距离 <small>CPP</small></a></li><li><a href="/notes/07d983c7275b5666/">82.删除排序链表中的重复元素-ii <small>CPP</small></a></li><li><a href="/notes/0ad3d0db8dd86ec0/">83.删除排序链表中的重复元素 <small>CPP</small></a></li><li><a href="/notes/1c62040a09bc4c3a/">92.反转链表 II <small>CPP</small></a></li><li><a href="/notes/cdb661dcf6e9acbe/">93.复原 IP 地址 <small>CPP</small></a></li><li><a href="/notes/2616f4bde8260e5d/">121.买卖股票的最佳时机 <small>CPP</small></a></li><li><a href="/notes/3db84bfe65ff3824/">122.买卖股票的最佳时机-II <small>CPP</small></a></li><li><a href="/notes/5e5910321065c5f2/">128.最长连续序列 <small>CPP</small></a></li><li><a href="/notes/50db8c67d7d6c96b/">142.环形链表-ii <small>CPP</small></a></li><li><a href="/notes/a745b24e46f7e8e2/">143.重排链表 <small>CPP</small></a></li><li><a href="/notes/50be710fff45d868/">146.lru-缓存 <small>CPP</small></a></li><li><a href="/notes/367810c5271fcc02/">198.打家劫舍 <small>CPP</small></a></li><li><a href="/notes/98723cd4305832f1/">199.二叉树的右视图 <small>CPP</small></a></li><li><a href="/notes/8953c9820b15afeb/">206.反转链表 <small>CPP</small></a></li><li><a href="/notes/aad8d01506c865c3/">207.课程表 <small>CPP</small></a></li><li><a href="/notes/e436ea8876352dc3/">209.长度最小的子数组 <small>CPP</small></a></li><li><a href="/notes/8fa679c5f37a53c9/">215.数组中的第K个最大元素 <small>CPP</small></a></li><li><a href="/notes/2475489ce09d9280/">227.基本计算器-ii <small>CPP</small></a></li><li><a href="/notes/08d2ef416fe36746/">236.二叉树的最近公共祖先 <small>CPP</small></a></li><li><a href="/notes/110fa7fed851d549/">300.最长递增子序列 <small>CPP</small></a></li><li><a href="/notes/5c1073abb1a4354f/">387.字符串中的第一个唯一字符 <small>CPP</small></a></li><li><a href="/notes/ece261e600606b17/">416.分割等和子集 <small>CPP</small></a></li><li><a href="/notes/f0fafa58fa81eced/">438.找到字符串中所有字母异位词 <small>CPP</small></a></li><li><a href="/notes/370133e875553c38/">542.01-矩阵 <small>CPP</small></a></li><li><a href="/notes/e6273d804d024ac3/">688.骑士在棋盘上的概率 <small>CPP</small></a></li><li><a href="/notes/5080a7cf177c528f/">695.岛屿的最大面积 <small>CPP</small></a></li><li><a href="/notes/002e2eddfaae4e16/">739.每日温度 <small>CPP</small></a></li><li><a href="/notes/014e112ab937d378/">785.判断二分图 <small>CPP</small></a></li><li><a href="/notes/5852112c135004af/">1143.最长公共子序列 <small>CPP</small></a></li><li><a href="/notes/85e225b9f26a2a1d/">leetcode <small>H</small></a></li></ul></details></li></ul></details><details><summary>项目实践 <small>4</small></summary><a class="section-overview" href="/topics/practice/">分类概览 →</a><ul><li><details><summary>业务实践</summary><ul><li><a href="/notes/3c9c4da576f6ac05/">AB 实验</a></li><li><a href="/notes/ac7c6e4dc35e8109/">IM 会话缓存与数据访问调度设计</a></li><li><details><summary>案例</summary><ul><li><a href="/notes/f6f786e148e57237/">直播互动玩法 - Cocos 场景切换适配问题</a></li><li><a href="/notes/c251094855ed2daa/">直播互动玩法 - Laya 动态切屏适配</a></li></ul></details></li></ul></details></li></ul></details><details><summary>游戏开发 <small>1</small></summary><a class="section-overview" href="/topics/games/">分类概览 →</a><ul><li><details><summary>游戏</summary><ul><li><details><summary>卡牌游戏</summary><ul><li><a href="/notes/c9dc8f92b42a56bd/">ScriptableObject</a></li></ul></details></li></ul></details></li></ul></details></nav></aside><main id="main"><header class="post-header"><div class="breadcrumbs"><a href="/topics/fundamentals/">编程与系统基础</a><span>/ C++</span></div><h1>智能指针与异步生命周期</h1><p>从所有权语义到异步回调，理解 shared_ptr、weak_ptr 与对象的生存边界。</p></header><article class="prose"><h2 id="用类型表达所有权">用类型表达所有权</h2>
+<div class="table-wrap" tabindex="0" role="region" aria-label="数据表格"><table><thead><tr><th scope="col">类型</th><th scope="col">所有权语义</th></tr></thead><tbody><tr><td><code>T*</code> / <code>const T*</code></td><td>可空借用，不管理生命周期</td></tr><tr><td><code>T&amp;</code> / <code>const T&amp;</code></td><td>不可空借用，不管理生命周期</td></tr><tr><td><code>std::unique_ptr&lt;T&gt;</code></td><td>独占所有权，可以转移，不能复制</td></tr><tr><td><code>std::shared_ptr&lt;T&gt;</code></td><td>共享所有权，复制会增加强引用计数</td></tr><tr><td><code>std::weak_ptr&lt;T&gt;</code></td><td>非拥有观察，不增加强引用计数</td></tr></tbody></table></div>
+<p>仅仅为了访问对象，不应强迫调用方传入智能指针：</p>
+<div class="code-block"><div class="code-label">cpp</div><pre tabindex="0"><code>void inspect(const User&amp; user);          // 只读借用
+void take(std::unique_ptr&lt;User&gt; user);   // 转移所有权</code></pre></div>
+<h2 id="用-weakptr-打破循环引用">用 <code>weak_ptr</code> 打破循环引用</h2>
+<p>父对象拥有子对象、子对象只回指父对象时：</p>
+<div class="code-block"><div class="code-label">cpp</div><pre tabindex="0"><code>struct Child;
 
-    <span class="syntax-keyword">void</span> requestPlay() {
-        <span class="syntax-keyword">const</span> <span class="syntax-keyword">auto</span> generation = ++requestGeneration_;
-        <span class="syntax-keyword">auto</span> weakSelf = weak_from_this();
-        executor_.post([weakSelf, generation]() {
-            <span class="syntax-keyword">auto</span> self = weakSelf.lock();
-            <span class="syntax-keyword">if</span> (!self || generation != self-&gt;requestGeneration_) {
-                <span class="syntax-keyword">return</span>;
-            }
-            self-&gt;play();
-        });
-    }
-
-    <span class="syntax-keyword">void</span> cancelPending() {
-        ++requestGeneration_;
-    }
-
-<span class="syntax-keyword">private</span>:
-    <span class="syntax-keyword">void</span> play(); <span class="syntax-comment">// 具体播放行为由业务实现</span>
-    Executor&amp; executor_;
-    std::uint64_t requestGeneration_ = <span class="syntax-number">0</span>;
-};</code></pre></div>
-<p>示例需要 <code>&lt;memory&gt;</code>、<code>&lt;cstdint&gt;</code>，并由执行器提供 <code>post()</code>。执行器应覆盖播放器使用它的整个期间；播放器仍通过 <code>make_shared</code> 创建，在构造完成后才调用 <code>requestPlay()</code>。</p>
-<p>执行路径里有两次不同的判断：<code>lock()</code> 判断对象能否安全访问，代次比较判断任务是否已经过期。页面关闭但播放器仍存活时，<code>cancelPending()</code> 使排队中的回调成为空操作；连续两次 <code>requestPlay()</code> 则只保留最新一次的执行资格。</p>
-<p>这是一种排队任务的逻辑取消，不会将回调从队列移除，也不能中断已经进入 <code>play()</code> 的操作。如果业务需要停止正在播放的内容，应提供单独的停止协议。执行器若因异常或容量限制无法接收任务，还需按业务要求回报提交失败。</p>
-<h3 id="取得强引用时复用已有控制块">取得强引用时复用已有控制块</h3>
-<p>强引用路径需要从当前对象取得一个持有者，这也是前面使用 <code>shared_from_this()</code> 的原因。若直接用 <code>this</code> 构造 <code>shared_ptr</code>，虽然地址相同，却可能另建一套负责删除对象的控制块：</p>
-<div class="code-block" data-language="cpp"><div class="code-label"><span>C++ · 复用已有控制块</span></div><pre tabindex="0"><code><span class="syntax-keyword">auto</span> self = shared_from_this();     <span class="syntax-comment">// 复用当前对象已有的共享所有权</span>
-<span class="syntax-comment">// std::shared_ptr&lt;Player&gt; self(this); // 错误示意：可能建立第二套所有权</span></code></pre></div>
-<p><code>shared_ptr</code> 通过控制块管理共享所有权。控制块通常保存强、弱引用计数，以及删除对象所需的信息。复制已有的 <code>shared_ptr</code> 会共享控制块；从同一个裸指针分别构造两个 <code>shared_ptr</code>，则会建立两套独立管理关系：</p>
-<div class="code-block" data-language="cpp"><div class="code-label"><span>C++ · 错误示例：重复管理同一地址</span></div><pre tabindex="0"><code>User* raw = <span class="syntax-keyword">new</span> User();
-
-std::shared_ptr&lt;User&gt; first(raw);
-std::shared_ptr&lt;User&gt; second(raw); <span class="syntax-comment">// 错误示意：两个控制块分别尝试删除同一对象</span></code></pre></div>
-<p>第二个指针应当从 <code>first</code> 复制：</p>
-<div class="code-block" data-language="cpp"><div class="code-label"><span>C++ · 复制共享所有权</span></div><pre tabindex="0"><code>std::shared_ptr&lt;User&gt; second = first;</code></pre></div>
-<p><code>enable_shared_from_this</code> 提供的也是复用已有所有权的途径：</p>
-<div class="code-block" data-language="cpp"><div class="code-label"><span>C++ · 建立共享管理关系</span></div><pre tabindex="0"><code><span class="syntax-keyword">class</span> Player
-    : <span class="syntax-keyword">public</span> std::enable_shared_from_this&lt;Player&gt; {
-};
-
-<span class="syntax-keyword">auto</span> player = std::make_shared&lt;Player&gt;();
-<span class="syntax-keyword">auto</span> self = player-&gt;shared_from_this();</code></pre></div>
-<p>这里 <code>self</code> 与 <code>player</code> 共享控制块。相关行为可以对照标准中的 <a href="https://eel.is/c++draft/util.smartptr.enab"><code>enable_shared_from_this</code></a>。</p>
-<p>这个关系需要先建立。栈上的对象、仅由 <code>unique_ptr</code> 管理的对象，以及正在构造、尚未交给 <code>shared_ptr</code> 管理的对象，都不能据此取得有效的共享所有权。在上述正常继承条件下，过早调用 <code>shared_from_this()</code> 会抛出 <code>std::bad_weak_ptr</code>。<code>weak_from_this()</code> 在关系尚未建立时得到的是空弱引用；把它提前存进回调，不会在构造结束后自动补上关联。</p>
-<p>因此，依赖共享所有权的异步启动通常应放在对象构造完成、交给 <code>shared_ptr</code> 管理之后。</p>
-<h3 id="沿持有关系检查引用环">沿持有关系检查引用环</h3>
-<p>假设对象持有一个回调，而回调又捕获对象的 <code>shared_ptr</code>：</p>
-<div class="code-block" data-language="text"><div class="code-label"><span>示意</span></div><pre tabindex="0"><code>Player -&gt; 保存的回调 -&gt; shared_ptr&lt;Player&gt; -&gt; Player</code></pre></div>
-<p>外部引用全部释放后，这个环内部仍然互相持有。如果没有清除回调的路径，对象就无法正常析构。</p>
-<p>父子对象也有同样的问题。父对象拥有子对象，子对象只需要回查父对象时，可以让回指使用弱引用：</p>
-<div class="code-block" data-language="cpp"><div class="code-label"><span>C++ · 父子对象的拥有与回指</span></div><pre tabindex="0"><code><span class="syntax-keyword">struct</span> Child;
-
-<span class="syntax-keyword">struct</span> Parent {
+struct Parent {
     std::shared_ptr&lt;Child&gt; child;
 };
 
-<span class="syntax-keyword">struct</span> Child {
+struct Child {
     std::weak_ptr&lt;Parent&gt; parent;
 };</code></pre></div>
-<p>在 <code>Child</code> 的成员函数中，使用前临时取得强引用：</p>
-<div class="code-block" data-language="cpp"><div class="code-label"><span>C++ · 临时取得父对象</span></div><pre tabindex="0"><code><span class="syntax-keyword">if</span> (<span class="syntax-keyword">auto</span> lockedParent = parent.lock()) {
-    lockedParent-&gt;update();
+<p>使用前将弱引用临时提升：</p>
+<div class="code-block"><div class="code-label">cpp</div><pre tabindex="0"><code>if (auto parent = parent.lock()) {
+    parent-&gt;update();
 }</code></pre></div>
-<p>片段省略了业务方法的声明。哪一条引用应当变弱，要看谁负责拥有谁。把所有回指机械地换成弱引用，可能只是把泄漏变成任务意外失效。</p>
-<h2 id="实现效果对象安全与请求有效分别验证">实现效果：对象安全与请求有效分别验证</h2>
-<p>用一个可以手动推进的执行器，先只入队、不立即运行，再控制释放、取消和执行的顺序，就能验证这里讨论的条件：</p>
-<div class="table-wrap" tabindex="0" role="region" aria-label="数据表格"><table><thead><tr><th scope="col">操作顺序</th><th scope="col">预期结果</th></tr></thead><tbody><tr><td>强引用任务入队，释放外部引用，执行任务</td><td>对象在执行时仍存活；闭包释放后才能判断是否可析构</td></tr><tr><td>弱引用任务入队，释放最后一个强引用，执行任务</td><td><code>lock()</code> 失败，不调用 <code>play()</code></td></tr><tr><td>对象继续存活，入队后调用 <code>cancelPending()</code></td><td>代次不匹配，任务不再调用 <code>play()</code></td></tr><tr><td>连续提交两个播放请求，再推进队列</td><td>旧任务跳过，最新任务执行</td></tr><tr><td>对象持有捕获自身强引用的回调</td><td>清除回调或打破引用环前，对象不会仅因外部释放而析构</td></tr></tbody></table></div>
-<p>本地用可手动推进的执行器检查了前四类顺序，播放次数与析构标记均符合表中的预期；另外验证了取消后重新请求仍可执行。若真实执行器跨线程，还需对成员访问的同步与正在执行任务的停止协议分别验证。</p>
-<p>这些结果对应开头的两个判断：<strong>强弱引用决定任务能否安全访问对象，请求代次决定任务是否仍有执行资格。</strong> 对象已销毁时，弱引用阻止访问；对象还活着但请求过期时，代次检查阻止执行。只换成智能指针，无法同时解决这两类问题。</p>
-<h2 id="补充同步借用与局部引用">补充：同步借用与局部引用</h2>
-<p>异步任务需要单独考虑生命周期；同步调用若只在调用期间访问对象，可以直接表达借用关系：</p>
-<div class="code-block" data-language="cpp"><div class="code-label"><span>C++ · 借用和转移所有权</span></div><pre tabindex="0"><code><span class="syntax-keyword">void</span> inspect(<span class="syntax-keyword">const</span> User&amp; user);         <span class="syntax-comment">// 调用期间只读访问</span>
-<span class="syntax-keyword">void</span> take(std::unique_ptr&lt;User&gt; user);  <span class="syntax-comment">// 接收独占所有权</span></code></pre></div>
-<p>常用类型可以按接口意图选择：</p>
-<div class="table-wrap" tabindex="0" role="region" aria-label="数据表格"><table><thead><tr><th scope="col">接口意图</th><th scope="col">常用表达</th></tr></thead><tbody><tr><td>借用一个可能为空的对象</td><td><code>T*</code> / <code>const T*</code>，约定不负责释放</td></tr><tr><td>借用一个必需存在的对象</td><td><code>T&amp;</code> / <code>const T&amp;</code></td></tr><tr><td>接收或转移独占所有权</td><td><code>std::unique_ptr&lt;T&gt;</code></td></tr><tr><td>共同维持对象生命</td><td><code>std::shared_ptr&lt;T&gt;</code></td></tr><tr><td>观察对象，使用时再尝试取得所有权</td><td><code>std::weak_ptr&lt;T&gt;</code></td></tr></tbody></table></div>
-<p>裸指针这个类型本身不会说明谁负责释放，需要接口约定。仅为了读几个字段就要求传入 <code>shared_ptr</code>，会把调用方的所有权方案带进接口。</p>
-<h3 id="局部变量的引用捕获">局部变量的引用捕获</h3>
-<p>引用捕获局部变量时，也必须检查被引用对象能否活到回调执行：</p>
-<div class="code-block" data-language="cpp"><div class="code-label"><span>C++ · 错误示例：捕获已离开作用域的变量</span></div><pre tabindex="0"><code>std::function&lt;<span class="syntax-keyword">void</span>()&gt; makePrinter() {
-    <span class="syntax-keyword">int</span> value = <span class="syntax-number">42</span>;
-    <span class="syntax-keyword">return</span> [&amp;value]() { <span class="syntax-comment">// 错误示意：函数返回后 value 已销毁</span>
+<p>选择哪一侧使用 <code>weak_ptr</code> 取决于所有权设计，不是固定规则。</p>
+<h2 id="控制块保存共享管理信息">控制块保存共享管理信息</h2>
+<p><code>shared_ptr</code> 的控制块通常保存强引用计数、弱引用计数、删除器和分配器信息。不要从同一个裸指针构造两套独立的 <code>shared_ptr</code>：</p>
+<div class="code-block"><div class="code-label">cpp</div><pre tabindex="0"><code>User* raw = new User();
+
+std::shared_ptr&lt;User&gt; first(raw);
+std::shared_ptr&lt;User&gt; second(raw); // 两个控制块，可能 double free</code></pre></div>
+<p>应当复制已有的 <code>shared_ptr</code>：</p>
+<div class="code-block"><div class="code-label">cpp</div><pre tabindex="0"><code>std::shared_ptr&lt;User&gt; second = first;</code></pre></div>
+<h2 id="makeshared-通常合并分配"><code>make_shared</code> 通常合并分配</h2>
+<div class="code-block"><div class="code-label">cpp</div><pre tabindex="0"><code>std::shared_ptr&lt;User&gt;(new User());</code></pre></div>
+<p>通常先为 <code>User</code> 分配内存，再为控制块分配内存。</p>
+<div class="code-block"><div class="code-label">cpp</div><pre tabindex="0"><code>std::make_shared&lt;User&gt;();</code></pre></div>
+<p>通常一次申请能够同时容纳控制块和 <code>User</code> 的内存，再使用原地构造初始化对象：</p>
+<div class="code-block"><div class="code-label">text</div><pre tabindex="0"><code>[控制块 | User 对象]</code></pre></div>
+<p>它通常分配次数更少、局部性更好。代价是强引用归零后，<code>User</code> 会立即析构，但若仍有 <code>weak_ptr</code>，包含对象存储和控制块的整块内存通常要等弱引用也归零后才能释放。</p>
+<h2 id="sharedfromthis-复用现有控制块"><code>shared_from_this</code> 复用现有控制块</h2>
+<div class="code-block"><div class="code-label">cpp</div><pre tabindex="0"><code>class Player
+    : public std::enable_shared_from_this&lt;Player&gt; {
+};</code></pre></div>
+<p>基类内部维护类似弱引用的关联。对象首次被兼容的 <code>shared_ptr</code> 管理时，现有控制块会与该关联绑定：</p>
+<div class="code-block"><div class="code-label">cpp</div><pre tabindex="0"><code>auto player = std::make_shared&lt;Player&gt;();
+auto self = player-&gt;shared_from_this();</code></pre></div>
+<p><code>self</code> 与 <code>player</code> 共享控制块。不要使用：</p>
+<div class="code-block"><div class="code-label">cpp</div><pre tabindex="0"><code>std::shared_ptr&lt;Player&gt;(this); // 可能创建第二个控制块</code></pre></div>
+<p>栈对象、仅由 <code>unique_ptr</code> 管理的对象，或构造期间尚未建立共享管理关系的对象，不能正常使用 <code>shared_from_this()</code>；它通常会抛出 <code>std::bad_weak_ptr</code>。</p>
+<h2 id="异步回调先决定是否延长生命周期">异步回调先决定是否延长生命周期</h2>
+<p>捕获 <code>this</code> 只保存裸指针，对象先销毁时会悬空：</p>
+<div class="code-block"><div class="code-label">cpp</div><pre tabindex="0"><code>executor.post([this]() {
+    play();
+});</code></pre></div>
+<p>任务必须执行并保持对象存活时，捕获强引用：</p>
+<div class="code-block"><div class="code-label">cpp</div><pre tabindex="0"><code>auto self = shared_from_this();
+executor.post([self]() {
+    self-&gt;play();
+});</code></pre></div>
+<p>对象销毁后任务可以取消时，捕获弱引用：</p>
+<div class="code-block"><div class="code-label">cpp</div><pre tabindex="0"><code>std::weak_ptr&lt;Player&gt; weakSelf = weak_from_this();
+executor.post([weakSelf]() {
+    if (auto self = weakSelf.lock()) {
+        self-&gt;play();
+    }
+});</code></pre></div>
+<p>普通局部变量按引用捕获也有同样风险：</p>
+<div class="code-block"><div class="code-label">cpp</div><pre tabindex="0"><code>std::function&lt;void()&gt; makePrinter() {
+    int value = 42;
+    return [&amp;value]() { // 返回后悬空
         std::cout &lt;&lt; value;
     };
 }</code></pre></div>
-<p>如果回调只需要这个整数的值，改成值捕获即可：</p>
-<div class="code-block" data-language="cpp"><div class="code-label"><span>C++ · 按值捕获</span></div><pre tabindex="0"><code><span class="syntax-keyword">return</span> [value]() {
+<p>此时应按值捕获：</p>
+<div class="code-block"><div class="code-label">cpp</div><pre tabindex="0"><code>return [value]() {
     std::cout &lt;&lt; value;
-};</code></pre></div>
-<p>检查回调时，可以先列出它保存的地址和引用，再逐个确认对象的销毁时机。这也是 <a href="https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#Rf-value-capture">C++ Core Guidelines F.53</a> 提醒避免在逃逸的 lambda 中捕获局部引用的原因。</p>
-<h2 id="补充对象析构与存储释放">补充：对象析构与存储释放</h2>
-<p>使用 <code>make_shared</code> 时，还需要区分对象生命和底层存储：</p>
-<div class="code-block" data-language="cpp"><div class="code-label"><span>C++ · 两种分配方式</span></div><pre tabindex="0"><code>std::shared_ptr&lt;User&gt;(<span class="syntax-keyword">new</span> User()); <span class="syntax-comment">// 常见实现分别分配对象和控制块</span>
-std::make_shared&lt;User&gt;();         <span class="syntax-comment">// 常见实现将两者放进一次分配</span></code></pre></div>
-<p>合并分配通常能减少分配次数，但会影响弱引用残留时的内存释放时机。最后一个强引用释放后，<code>User</code> 已经析构；如果仍有弱引用，控制块还要保留。在对象与控制块合并分配的实现中，整块存储也要继续保留，直到最后一个弱引用释放。</p>
-<p>对于较大的对象，如果弱引用会长期留在注册表或缓存中，这个差别值得检查。看到一块内存尚未归还，不能直接推断对象析构函数没有执行。</p>
-<p>这项补充影响的是存储何时归还。排查时将它与对象析构、任务取消分开记录，才能判断延迟释放发生在哪一层。</p></article><footer class="article-footer"><a href="/#articles">← 返回文章列表</a><a href="#main">回到顶部 ↑</a></footer></main>
-  <aside class="desktop-toc"><p>本篇目录</p><nav aria-label="本篇目录"><ol><li><a href="#%E8%83%8C%E6%99%AF%E9%A1%B5%E9%9D%A2%E6%92%AD%E6%94%BE%E5%99%A8%E4%B8%8E%E4%BB%BB%E5%8A%A1%E5%90%84%E6%9C%89%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F">背景：页面、播放器与任务各有生命周期</a></li><li><a href="#%E9%97%AE%E9%A2%98%E4%BB%BB%E5%8A%A1%E6%8E%92%E9%98%9F%E5%90%8E%E5%AF%B9%E8%B1%A1%E5%85%88%E9%94%80%E6%AF%81">问题：任务排队后，对象先销毁</a></li><li><a href="#%E6%96%B9%E6%A1%88%E6%AF%94%E8%BE%83%E4%BB%BB%E5%8A%A1%E6%98%AF%E5%90%A6%E9%9C%80%E8%A6%81%E6%8C%81%E6%9C%89%E6%92%AD%E6%94%BE%E5%99%A8">方案比较：任务是否需要持有播放器</a></li><li class="toc-child"><a href="#%E5%BC%BA%E5%BC%95%E7%94%A8%E5%BB%B6%E9%95%BF%E5%AF%B9%E8%B1%A1%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F">强引用：延长对象生命周期</a></li><li class="toc-child"><a href="#%E5%BC%B1%E5%BC%95%E7%94%A8%E6%89%A7%E8%A1%8C%E6%97%B6%E6%A3%80%E6%9F%A5%E5%AF%B9%E8%B1%A1">弱引用：执行时检查对象</a></li><li><a href="#%E5%AE%9E%E7%8E%B0%E6%8A%8A%E5%AD%98%E6%B4%BB%E5%8F%96%E6%B6%88%E5%92%8C%E9%87%8A%E6%94%BE%E5%88%86%E5%BC%80%E5%A4%84%E7%90%86">实现：把存活、取消和释放分开处理</a></li><li class="toc-child"><a href="#%E7%94%A8%E8%AF%B7%E6%B1%82%E4%BB%A3%E6%AC%A1%E5%8F%96%E6%B6%88%E8%BF%87%E6%9C%9F%E6%93%8D%E4%BD%9C">用请求代次取消过期操作</a></li><li class="toc-child"><a href="#%E5%8F%96%E5%BE%97%E5%BC%BA%E5%BC%95%E7%94%A8%E6%97%B6%E5%A4%8D%E7%94%A8%E5%B7%B2%E6%9C%89%E6%8E%A7%E5%88%B6%E5%9D%97">取得强引用时复用已有控制块</a></li><li class="toc-child"><a href="#%E6%B2%BF%E6%8C%81%E6%9C%89%E5%85%B3%E7%B3%BB%E6%A3%80%E6%9F%A5%E5%BC%95%E7%94%A8%E7%8E%AF">沿持有关系检查引用环</a></li><li><a href="#%E5%AE%9E%E7%8E%B0%E6%95%88%E6%9E%9C%E5%AF%B9%E8%B1%A1%E5%AE%89%E5%85%A8%E4%B8%8E%E8%AF%B7%E6%B1%82%E6%9C%89%E6%95%88%E5%88%86%E5%88%AB%E9%AA%8C%E8%AF%81">实现效果：对象安全与请求有效分别验证</a></li><li><a href="#%E8%A1%A5%E5%85%85%E5%90%8C%E6%AD%A5%E5%80%9F%E7%94%A8%E4%B8%8E%E5%B1%80%E9%83%A8%E5%BC%95%E7%94%A8">补充：同步借用与局部引用</a></li><li class="toc-child"><a href="#%E5%B1%80%E9%83%A8%E5%8F%98%E9%87%8F%E7%9A%84%E5%BC%95%E7%94%A8%E6%8D%95%E8%8E%B7">局部变量的引用捕获</a></li><li><a href="#%E8%A1%A5%E5%85%85%E5%AF%B9%E8%B1%A1%E6%9E%90%E6%9E%84%E4%B8%8E%E5%AD%98%E5%82%A8%E9%87%8A%E6%94%BE">补充：对象析构与存储释放</a></li></ol></nav><a class="toc-return" href="/#articles">← 全部文章</a></aside></div></body></html>
+};</code></pre></div></article><p class="post-bottom"><a href="/topics/fundamentals/">← 返回编程与系统基础目录</a><a href="#main">回到顶部 ↑</a></p><footer><span>Joel · 技术学习与实践笔记</span><a href="#main">回到顶部 ↑</a></footer></main><aside class="toc"><span>本篇目录</span><ul><li><a href="#%E7%94%A8%E7%B1%BB%E5%9E%8B%E8%A1%A8%E8%BE%BE%E6%89%80%E6%9C%89%E6%9D%83">用类型表达所有权</a></li><li><a href="#%E7%94%A8-weakptr-%E6%89%93%E7%A0%B4%E5%BE%AA%E7%8E%AF%E5%BC%95%E7%94%A8">用 weak_ptr 打破循环引用</a></li><li><a href="#%E6%8E%A7%E5%88%B6%E5%9D%97%E4%BF%9D%E5%AD%98%E5%85%B1%E4%BA%AB%E7%AE%A1%E7%90%86%E4%BF%A1%E6%81%AF">控制块保存共享管理信息</a></li><li><a href="#makeshared-%E9%80%9A%E5%B8%B8%E5%90%88%E5%B9%B6%E5%88%86%E9%85%8D">make_shared 通常合并分配</a></li><li><a href="#sharedfromthis-%E5%A4%8D%E7%94%A8%E7%8E%B0%E6%9C%89%E6%8E%A7%E5%88%B6%E5%9D%97">shared_from_this 复用现有控制块</a></li><li><a href="#%E5%BC%82%E6%AD%A5%E5%9B%9E%E8%B0%83%E5%85%88%E5%86%B3%E5%AE%9A%E6%98%AF%E5%90%A6%E5%BB%B6%E9%95%BF%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F">异步回调先决定是否延长生命周期</a></li></ul></aside></div></body></html>

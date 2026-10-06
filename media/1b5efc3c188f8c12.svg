@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1380" height="780" viewBox="0 0 1380 780" role="img" aria-labelledby="title desc">
+  <title id="title">云游戏优化策略地图</title>
+  <desc id="desc">从操作延迟和 100ms 卡顿率出发，映射到抓屏、编码、网络、JitterBuffer、解码和渲染直通等优化策略。</desc>
+  <defs>
+    <style>
+      .bg{fill:#fffdf8}.title{font:700 25px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;fill:#172033}.sub{font:13px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;fill:#526174}.center{fill:#172033;stroke:#172033}.metric{fill:#f5f3ff;stroke:#8b7bd8}.card{fill:#fff;stroke:#435166;stroke-width:1.5;rx:14}.blue{fill:#e9f5ff;stroke:#6aa6d8}.orange{fill:#fff4df;stroke:#d6a24a}.green{fill:#eef8ed;stroke:#71a96d}.red{fill:#fff1f2;stroke:#fb7185}.label{font:700 14px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;fill:#172033}.txt{font:12.3px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;fill:#4b5563}.white{font:700 16px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;fill:#fff}.small{font:12px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;fill:#64748b}.arrow{stroke:#334155;stroke-width:2;fill:none;marker-end:url(#arrow)}.dash{stroke:#7c8796;stroke-width:1.7;fill:none;stroke-dasharray:6 6;marker-end:url(#arrow2)}
+    </style>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L8,3 L0,6 Z" fill="#334155"/></marker>
+    <marker id="arrow2" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L8,3 L0,6 Z" fill="#7c8796"/></marker>
+  </defs>
+  <rect class="bg" width="1380" height="780"/>
+  <text class="title" x="44" y="44">云游戏优化策略地图</text>
+  <text class="sub" x="44" y="72">先用帧级指标定位瓶颈，再决定是缩短链路、减少抖动，还是提高硬件能力覆盖。</text>
+
+  <rect class="metric" x="90" y="120" width="250" height="88" rx="16"/><text class="label" x="215" y="153" text-anchor="middle">操作延迟</text><text class="txt" x="215" y="177" text-anchor="middle">输入到画面变化</text><text class="txt" x="215" y="196" text-anchor="middle">目标：降低端到端耗时</text>
+  <rect class="metric" x="1040" y="120" width="250" height="88" rx="16"/><text class="label" x="1165" y="153" text-anchor="middle">100ms 卡顿率</text><text class="txt" x="1165" y="177" text-anchor="middle">渲染间隔异常</text><text class="txt" x="1165" y="196" text-anchor="middle">目标：降低抖动和丢帧</text>
+  <rect class="center" x="535" y="122" width="310" height="86" rx="18"/><text class="white" x="690" y="158" text-anchor="middle">帧级全链路指标</text><text class="small" x="690" y="184" text-anchor="middle" fill="#dbe4ef">平均 / P90 / Jitter / 丢帧原因</text>
+  <path class="arrow" d="M340 164 L535 164"/><path class="arrow" d="M1040 164 L845 164"/>
+
+  <g transform="translate(75,300)"><rect class="card blue" width="250" height="126" rx="14"/><text class="label" x="24" y="30">抓屏 / 编码前处理</text><text class="txt" x="24" y="56">OES 纹理替代 YUV 路径</text><text class="txt" x="24" y="78">探索编码 Surface 直通</text><text class="txt" x="24" y="100">收益：约 2ms</text></g>
+  <g transform="translate(360,300)"><rect class="card blue" width="250" height="126" rx="14"/><text class="label" x="24" y="30">编码</text><text class="txt" x="24" y="56">提高硬编覆盖率</text><text class="txt" x="24" y="78">NDK / 异步 API</text><text class="txt" x="24" y="100">收益：约 1ms，CPU 下降</text></g>
+  <g transform="translate(645,300)"><rect class="card orange" width="250" height="126" rx="14"/><text class="label" x="24" y="30">网络传输</text><text class="txt" x="24" y="56">同省同运营商调度</text><text class="txt" x="24" y="78">帧级 / 包级拥塞反馈</text><text class="txt" x="24" y="100">收益：约 9ms</text></g>
+  <g transform="translate(930,300)"><rect class="card orange" width="250" height="126" rx="14"/><text class="label" x="24" y="30">JitterBuffer</text><text class="txt" x="24" y="56">动态奖惩爬升</text><text class="txt" x="24" y="78">关键帧清空 / 后移抗抖</text><text class="txt" x="24" y="100">收益：约 2ms，P90 约 5ms</text></g>
+  <g transform="translate(360,500)"><rect class="card green" width="250" height="126" rx="14"/><text class="label" x="24" y="30">解码</text><text class="txt" x="24" y="56">硬解覆盖率 / 低延迟参数</text><text class="txt" x="24" y="78">NDK / 异步 API</text><text class="txt" x="24" y="100">收益：约 3ms</text></g>
+  <g transform="translate(645,500)"><rect class="card green" width="250" height="126" rx="14"/><text class="label" x="24" y="30">解码后处理 / 渲染</text><text class="txt" x="24" y="56">减少 SurfaceTexture / FBO</text><text class="txt" x="24" y="78">Surface 直通 / HWC 裁剪</text><text class="txt" x="24" y="100">收益：约 3~4ms</text></g>
+  <g transform="translate(930,500)"><rect class="card red" width="250" height="126" rx="14"/><text class="label" x="24" y="30">效果验证</text><text class="txt" x="24" y="56">卡顿率 2.18% -> 1.93%</text><text class="txt" x="24" y="78">操作延迟 143ms -> 96ms</text><text class="txt" x="24" y="100">端到端减少约 47ms</text></g>
+
+  <path class="dash" d="M690 208 C310 230,200 260,200 300"/><path class="dash" d="M690 208 C475 240,485 270,485 300"/><path class="dash" d="M690 208 C770 245,770 270,770 300"/><path class="dash" d="M690 208 C1040 235,1055 265,1055 300"/><path class="dash" d="M690 208 C500 420,485 470,485 500"/><path class="dash" d="M690 208 C770 420,770 470,770 500"/>
+  <path class="arrow" d="M895 563 L930 563"/>
+
+  <rect class="card" x="95" y="675" width="1190" height="52" rx="14"/><text class="sub" x="120" y="707">判断优先级：先找耗时高、波动大、能减少中间队列或格式转换的节点；收益要同时看单环节指标、端到端指标和业务指标。</text>
+</svg>
